@@ -1,0 +1,154 @@
+# See docs at: https://mystmd.org/guide/frontmatter
+version: 1
+project:
+  jupyter:
+    binder:
+      url: https://mybinder.org
+      repo: adrs0049/MATH551
+      ref: main
+  # Launch button for opening notebooks externally
+  binder: https://mybinder.org/v2/gh/adrs0049/MATH551/main
+  title: Introduction to Scientific Computing
+  description: Lecture notes for MATH 551 - A first course in numerical analysis
+  authors:
+    - name: Andreas Buttenschoen
+      email: andreas.buttenschoen@umass.edu
+      affiliations:
+        - University of Massachusetts Amherst
+  copyright: "2025"
+  license: CC-BY-NC-SA-4.0
+  github: https://github.com/adrs0049/MATH551
+  bibliography:
+    - references.bib
+  abbreviations:
+    FD: Finite Difference
+    LU: Lower-Upper (decomposition)
+    QR: Orthogonal-Triangular (factorization)
+    ODE: Ordinary Differential Equation
+    PDE: Partial Differential Equation
+    SPD: Symmetric Positive Definite
+  toc:
+    - file: index.md
+    - file: schedule.md
+      title: Course Schedule
+    - file: core-concepts.md
+      title: Core Concepts
+    # PART I: LOCAL APPROXIMATION
+    - file: approximation-theory/index.md
+      title: Local Approximation
+      children:
+        - file: approximation-theory/taylor.md
+        - file: approximation-theory/numerical-differentiation.md
+        - file: approximation-theory/numerical-integration.md
+        - file: approximation-theory/exercises.md
+    - file: error-stability/index.md
+      title: Floating Point and Error Analysis
+      children:
+        - file: error-stability/floating-point.md
+        - file: error-stability/fast-inverse-sqrt.md
+        - file: error-stability/condition-numbers.md
+        - file: error-stability/forward-backward-error.md
+        - file: error-stability/exercises.md
+    # PART II: NONLINEAR EQUATIONS
+    - file: nonlinear-equations/index.md
+      title: Nonlinear Equations
+      children:
+        - file: nonlinear-equations/bisection.md
+        - file: nonlinear-equations/fixed-point.md
+        - file: nonlinear-equations/newton.md
+        - file: nonlinear-equations/error-analysis.md
+        - file: nonlinear-equations/exercises.md
+    # PART III: LINEAR ALGEBRA
+    - file: qr-least-squares/index.md
+      title: Linear Algebra and QR Factorization
+      children:
+        - file: qr-least-squares/linear-algebra-fundamentals.md
+        - file: qr-least-squares/condition-stability.md
+        - file: qr-least-squares/iterative-methods.md
+        - file: qr-least-squares/orthogonality.md
+        - file: qr-least-squares/gram-schmidt.md
+        - file: qr-least-squares/qr-factorization.md
+        - file: qr-least-squares/least-squares.md
+        - file: qr-least-squares/qr-solving.md
+        - file: qr-least-squares/exercises.md
+    # PART IV: ODES
+    - file: odes/index.md
+      title: Numerical Methods for ODEs
+      children:
+        - file: odes/forward-euler.md
+        - file: odes/backward-euler.md
+        - file: odes/stability.md
+        - file: odes/runge-kutta.md
+    # PART V: NONLINEAR SYSTEMS
+    - file: nonlinear-systems/index.md
+      title: Nonlinear Systems
+      children:
+        - file: nonlinear-systems/newton-systems.md
+        - file: nonlinear-systems/globalization.md
+        - file: nonlinear-systems/convergence.md          # optional
+        - file: nonlinear-systems/quasi-newton.md         # optional
+        - file: nonlinear-systems/constrained-optimization.md  # optional
+        - file: nonlinear-systems/exercises.md
+    # PART VI: APPROXIMATION THEORY (ADVANCED)
+    - file: interpolation/index.md
+      title: Approximation Theory
+      children:
+        # Core interpolation
+        - file: interpolation/lagrange.md
+        - file: interpolation/chebyshev.md
+        # Fourier and transforms
+        - file: interpolation/fourier-dct.ipynb
+          title: Fourier Transform and DCT
+        - file: interpolation/values-coefficients.md
+        # Calculus via spectral methods
+        - file: interpolation/chebyshev-differentiation.ipynb
+        - file: interpolation/chebyshev-integration.ipynb
+        - file: interpolation/differentiation.md
+          title: Differentiation Matrices (old)
+        - file: interpolation/differentiation-matrices.md
+          title: Differentiation Matrices (to merge)
+        - file: interpolation/integration.md
+          title: Integration via Chebyshev (old)
+        # Convergence theory
+        - file: interpolation/spectral-accuracy.md
+        - file: interpolation/gibbs.md
+        # Spectral methods for BVPs
+        - file: interpolation/spectral-methods.md
+          title: Spectral Methods for BVPs
+        # Exercises
+        - file: interpolation/exercises.md
+    - file: neural-networks/index.md
+      title: Neural Networks as Universal Approximators
+      children:
+        - file: neural-networks/universal-approximation.md
+        - file: neural-networks/barron-spaces.md
+        - file: neural-networks/deep-networks.md
+        - file: neural-networks/exercises.md
+    # NOTEBOOKS
+    - file: notebooks/index.md
+      title: Interactive Notebooks
+      children:
+        - file: approximation-theory/taylor-series.ipynb
+        - file: approximation-theory/finite-difference-demo.ipynb
+        - file: error-stability/fast-inverse-sqrt.ipynb
+        - file: nonlinear-equations/bisection-demo.ipynb
+        - file: nonlinear-equations/fixed-point-iteration.ipynb
+        - file: qr-least-squares/CondNumberEst.ipynb
+        - file: direct-methods/gaussian-elimination-notebook.ipynb
+        - file: direct-methods/lu-decomposition-notebook.ipynb
+        - file: direct-methods/stability-ge.ipynb
+        - file: iterative-methods/jacobi-gauss-seidel.ipynb
+    # APPENDICES
+    - file: appendix/index.md
+      title: Appendices
+      children:
+        - file: appendix/direct-methods.md
+        - file: appendix/fourier.md
+        - file: appendix/spectral-methods.md
+site:
+  # Use local fork with Colab support (submodule)
+  template: ./myst-theme/themes/book/template.yml
+  options:
+    hide_footer_links: false
+    logo_text: MATH 551
+    style: _static/custom.css
