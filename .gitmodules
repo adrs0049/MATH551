@@ -1,0 +1,3 @@
+[submodule "myst-theme"]
+	path = myst-theme
+	url = https://github.com/adrs0049/myst-theme.git
