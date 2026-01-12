@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="http://localhost:3000/sitemap_style.xsl" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>http://localhost:3000</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/index-1</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/taylor</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/numerical-differentiation</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/numerical-integration</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/exercises</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/index-2</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/floating-point</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/fast-inverse-sqrt</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/condition-numbers</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/forward-backward-error</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/exercises-1</loc>
+  </url>
+</urlset>
