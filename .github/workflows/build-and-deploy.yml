@@ -28,10 +28,6 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-    # Use full TOC for deployment
-    - name: Use full myst.yml
-      run: |
-        cp myst.full.yml myst.yml
     # Build the book
     - name: Build the book
       run: |
