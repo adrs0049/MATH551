@@ -46,6 +46,18 @@ project:
         - file: error-stability/condition-numbers.md
         - file: error-stability/forward-backward-error.md
         - file: error-stability/exercises.md
+    # PART III: NONLINEAR EQUATIONS
+    - file: nonlinear-equations/index.md
+      title: Nonlinear Equations
+      children:
+        - file: nonlinear-equations/bisection.md
+        - file: nonlinear-equations/newton.md
+        - file: nonlinear-equations/fixed-point.md
+        - file: nonlinear-equations/error-analysis.md
+        - file: nonlinear-equations/exercises.md
+    # NOTEBOOKS
+    - file: notebooks/index.md
+      title: Interactive Notebooks
 site:
   # Use local fork with Colab support (submodule)
   template: ./myst-theme/themes/book/template.yml
