@@ -68,6 +68,7 @@ site:
   # Use local fork with Colab support (submodule)
   template: ./myst-theme/themes/book/template.yml
   options:
+    base_url: /MATH551
     hide_footer_links: false
     logo_text: MATH 551
     style: _static/custom.css
