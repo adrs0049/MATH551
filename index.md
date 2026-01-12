@@ -2,7 +2,7 @@
 
 ## Instructor
 
-This is a course developed by Brian van Koten and [Andreas Buttenschoen](https://www.buttenschoen.ca) at the University of Massachusetts Amherst.
+This is a course developed by [Andreas Buttenschoen](https://www.buttenschoen.ca) and Brian van Koten at the University of Massachusetts Amherst.
 
 ## Description
 

@@ -29,10 +29,6 @@ project:
     SPD: Symmetric Positive Definite
   toc:
     - file: index.md
-    - file: schedule.md
-      title: Course Schedule
-    - file: core-concepts.md
-      title: Core Concepts
     # PART I: LOCAL APPROXIMATION
     - file: approximation-theory/index.md
       title: Local Approximation
@@ -50,20 +46,6 @@ project:
         - file: error-stability/condition-numbers.md
         - file: error-stability/forward-backward-error.md
         - file: error-stability/exercises.md
-    # NOTEBOOKS (only for enabled chapters)
-    - file: notebooks/index.md
-      title: Interactive Notebooks
-      children:
-        - file: approximation-theory/taylor-series.ipynb
-        - file: approximation-theory/finite-difference-demo.ipynb
-        - file: error-stability/fast-inverse-sqrt.ipynb
-    # APPENDICES
-    - file: appendix/index.md
-      title: Appendices
-      children:
-        - file: appendix/direct-methods.md
-        - file: appendix/fourier.md
-        - file: appendix/spectral-methods.md
 site:
   # Use local fork with Colab support (submodule)
   template: ./myst-theme/themes/book/template.yml
