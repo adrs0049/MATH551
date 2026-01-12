@@ -1,0 +1,48 @@
+/* Custom styles for MATH 551 Jupyter Book */
+
+/* ============================================
+   TOC Icons - Visual indicators for page types
+   ============================================ */
+
+/* Learning Outcomes - graduation cap emoji */
+nav a[href*="learning-outcomes"]::before {
+  content: "🎓 ";
+}
+
+/* Exercises - pencil emoji */
+nav a[href*="exercises"]::before {
+  content: "✏️ ";
+}
+
+/* Notebooks - notebook emoji */
+nav a[href$=".ipynb"]::before,
+nav a[href*="-demo"]::before {
+  content: "📓 ";
+}
+
+/* Alternative: Use colored dots instead of emojis
+   Uncomment below and comment out emoji section above if preferred */
+
+/*
+nav a[href*="learning-outcomes"]::before {
+  content: "●";
+  color: #22c55e;
+  margin-right: 0.4em;
+  font-size: 0.7em;
+}
+
+nav a[href*="exercises"]::before {
+  content: "●";
+  color: #f59e0b;
+  margin-right: 0.4em;
+  font-size: 0.7em;
+}
+
+nav a[href$=".ipynb"]::before,
+nav a[href*="-notebook"]::before {
+  content: "●";
+  color: #3b82f6;
+  margin-right: 0.4em;
+  font-size: 0.7em;
+}
+*/
