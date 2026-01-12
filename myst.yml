@@ -58,6 +58,17 @@ project:
     # NOTEBOOKS
     - file: notebooks/index.md
       title: Interactive Notebooks
+      children:
+        - file: notebooks/taylor-series.ipynb
+          title: Taylor Series
+        - file: notebooks/finite-difference-demo.ipynb
+          title: Finite Differences
+        - file: notebooks/fast-inverse-sqrt.ipynb
+          title: Fast Inverse Sqrt
+        - file: notebooks/bisection-demo.ipynb
+          title: Bisection Demo
+        - file: notebooks/fixed-point-iteration.ipynb
+          title: Fixed Point Iteration
 site:
   # Use local fork with Colab support (submodule)
   template: ./myst-theme/themes/book/template.yml
