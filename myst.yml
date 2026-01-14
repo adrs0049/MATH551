@@ -29,6 +29,8 @@ project:
     SPD: Symmetric Positive Definite
   toc:
     - file: index.md
+    - file: schedule.md
+      title: Schedule
     # PART I: LOCAL APPROXIMATION
     - file: approximation-theory/index.md
       title: Local Approximation
