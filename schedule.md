@@ -24,17 +24,17 @@ Class meets Monday & Wednesday, 75 minutes per session.
 | 5 | Feb 18 | Wed | Forward/backward error | |
 | 6 | Feb 19 | Thu | Condition numbers + **Quiz 1** | *Mon schedule* |
 | 7 | Feb 23 | Mon | **ODEs** - Euler's method | |
-| 8 | Feb 25 | Wed | Stability regions, stiffness | |
-| 9 | Mar 2 | Mon | RK2, embedded methods, adaptive stepping | |
-| 10 | Mar 4 | Wed | **Nonlinear Equations** - Bisection | |
-| 11 | Mar 9 | Mon | Fixed-point & Newton | |
-| 12 | Mar 11 | Wed | Convergence analysis + **Quiz 2** | |
+| 8 | Feb 25 | Wed | Euler-Maruyama | |
+| 9 | Mar 2 | Mon | **Nonlinear Equations** - Bisection | |
+| 10 | Mar 4 | Wed | Fixed-point & Newton | |
+| 11 | Mar 9 | Mon | Convergence analysis + **Quiz 2** | |
+| 12 | Mar 11 | Wed | TBD | |
 | | Mar 15-22 | | **SPRING BREAK** | |
-| 13 | Mar 23 | Mon | Line search & error-oriented methods | |
-| 14 | Mar 25 | Wed | **QR & Least Squares** - Norms, conditioning | |
-| 15 | Mar 30 | Mon | Orthogonality, Gram-Schmidt | |
-| 16 | Apr 1 | Wed | QR factorization | |
-| 17 | Apr 6 | Mon | Least squares via QR | |
+| 13 | Mar 23 | Mon | **QR & Least Squares** - Norms, conditioning | |
+| 14 | Mar 25 | Wed | Orthogonality, Gram-Schmidt | |
+| 15 | Mar 30 | Mon | QR factorization | |
+| 16 | Apr 1 | Wed | Least squares via QR | |
+| 17 | Apr 6 | Mon | TBD | |
 | 18 | Apr 8 | Wed | SVD, pseudo-inverse, low-rank approximation + **Quiz 3** | |
 | 19 | Apr 13 | Mon | **Interpolation** - Lagrange | |
 | 20 | Apr 15 | Wed | Chebyshev polynomials | |
@@ -52,9 +52,9 @@ Class meets Monday & Wednesday, 75 minutes per session.
 |-------|---------|---------|
 | Approximation Theory | 3 | Taylor's theorem, finite differences |
 | Error & Stability | 3 | Floating point, forward/backward error, condition numbers |
-| ODEs | 3 | Euler, stability regions, RK2, adaptive stepping |
-| Nonlinear Equations | 4 | Bisection, fixed-point, Newton, line search |
-| QR, Least Squares & SVD | 5 | Gram-Schmidt, QR, least squares, SVD, pseudo-inverse |
+| ODEs | 2 | Euler's method, Euler-Maruyama |
+| Nonlinear Equations | 3 | Bisection, fixed-point, Newton, convergence analysis |
+| QR, Least Squares & SVD | 6 | Norms, Gram-Schmidt, QR, least squares, TBD, SVD |
 | Interpolation | 5 | Lagrange, Chebyshev, FFT, calculus via polynomials, spectral accuracy |
 | Neural Networks | 3 | Universal approximation, Barron spaces, deep networks |
 
