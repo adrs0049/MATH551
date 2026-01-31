@@ -11,7 +11,7 @@ on:
 env:
   # BASE_URL determines the website is served from, including CSS & JS assets
   BASE_URL: /${{ github.event.repository.name }}
-  NODE_OPTIONS: '--max-old-space-size=8192'
+  NODE_OPTIONS: '--max-old-space-size=16384'
 
 permissions:
   contents: read
