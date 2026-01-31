@@ -1,5 +1,10 @@
 /* Custom styles for MATH 551 Jupyter Book */
 
+/* Hide the notebook kernel toolbar (Launch Kernel button) */
+.myst-jp-nb-toolbar {
+  display: none !important;
+}
+
 /* ============================================
    TOC Icons - Visual indicators for page types
    ============================================ */
@@ -12,12 +17,6 @@ nav a[href*="learning-outcomes"]::before {
 /* Exercises - pencil emoji */
 nav a[href*="exercises"]::before {
   content: "✏️ ";
-}
-
-/* Notebooks - notebook emoji */
-nav a[href$=".ipynb"]::before,
-nav a[href*="-demo"]::before {
-  content: "📓 ";
 }
 
 /* Alternative: Use colored dots instead of emojis
