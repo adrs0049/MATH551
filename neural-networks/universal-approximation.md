@@ -49,7 +49,7 @@ $$
 The Universal Approximation Theorem is a modern descendant of one of the most beautiful results in classical analysis.
 
 :::{prf:theorem} Weierstrass Approximation Theorem (1885)
-:label: thm-weierstrass
+:label: thm-weierstrass-nn
 
 Let $f: [a,b] \to \mathbb{R}$ be continuous. For any $\epsilon > 0$, there exists a polynomial $p$ such that:
 $$

@@ -220,7 +220,7 @@ for some $q < 1$. Then:
 :::
 
 :::{prf:remark} Why the Banach FPT Matters
-:label: rmk-banach-applications
+:label: rmk-banach-fpt-applications
 :class: dropdown
 
 The Banach FPT is not just about scalar equations. The same principle governs:

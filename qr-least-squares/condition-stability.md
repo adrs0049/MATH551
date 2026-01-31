@@ -81,7 +81,7 @@ $$
 The sensitivity theorem motivates the following definition:
 
 :::{prf:definition} Condition Number
-:label: def-condition-number
+:label: def-condition-number-matrix
 
 $$
 \kappa(A) = \|A\| \cdot \|A^{-1}\|
