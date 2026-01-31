@@ -240,6 +240,68 @@ To go from 3 correct digits to 12 correct digits takes only 2 iterations.
 **Examples of quadratic convergence:**
 - **Newton's method** (for simple roots with good initial guess)
 
+### Superlinear Convergence
+
+::::::{prf:definition} Superlinear Convergence
+:label: def-superlinear-convergence
+
+A sequence $\{x_n\}$ converges **superlinearly** to $x^*$ if:
+
+$$
+\lim_{n \to \infty} \frac{|x_{n+1} - x^*|}{|x_n - x^*|} = 0
+$$
+
+::::{dropdown} What this means
+The ratio of consecutive errors goes to zero—faster than any geometric rate, but not necessarily quadratic.
+
+Superlinear convergence is "between" linear and quadratic: the effective contraction factor improves as we get closer to the root.
+::::
+::::::
+
+**Examples of superlinear convergence:**
+- **Secant method:** Order $\approx 1.618$ (the golden ratio)
+- **Quasi-Newton methods:** Achieve superlinear without computing exact derivatives
+
+### General Order of Convergence
+
+::::::{prf:definition} Order of Convergence
+:label: def-order-convergence
+
+A sequence $\{x_n\}$ converging to $x^*$ has **order of convergence** $p \geq 1$ if:
+
+$$
+\lim_{n \to \infty} \frac{|x_{n+1} - x^*|}{|x_n - x^*|^p} = C
+$$
+
+for some constant $C > 0$ (the **asymptotic error constant**).
+
+| Order $p$ | Name | Digits gained per iteration |
+|-----------|------|----------------------------|
+| $p = 1$ | Linear | $-\log_{10}(C)$ (constant) |
+| $1 < p < 2$ | Superlinear | Increasing |
+| $p = 2$ | Quadratic | Doubles |
+| $p = 3$ | Cubic | Triples |
+::::::
+
+::::::{prf:example} Orders of Common Methods
+:label: ex-convergence-orders
+
+| Method | Order $p$ | Asymptotic Error Constant |
+|--------|-----------|---------------------------|
+| Bisection | 1 | $C = 0.5$ |
+| Fixed-point ($g'(x^*) \neq 0$) | 1 | $C = \|g'(x^*)\|$ |
+| Secant | $\phi \approx 1.618$ | Depends on $f$ |
+| Newton (simple root) | 2 | $C = \|f''(x^*)\|/(2\|f'(x^*)\|)$ |
+| Newton (double root) | 1 | Degrades to linear! |
+| Halley | 3 | Uses second derivatives |
+
+:::{dropdown} Why the secant method has order $\phi$
+The secant method uses $x_{n+1} = x_n - f(x_n) \frac{x_n - x_{n-1}}{f(x_n) - f(x_{n-1})}$.
+
+The error satisfies $e_{n+1} \approx C \cdot e_n \cdot e_{n-1}$. Assuming $e_n \sim e_0^{p^n}$ leads to $p^2 = p + 1$, giving $p = \frac{1 + \sqrt{5}}{2} = \phi$.
+:::
+::::::
+
 ### Comparison
 
 | Method | Convergence | Rate | Iterations for 10 digits |
@@ -263,9 +325,11 @@ In practice, a common strategy is: use bisection to get close, then switch to Ne
 
 | Concept | Formula | Interpretation |
 |---------|---------|----------------|
-| Condition number | $\kappa = 1/|f'(x^*)|$ | Sensitivity of root to perturbations |
+| Condition number | $\kappa = 1/\|f'(x^*)\|$ | Sensitivity of root to perturbations |
 | Forward error | $\|\hat{x} - x^*\|$ | Distance from true root |
 | Backward error | $\|f(\hat{x})\|$ | Residual |
 | Error relationship | Forward $\approx \kappa \times$ Backward | Why both stopping criteria matter |
 | Linear convergence | $e_{n+1} \leq L \cdot e_n$ | Constant factor reduction |
+| Superlinear convergence | $e_{n+1}/e_n \to 0$ | Ratio improves each step |
 | Quadratic convergence | $e_{n+1} \leq C \cdot e_n^2$ | Digits double each step |
+| Order $p$ convergence | $e_{n+1} \sim C \cdot e_n^p$ | General framework |
