@@ -1,5 +1,9 @@
 # Core Concepts and Fundamentals
 
+:::{note}
+This page serves as a **quick reference** summarizing the key theorems and concepts that appear throughout the course. Use it for review or to see how different topics connect.
+:::
+
 :::{tip} Big Idea
 These are the fundamental concepts that unify the entire course: approximation theorems justify *what* we're doing, while error analysis tells us *how well* we're doing it.
 :::
