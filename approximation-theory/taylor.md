@@ -20,18 +20,19 @@ $$
 where $\xi \in (x_0, x_0 + h)$.
 :::
 
-Suppose we have a function $f(x)$ with $k + 1$ continuous derivatives. Then we can write:
+Suppose we have a function $f(x)$ with $k + 1$ continuous derivatives,
+and let $x = x_0 + h$ then we can write:
 
 $$
 \begin{split}
 f(x) &= \underbrace{P_k(x)}_{\text{$k$-th Taylor polynomial}} +
         \underbrace{R_k(x)}_{\text{Remainder or error term}} \\
-     &= \sum_{i=0}^{k} \frac{f^{(i)}(x_0)}{i!} (x - x_0)^i +
+f(x) &= \sum_{i=0}^{k} \frac{f^{(i)}(x_0)}{i!} (x - x_0)^i +
         \frac{f^{(k+1)}(\xi)}{(k+1)!}(x - x_0)^{k+1},
 \end{split}
 $$
 
-where $\xi \in (x_0, x_0 + h)$. This means that:
+where $\xi \in (x_0, x_0 + h)$. This means that the approximation error is:
 
 $$
 |f(x) - P_k(x)| = |R_k(x)| \quad\implies\quad
@@ -88,7 +89,7 @@ $$
 With some experimentation, we find that the first $n$ for which this inequality holds is $n = 6$.
 :::
 
-```{figure} taylor.png
+```{figure} /img/taylor.png
 :width: 75%
 :align: center
 
