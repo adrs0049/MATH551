@@ -44,59 +44,78 @@ float Q_rsqrt( float x )
 
 Let's understand what this does.
 
-## The Key Insight: Logarithms from Bit Patterns
+## The Strategy: Turn Multiplication into Addition
 
-We want to compute $y = \frac{1}{\sqrt{x}}$. Taking logarithms:
-
-$$
-\log_2(y) = -\frac{1}{2}\log_2(x)
-$$
-
-From the IEEE 754 representation of a positive float $x$:
+We want to compute $y = x^{-1/2}$. Taking $\log_2$ of both sides:
 
 $$
-\text{fl}(x) = 2^{E_x - 127}(1 + m_x)
+\log_2(y) = -\tfrac{1}{2}\log_2(x)
+$$
+
+If we had a cheap way to compute $\log_2$, we could replace the expensive power $x^{-1/2}$ with a simple multiply-by-$(-1/2)$, then exponentiate back. Of course, computing $\log_2$ is itself expensive — unless the hardware is already doing it for us.
+
+## Integer Interpretation of Float Bits
+
+Recall that a 32-bit float stores sign bit $S_x$, exponent $E_x$, and mantissa bits $m_x$. If we read those same 32 bits as an integer, we get:
+
+$$
+\text{Int}(x) = 2^{31} S_x + 2^{23} E_x + M_x
+$$
+
+where $M_x = 2^{23} m_x$ is the integer value of the mantissa bits. This is what the C line `i = *(long *)&y` does — it reinterprets the float's bits as an integer without changing them.
+
+## Why Integer Bits $\approx$ Logarithm
+
+From the [IEEE 754 representation](floating-point.md), a positive float represents:
+
+$$
+x = 2^{E_x - 127}(1 + m_x)
 $$
 
 Taking $\log_2$:
 
 $$
-\log_2(\text{fl}(x)) = E_x - 127 + \log_2(1 + m_x)
+\log_2(x) = (E_x - 127) + \log_2(1 + m_x)
 $$
 
-Since $m_x \in [0, 1)$, we can approximate:
+Since $m_x \in [0, 1)$, we approximate $\log_2(1 + m_x) \approx m_x + \sigma$ where $\sigma \approx 0.0430$. Substituting $m_x = M_x / 2^{23}$:
 
 $$
-\log_2(1 + m_x) \approx m_x + \sigma
+\log_2(x) \approx \frac{1}{2^{23}}\underbrace{(M_x + 2^{23} E_x)}_{\text{Int}(x)} + (\sigma - 127)
 $$
 
-where $\sigma \approx 0.0430$ is a correction constant.
+That is:
+
+$$
+\log_2(x) \approx \frac{1}{2^{23}} \cdot \text{Int}(x) + (\sigma - 127)
+$$
+
+**The integer interpretation of float bits is a scaled-and-shifted logarithm.** This is the key insight that makes the entire algorithm work.
 
 ## The Magic Formula
 
-Substituting $m_x = M_x / 2^{23}$ (where $M_x$ is the integer mantissa):
+Now apply this to $\log_2(y) = -\frac{1}{2}\log_2(x)$. Writing both sides in terms of integer bit patterns:
 
 $$
-\log_2(\text{fl}(x)) \approx \frac{1}{2^{23}}(M_x + 2^{23} E_x) + \sigma - 127
+\frac{1}{2^{23}} \text{Int}(y) + (\sigma - 127) = -\frac{1}{2}\left[\frac{1}{2^{23}} \text{Int}(x) + (\sigma - 127)\right]
 $$
 
-The key observation: **the integer interpretation of float bits approximates the logarithm!**
+Solving for $\text{Int}(y)$:
 
 $$
-\log_2(\text{fl}(x)) \approx \frac{1}{2^{23}} \cdot \text{Int}(x) + \sigma - 127
+\text{Int}(y) = \underbrace{\tfrac{3}{2} \cdot 2^{23}(127 - \sigma)}_{\texttt{0x5f3759df}} - \frac{1}{2}\,\text{Int}(x)
 $$
 
-Applying this to our inverse square root equation $\log_2(y) = -\frac{1}{2}\log_2(x)$:
+This is exactly the "what the fuck?" line:
 
-$$
-\text{Int}(y) = \underbrace{\frac{3}{2} \cdot 2^{23}(127 - \sigma)}_{\text{Magic Number}} - \frac{1}{2}\text{Int}(x)
-$$
+```c
+i = 0x5f3759df - (i >> 1);
+```
 
-The magic number `0x5f3759df` comes from this formula!
+- `i >> 1`: integer right shift divides $\text{Int}(x)$ by 2
+- Subtract from the magic constant: completes the formula
 
-The line `i = 0x5f3759df - (i >> 1)` computes:
-- `i >> 1`: Right shift divides by 2 (the $-\frac{1}{2}$ factor)
-- Subtract from magic number: Implements the full formula
+The magic number `0x5f3759df` is just $\frac{3}{2} \cdot 2^{23}(127 - \sigma)$ evaluated for the optimal $\sigma$.
 
 ## Newton's Method Refinement
 

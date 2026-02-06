@@ -18,9 +18,7 @@ Test your understanding with these conceptual questions:
 
 6. **Subtractive Cancellation:** When subtracting two numbers $a$ and $b$, under what conditions is the result reliable?
 
-7. **Forward vs. Backward:** If an algorithm has small backward error but large forward error, what does this tell you about the problem?
-
-8. **Trade-offs:** In finite differences, why can't we just use an extremely small $h$ to get arbitrary accuracy?
+7. **Trade-offs:** In finite differences, why can't we just use an extremely small $h$ to get arbitrary accuracy?
 
 
 ## Floating-Point Arithmetic
@@ -77,42 +75,6 @@ def kahan_sum(xs):
 - **(d)** Compare Kahan summation to naive summation for the integral:
   $$I = \int_1^{2^{22}} \frac{dx}{\sqrt{x}} = 2(2^{11} - 1)$$
   using the trapezoidal rule with $N = 10^6$ points, in single precision (`np.float32`).
-
----
-
-## Forward and Backward Error
-
----
-
-### Q2.5: Quadratic Formula
-
-For $ax^2 + bx + c = 0$ with $a = 1$, $b = -10^8$, $c = 1$:
-
-- **(a)** Compute both roots using the standard quadratic formula.
-- **(b)** Identify which root suffers from cancellation.
-- **(c)** Use the identity $x_1 x_2 = c/a$ to compute the small root accurately.
-- **(d)** Compute the backward error (residual) for both methods.
-
----
-
-### Q2.6: Exponential Minus One
-
-- **(a)** For $x = 10^{-k}$, $k = 1, \ldots, 16$, compute $e^x - 1$ using direct subtraction.
-- **(b)** Compare to `numpy.expm1(x)`.
-- **(c)** Plot the relative error of the direct method vs. $x$.
-- **(d)** At what $x$ does the direct method lose all significant digits?
-
----
-
-### Q2.7: Variance Computation
-
-Consider computing variance: $\sigma^2 = \frac{1}{n}\sum(x_i - \bar{x})^2$.
-
-An alternative "one-pass" formula is: $\sigma^2 = \frac{1}{n}\sum x_i^2 - \bar{x}^2$.
-
-- **(a)** For $x = [10^8, 10^8 + 1, 10^8 + 2]$, compute variance both ways.
-- **(b)** Which method is more accurate? Why?
-- **(c)** Research Welford's algorithm. Why is it preferred?
 
 ---
 
@@ -191,75 +153,11 @@ $$
 
 ---
 
-### Q2.12: Residuals and Forward Error
-
-Solve the system:
-
-$$
-\begin{pmatrix} 1 & 1 \\ 1 & 1.0001 \end{pmatrix}
-\begin{pmatrix} x_1 \\ x_2 \end{pmatrix} =
-\begin{pmatrix} 2 \\ 2 \end{pmatrix}
-$$
-
-- **(a)** Solve using Gaussian elimination.
-- **(b)** Perturb $b_2$ by $0.0001$ and solve again.
-- **(c)** Compute the condition number of $A$.
-- **(d)** Verify that forward error $\approx \kappa \times$ relative perturbation.
-
----
-
 ## Computational Exercises
 
 ---
 
-### Q2.13: Unstable Recursion
-
-Consider evaluating the integrals
-
-$$
-y_n = \int_0^1 \frac{x^n}{10 + x}\, dx
-$$
-
-for $n = 1, 2, \dots, 30$.
-
-- **(a)** Show that $y_n + 10y_{n-1} = \frac{1}{n}$.
-
-- **(b)** Show that $y_0 = \log 11 - \log 10$, then use the recursion
-  $$
-  y_n = \frac{1}{n} - 10y_{n-1}
-  $$
-  to numerically generate $y_1$ through $y_{30}$. Be sure to use $y_0$ in the form **above** (not $\log(11/10)$). Include a table showing $n$ and $y_n$. Briefly explain what you observe.
-
-- **(c)** Show that for $n \geq 0$, we have $0 \leq y_n \leq 1$. Discuss the results from (b) in light of this bound.
-
-- **(d)** Derive a formula for computing $y_{n-1}$ given $y_n$ (the backward recursion).
-
-- **(e)** Show that $y_n$ equals an infinite series.
-
-:::{dropdown} Hint for (e)
-Use the backward recursion $y_n = \frac{1}{10}\left(\frac{1}{n+1} - y_{n+1}\right)$ assuming $y_\infty = 0$. Repeatedly substitute to find the pattern.
-:::
-
-- **(f)** Show that for any $\varepsilon > 0$ and positive integer $n_0$, there exists $n_1 \geq n_0$ such that taking $y_{n_1} = 0$ as a starting value produces integral evaluations $y_n$ with absolute error smaller than $\varepsilon$ for all $0 < n \leq n_0$.
-
-- **(g)** Explain why the backward algorithm is stable.
-
-:::{dropdown} Hint for (g)
-Include a small round-off error at each step. What happens to this error as you iterate backward?
-:::
-
-- **(h)** Write a computer program that computes $y_{20}$ within an absolute error of at most $10^{-5}$. Explain how you chose $n_1$.
-
-:::{dropdown} Solution for (a)
-Using integration by parts or direct manipulation:
-$$
-y_n + 10y_{n-1} = \int_0^1 \frac{x^n + 10x^{n-1}}{10+x}\,dx = \int_0^1 \frac{x^{n-1}(x+10)}{10+x}\,dx = \int_0^1 x^{n-1}\,dx = \frac{1}{n}
-$$
-:::
-
----
-
-### Q2.14: Trapezoidal Rule with Round-off
+### Q2.12: Trapezoidal Rule with Round-off
 
 Consider computing the integral:
 
@@ -288,7 +186,7 @@ s = np.asarray(0.0, dtype=np.float32)
 
 ---
 
-### Q2.15: Fast Inverse Square Root Accuracy
+### Q2.13: Fast Inverse Square Root Accuracy
 
 Refer to the fast inverse square root code.
 

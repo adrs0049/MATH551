@@ -157,7 +157,7 @@ The computed answer is the exact answer to a slightly perturbed problem.
 (golden-rule)=
 ## The Relationship: Forward Error ≤ κ × Backward Error
 
-Now we connect backward error to forward error using the **condition number** from the [previous section](condition-numbers.md).
+Now we connect backward error to forward error using the **condition number** from the [error-stability chapter](../error-stability/condition-numbers.md).
 
 ### Derivation
 

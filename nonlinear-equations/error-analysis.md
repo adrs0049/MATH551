@@ -109,7 +109,7 @@ A perturbation of size $10^{-16}$ (machine epsilon) could move the root by $5 \t
 
 ## Forward and Backward Error
 
-The [forward/backward error framework](../error-stability/forward-backward-error.md) from earlier applies naturally to root finding.
+The [forward/backward error framework](../qr-least-squares/forward-backward-error.md) from earlier applies naturally to root finding.
 
 ### Forward Error
 

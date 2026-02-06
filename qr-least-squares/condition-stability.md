@@ -6,7 +6,7 @@ The **condition number** $\kappa(A) = \|A\|\|A^{-1}\|$ tells us how sensitive a 
 
 ## Recap: Forward and Backward Error
 
-We introduced [forward and backward error](../error-stability/forward-backward-error.md) earlier. The [golden rule](../error-stability/forward-backward-error.md#golden-rule) connects them:
+We introduced [forward and backward error](forward-backward-error.md) earlier. The [golden rule](forward-backward-error.md#golden-rule) connects them:
 
 $$
 \text{relative forward error} \lesssim \kappa \times \text{relative backward error}

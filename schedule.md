@@ -17,12 +17,12 @@ Class meets Monday & Wednesday, 75 minutes per session.
 
 | # | Date | Day | Topic | Notes |
 |---|------|-----|-------|-------|
-| 1 | Feb 2 | Mon | **Approximation Theory** - Introduction | |
-| 2 | Feb 4 | Wed | Taylor's Theorem | |
-| 3 | Feb 9 | Mon | Finite Differences | |
-| 4 | Feb 11 | Wed | **Error & Stability** - Floating point | |
-| 5 | Feb 18 | Wed | Forward/backward error | |
-| 6 | Feb 19 | Thu | Condition numbers + **Quiz 1** | *Mon schedule* |
+| 1 | Feb 2 | Mon | **Approximation Theory** - Taylor's theorem with remainder | |
+| 2 | Feb 4 | Wed | Finite Differences | |
+| 3 | Feb 9 | Mon |  **Error & Stability** - Floating point | |
+| 4 | Feb 11 | Wed | Condition Numbers | |
+| 5 | Feb 18 | Wed | TBA | |
+| 6 | Feb 19 | Thu | TBA  **Quiz 1** | *Mon schedule* |
 | 7 | Feb 23 | Mon | **ODEs** - Euler's method | |
 | 8 | Feb 25 | Wed | Euler-Maruyama | |
 | 9 | Mar 2 | Mon | **Nonlinear Equations** - Bisection | |

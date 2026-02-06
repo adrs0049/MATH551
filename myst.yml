@@ -49,9 +49,8 @@ project:
       title: Floating Point and Error Analysis
       children:
         - file: error-stability/floating-point.md
-        - file: error-stability/fast-inverse-sqrt.md
         - file: error-stability/condition-numbers.md
-        - file: error-stability/forward-backward-error.md
+        - file: error-stability/fast-inverse-sqrt.md
         - file: error-stability/exercises.md
     # PART II: ODES
     - file: odes/index.md
@@ -75,6 +74,7 @@ project:
       title: Linear Algebra and QR Factorization
       children:
         - file: qr-least-squares/linear-algebra-fundamentals.md
+        - file: qr-least-squares/forward-backward-error.md
         - file: qr-least-squares/condition-stability.md
         - file: qr-least-squares/iterative-methods.md
         - file: qr-least-squares/orthogonality.md

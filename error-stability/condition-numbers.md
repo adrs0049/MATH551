@@ -1,16 +1,8 @@
 # Condition Numbers
 
 :::{tip} Big Idea
-The condition number measures how sensitive a problem is to small perturbations in the input. Large condition numbers signal potential trouble **regardless of the algorithm used**—it's a property of the mathematics, not the implementation.
+Some problems are inherently harder than others. Consider computing $f(x) = \tan(x)$ near $x = \pi/2$: even with infinite precision arithmetic, tiny uncertainties in $x$ cause huge changes in $\tan(x)$. This isn't a flaw in our algorithm — it's the nature of the tangent function near its pole. The **condition number** $\kappa$ quantifies this sensitivity: *if my input is slightly wrong, how wrong might my output be?* Large $\kappa$ signals trouble regardless of the algorithm used.
 :::
-
-## Why Condition Numbers Matter
-
-Before we discuss algorithms and their errors, we need to understand: **some problems are inherently harder than others**.
-
-Consider computing $f(x) = \tan(x)$ near $x = \pi/2$. Even with infinite precision arithmetic and a perfect algorithm, tiny uncertainties in $x$ cause huge changes in $\tan(x)$. This isn't a flaw in our algorithm—it's the nature of the tangent function near its pole.
-
-The **condition number** quantifies this sensitivity. It answers: *if my input is slightly wrong, how wrong might my output be?*
 
 ## Absolute and Relative Error
 
@@ -158,13 +150,71 @@ As $x \to 1$, we have $\ln(x) \to 0$, so $\kappa \to \infty$.
 **Result:** $\kappa \to \infty$ — evaluating $\ln(x)$ near $x = 1$ is **ill-conditioned**.
 :::
 
+## Condition Number of Subtraction
+
+The condition number formula $\kappa = |xf'(x)/f(x)|$ works for functions of one variable. For a function of **two** variables $g(a, b) = a - b$, we generalize: the condition number measures how the relative error in $g$ relates to the relative errors in $a$ and $b$.
+
+:::{prf:example} Subtraction is Ill-Conditioned When $a \approx b$
+:label: ex-subtraction-condition
+:class: dropdown
+
+Consider $g(a, b) = a - b$ with small perturbations $\tilde{a} = a(1 + \varepsilon_1)$ and $\tilde{b} = b(1 + \varepsilon_2)$:
+
+$$
+\tilde{g} - g = a\varepsilon_1 - b\varepsilon_2
+$$
+
+The relative error in the result is:
+
+$$
+\frac{|\tilde{g} - g|}{|g|} \leq \frac{|a| + |b|}{|a - b|} \cdot \max(|\varepsilon_1|, |\varepsilon_2|)
+$$
+
+The condition number of subtraction is therefore:
+
+$$
+\kappa = \frac{|a| + |b|}{|a - b|}
+$$
+
+- When $a$ and $b$ are well-separated: $\kappa \approx \mathcal{O}(1)$ — subtraction is well-conditioned.
+- When $a \approx b$: $\kappa \to \infty$ — subtraction is **ill-conditioned**.
+
+This is precisely the [catastrophic cancellation](floating-point.md#rmk-cancellation-subtraction) we saw in the floating-point chapter, now explained through the lens of condition numbers.
+:::
+
+## Condition Number of the Finite Difference
+
+We can now give a **condition number explanation** of the [finite difference trade-off](floating-point.md#application-the-finite-difference-trade-off).
+
+:::{prf:example} Finite Difference Condition Number
+:label: ex-fd-condition
+:class: dropdown
+
+The forward difference $\frac{f(x_0 + h) - f(x_0)}{h}$ requires computing $a - b$ where $a = f(x_0 + h)$ and $b = f(x_0)$.
+
+Applying the subtraction condition number with $a \approx b \approx f(x_0)$:
+
+$$
+\kappa \approx \frac{|f(x_0 + h)| + |f(x_0)|}{|f(x_0 + h) - f(x_0)|} \approx \frac{2|f(x_0)|}{h|f'(x_0)|}
+$$
+
+As $h \to 0$, this condition number grows like $1/h$. Each input carries relative error $\mu$ (machine epsilon), so the round-off contribution to the finite difference is:
+
+$$
+\text{round-off error} \approx \kappa \cdot \mu \cdot |f'(x_0)| \approx \frac{2\mu|f(x_0)|}{h}
+$$
+
+This matches exactly the round-off term we derived from the floating-point analysis — but now we see it as a **conditioning problem**: the subtraction step is ill-conditioned for small $h$.
+:::
+
 ## Summary
 
-| Problem | Condition Number | Well/Ill-Conditioned |
-|---------|-----------------|---------------------|
-| $f(x) = \sqrt{x}$ | $\kappa = 1/2$ | Well-conditioned |
-| $f(x) = x^2$ | $\kappa = 2$ | Well-conditioned |
-| $f(x) = \tan(x)$ near $\pi/2$ | $\kappa \to \infty$ | Ill-conditioned |
-| $f(x) = \ln(x)$ near $1$ | $\kappa \to \infty$ | Ill-conditioned |
+The condition number is a property of the **mathematical problem** — it tells us
+the best possible accuracy any algorithm could achieve. The question of
+algorithm quality (forward and backward error, stability) will come up when we
+study [linear systems](../qr-least-squares/forward-backward-error.md).
 
-The condition number is a property of the **mathematical problem**—it tells us the best possible accuracy any algorithm could achieve. But even well-conditioned problems can give bad results if we use a bad algorithm. That's the subject of the [next section](forward-backward-error.md).
+For now, we have all the tools we need to understand the [fast inverse square
+root](fast-inverse-sqrt.md): the floating-point representation from the previous
+section, and condition numbers to appreciate the Newton refinement step.
+
