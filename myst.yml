@@ -1,9 +1,6 @@
 # See docs at: https://mystmd.org/guide/frontmatter
 version: 1
 project:
-  # Reduce memory usage during build
-  execute:
-    enabled: false  # Don't re-execute notebooks, use cached outputs
   settings:
     output_matplotlib_strings: remove  # Clean up matplotlib output strings
   jupyter:
