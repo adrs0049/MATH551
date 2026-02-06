@@ -134,7 +134,7 @@ $$
 **Why the improvement?** The even-powered terms ($h^2, h^4, \ldots$) **cancel** due to symmetry.
 :::
 
-```{figure} cdf.png
+```{figure} /img/cdf.png
 :width: 80%
 :align: center
 
