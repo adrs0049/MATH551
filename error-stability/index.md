@@ -31,20 +31,20 @@ This code — from the [Quake III Arena source](https://github.com/id-Software/Q
 
 ## Overview
 
-This chapter builds up the ideas needed to explain the fast inverse square root:
+This chapter is driven by a mystery from [Chapter 1](../approximation-theory/numerical-differentiation.md): *why does the finite difference error increase when we make the step size smaller?* By the end, you'll not only understand the answer, but also see how floating-point representation can be exploited for creative algorithmic tricks.
 
-1. **Floating-point representation** — How computers store numbers using IEEE 754. Every number has a small representation error bounded by machine epsilon. We'll see how subtracting nearly equal numbers destroys accuracy, and derive the optimal step size for finite differences.
+1. **Errors and floating-point arithmetic** — We define absolute and relative error, then introduce floating-point numbers as approximations with a relative error guarantee (machine epsilon). This immediately solves the finite difference mystery: subtracting nearly equal numbers amplifies relative error, creating a trade-off between truncation and round-off.
 
-2. **Condition numbers** — Some mathematical problems amplify input errors. The condition number $\kappa$ measures this sensitivity. We'll see that subtraction is ill-conditioned when operands are close — giving a deeper explanation of the finite difference trade-off.
+2. **Condition numbers** — Could we have predicted the finite difference problem before running any code? Yes — the condition number $\kappa$ measures how much a computation amplifies input errors. We'll see that subtraction is ill-conditioned when operands are close, giving a deeper theoretical explanation of the trade-off.
 
-3. **Fast inverse square root** — Now we can explain the bit manipulation (it exploits the floating-point representation to approximate a logarithm) and the Newton refinement step (which bridges naturally to root-finding methods in the [next chapter](../nonlinear-equations/index.md)).
+3. **Fast inverse square root** — Now we look *inside* the floating-point representation (IEEE 754 bit layout) and discover that reinterpreting float bits as an integer gives an approximate logarithm. This insight, combined with Newton's method, produces one of the most famous algorithms in computer science.
 
 ## Learning Outcomes
 
 After completing this chapter, you should be able to:
 
-- **L2.1:** Explain IEEE 754 floating-point representation.
-- **L2.2:** Define machine epsilon and its significance.
-- **L2.3:** Compute condition numbers for simple functions.
-- **L2.4:** Identify sources of numerical instability.
-- **L2.5:** Reformulate expressions to avoid cancellation.
+- **L2.1:** Define absolute and relative error, and explain why relative error is the appropriate measure for floating-point computations.
+- **L2.2:** State the floating-point guarantee ($\text{fl}(x) = x(1+\varepsilon)$) and define machine epsilon.
+- **L2.3:** Explain the finite difference error trade-off between truncation and round-off.
+- **L2.4:** Compute condition numbers for simple functions and identify ill-conditioned problems.
+- **L2.5:** Explain how the fast inverse square root exploits IEEE 754 bit representation.

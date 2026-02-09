@@ -42,7 +42,60 @@ float Q_rsqrt( float x )
 }
 ```
 
-Let's understand what this does.
+Let's understand what this does. But first, we need to know how those 32 bits actually encode a number.
+
+## How Computers Store Numbers: IEEE 754
+
+Up to this point, we've treated floating-point numbers as approximations with a [relative error guarantee](floating-point.md#eq-fp-guarantee). That was enough to explain the finite difference trade-off. But the fast inverse square root exploits the *bit-level details* of how numbers are stored — so now we need to look inside.
+
+### Binary Notation
+
+Just as decimal uses powers of 10, **binary** uses powers of 2 with digits $d_i \in \{0, 1\}$:
+
+$$
+d_N d_{N-1} \dots d_1 d_0 \;\longrightarrow\; \sum_{i=0}^{N} d_i \cdot 2^i
+$$
+
+For example, $110_2 = 1 \cdot 4 + 1 \cdot 2 + 0 \cdot 1 = 6$. Fractions work the same way: $1.01_2 = 1 + 0 \cdot 2^{-1} + 1 \cdot 2^{-2} = 1.25$.
+
+### Scientific Notation in Binary
+
+Just like $245000 = 2.45 \times 10^5$ in decimal, any nonzero binary number can be written in **normalized form**:
+
+$$
+x = \pm 1.d_1 d_2 d_3 \dots \times 2^e
+$$
+
+The leading digit is always 1, so it doesn't need to be stored — a free extra bit of precision!
+
+### IEEE 754 Single Precision (32-bit)
+
+The IEEE 754 standard packs a floating-point number into 32 bits with three fields:
+
+| Component | Bits | Role |
+|-----------|------|------|
+| Sign $S$ | 1 | 0 = positive, 1 = negative |
+| Exponent $E$ | 8 | Biased exponent (stored as $E = e + 127$) |
+| Mantissa $M$ | 23 | Fractional part $m = M / 2^{23}$ |
+
+The value represented is:
+
+```{math}
+:label: eq-ieee754
+x = (-1)^S \times (1 + m) \times 2^{E - 127}
+```
+
+where $m = M/2^{23} \in [0, 1)$ is the fractional mantissa. The "$1 +$" comes from the implicit leading bit.
+
+:::{prf:remark} Double Precision
+:label: rmk-double-precision
+
+Double precision (64-bit) uses the same idea with 1 sign bit, 11 exponent bits (bias 1023), and 52 mantissa bits.
+:::
+
+### The Key Insight
+
+Here is the observation that makes the fast inverse square root possible: if we read those same 32 bits as an **integer** rather than a float, we get something closely related to $\log_2(x)$. The next two sections make this precise.
 
 ## The Strategy: Turn Multiplication into Addition
 
@@ -66,7 +119,7 @@ where $M_x = 2^{23} m_x$ is the integer value of the mantissa bits. This is what
 
 ## Why Integer Bits $\approx$ Logarithm
 
-From the [IEEE 754 representation](floating-point.md), a positive float represents:
+From the [IEEE 754 representation](#eq-ieee754), a positive float represents:
 
 $$
 x = 2^{E_x - 127}(1 + m_x)

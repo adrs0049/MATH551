@@ -4,132 +4,86 @@ kernelspec:
   display_name: Python 3
 ---
 
-# Floating Point Numbers
+# Errors and Floating-Point Arithmetic
 
 :::{tip} Big Idea
-Computers represent real numbers using finite precision floating point arithmetic. Understanding this representation explains why certain computations lose accuracy and helps us write more robust numerical code.
+Every computation on a computer introduces small errors because real numbers must be stored in finite precision. The key guarantee: the relative error of representing any real number is bounded by **machine epsilon**. This simple fact explains the mysterious finite difference behavior from [Chapter 1](../approximation-theory/numerical-differentiation.md) — and understanding it is the first step toward writing robust numerical code.
 :::
 
-## Number Systems
+## Absolute and Relative Error
 
-### Integers in Base 10
+Before we can analyze floating-point arithmetic, we need precise definitions of error.
 
-We typically write integers in base 10. A number $d_N d_{N-1} \dots d_1 d_0$ (where $d_i \in \{0, 1, \dots, 9\}$) represents:
+:::{prf:definition} Absolute and Relative Error
+:label: def-error-types
 
+Let $x$ be the true value and $x^*$ be a numerical approximation.
+
+**Absolute error:**
 $$
-\# = d_0 \cdot 10^0 + d_1 \cdot 10^1 + \cdots + d_N \cdot 10^N
-$$
-
-### Binary Representation
-
-Computers use base 2 (binary), where digits $d_i \in \{0, 1\}$. A binary number $d_N d_{N-1} \dots d_1 d_0$ represents:
-
-$$
-\# = \sum_{i=0}^{N} d_i \cdot 2^i
+\text{Abs}(x) = |x - x^*|
 $$
 
-:::{prf:example} Binary to Decimal
-:label: ex-binary-decimal
+**Relative error:**
+$$
+\text{Rel}(x) = \frac{|x - x^*|}{|x|}, \quad x \neq 0
+$$
+:::
+
+### Why Relative Error Matters
+
+:::{prf:example} Same Absolute Error, Different Quality
+:label: ex-rel-error
 :class: dropdown
 
-The binary number $110_2 = 1 \cdot 2^2 + 1 \cdot 2^1 + 0 \cdot 2^0 = 6$.
+| | $x = 1$, $x^* = 2$ | $x = 10^6$, $x^* = 10^6 + 1$ |
+|--|--|--|
+| Absolute error | $1$ | $1$ |
+| Relative error | $100\%$ | $0.0001\%$ |
+| Quality | Terrible | Excellent |
 
-**Bit shifting:**
-- Left shift: $110_2 \to 1100_2 = 12$ (doubles the number)
-- Right shift: $110_2 \to 11_2 = 3$ (halves the number)
+Both have the same absolute error, but the first is off by 100% while the second is nearly perfect. **Relative error captures what matters.**
 :::
 
-### Signed Integers: Two's Complement
+## Floating-Point Numbers as Approximations
 
-Negative integers use **two's complement** representation. For an $N$-bit signed integer $a = d_{N-1}d_{N-2}\dots d_1 d_0$:
+We need to represent all real numbers — from Avogadro's number ($6.02 \times 10^{23}$) to Planck's constant ($6.63 \times 10^{-34}$) — using finite resources. The solution is **floating-point arithmetic**: a finite set of numbers $\mathbb{F}$ that approximates the real line $\mathbb{R}$, with a guaranteed bound on the relative error of the approximation.
+
+The key fact is this: for any real number $x$, its floating-point representation $\text{fl}(x)$ satisfies
+
+```{math}
+:label: eq-fp-guarantee
+\text{fl}(x) = x(1 + \varepsilon), \quad |\varepsilon| \leq \mu
+```
+
+where $\mu$ is **machine epsilon** (or **unit roundoff**). This says that floating-point representation introduces a small *relative* error — the same relative accuracy whether $x$ is tiny or huge.
+
+:::{prf:definition} Machine Epsilon
+:label: def-machine-epsilon
+
+The **machine epsilon** $\mu$ is the smallest number such that
 
 $$
-a = -d_{N-1} \cdot 2^{N-1} + \sum_{i=0}^{N-2} d_i \cdot 2^i
+\frac{|\text{fl}(x) - x|}{|x|} \leq \mu \quad \text{for all } x \in \mathbb{R}
 $$
 
-:::{prf:example} Two's Complement Negation
-:label: ex-twos-complement
-:class: dropdown
+For a floating-point system with $t$ mantissa bits:
 
-To get $-5$ from $5$ in 8-bit two's complement:
+$$
+\mu = \frac{1}{2} \times 2^{-t}
+$$
 
-1. Start with $5 = 0000\,0101_2$
-2. Invert all bits: $1111\,1010_2$
-3. Add one: $1111\,1011_2 = -5$
+| Precision | Mantissa bits | Machine epsilon | Decimal digits |
+|-----------|--------------|-----------------|----------------|
+| Single (float32) | 23 | $\approx 5.96 \times 10^{-8}$ | ~7 |
+| Double (float64) | 52 | $\approx 1.11 \times 10^{-16}$ | ~16 |
 :::
 
-## Fixed Point Notation
+:::{prf:remark} Practical Implication
+:label: rmk-precision-digits
 
-To represent fractions, we allow digits after a radix point:
-
-$$
-d_N \dots d_1 d_0 . d_{-1} d_{-2} \dots d_{-M}
-$$
-
-represents:
-
-$$
-\# = \sum_{i=-M}^{N} d_i \cdot b^i
-$$
-
-where $b$ is the base.
-
-:::{prf:example} Fixed Point Binary
-:label: ex-fixed-point
-:class: dropdown
-
-In binary: $1.01_2 = 1 + 0 \cdot 2^{-1} + 1 \cdot 2^{-2} = 1.25$
+Single precision gives about **7 decimal digits** of accuracy; double precision gives about **16 decimal digits**. This means that two real numbers that agree to 16 significant digits will have the *same* double-precision representation.
 :::
-
-With finitely many digits, some numbers cannot be represented exactly (e.g., $\frac{1}{3}$ or $\pi$).
-
-## Floating Point Numbers
-
-For scientific computing, we need to represent numbers of vastly different magnitudes—from Avogadro's number ($6.02 \times 10^{23}$) to Planck's constant ($6.63 \times 10^{-34}$).
-
-**Scientific notation** allows the radix point to "float":
-
-$$
-245000 = 2.45 \times 10^5
-$$
-
-In binary:
-$$
-11000_2 = 1.1_2 \times 2^4, \quad 0.0101_2 = 1.01_2 \times 2^{-2}
-$$
-
-Note: In normalized binary scientific notation, the digit before the radix point is always 1, so we don't need to store it!
-
-## IEEE 754 Standard
-
-A floating point number consists of three parts:
-- **Sign bit** $S$: 0 for positive, 1 for negative
-- **Exponent** $E$: Shifted to allow negative exponents
-- **Mantissa/Fraction** $m$: The significant digits
-
-### Single Precision (32-bit)
-
-| Component | Bits |
-|-----------|------|
-| Sign | 1 |
-| Exponent | 8 |
-| Mantissa | 23 |
-
-The value represented is:
-
-$$
-\text{fl}(x) = \pm \left(1 + \frac{d_0}{2^1} + \frac{d_1}{2^2} + \cdots + \frac{d_{22}}{2^{23}}\right) \times 2^{E - 127}
-$$
-
-where $d_i$ are the mantissa bits and $E$ is the stored exponent.
-
-### Double Precision (64-bit)
-
-| Component | Bits |
-|-----------|------|
-| Sign | 1 |
-| Exponent | 11 |
-| Mantissa | 52 |
 
 ## The Floating-Point Number Line
 
@@ -200,47 +154,13 @@ In analysis, the real numbers $\mathbb{R}$ are constructed as the **completion**
 Floating-point arithmetic attempts something analogous with finite resources: approximate $\mathbb{R}$ using a finite subset $\mathbb{F} \subset \mathbb{Q}$, chosen so that every real number has a nearby representative. The logarithmic spacing ensures this works across many orders of magnitude — but unlike $\mathbb{R}$, the gaps never close. Machine epsilon is the price we pay for finiteness: no matter how many bits we use, there is always a smallest relative gap below which distinct real numbers become indistinguishable.
 :::
 
-## Rounding Error (Machine Epsilon)
+## Solving the Mystery: The Finite Difference Trade-off
 
-Given a real number $x$, its floating point representation $\text{fl}(x)$ satisfies:
-
-$$
-\frac{|\text{fl}(x) - x|}{|x|} \leq \mu
-$$
-
-where $\mu$ is the **machine epsilon** (or **unit roundoff**):
-
-$$
-\mu = \frac{1}{2} \times 2^{-t}
-$$
-
-with $t$ being the number of mantissa bits.
-
-| Precision | Mantissa bits | Machine epsilon |
-|-----------|--------------|-----------------|
-| Single (float) | 23 | $\approx 5.96 \times 10^{-8}$ |
-| Double | 52 | $\approx 1.11 \times 10^{-16}$ |
-
-:::{prf:remark} Practical Implication
-:label: rmk-precision-digits
-
-- Single precision gives about **7 decimal digits** of accuracy
-- Double precision gives about **16 decimal digits** of accuracy
-:::
-
-## Application: The Finite Difference Trade-off
-
-In the [previous chapter](../approximation-theory/numerical-differentiation.md), we observed that finite difference errors **increase** for very small step sizes. Machine epsilon explains why.
+In the [previous chapter](../approximation-theory/numerical-differentiation.md), we observed that finite difference errors **increase** for very small step sizes. Now we have the tools to explain why.
 
 ### Round-off Error in Subtraction
 
-The machine epsilon bound can be rewritten in multiplicative form: for any real number $a$,
-
-$$
-\text{fl}(a) = a(1 + \varepsilon), \quad |\varepsilon| \leq \mu
-$$
-
-Now consider computing $a - b$ when both values carry representation error:
+Using the floating-point guarantee {eq}`eq-fp-guarantee`, consider computing $a - b$ when both values carry representation error:
 
 $$
 \text{fl}(a) - \text{fl}(b) = a(1 + \varepsilon_1) - b(1 + \varepsilon_2) = (a - b) + \underbrace{(a\varepsilon_1 - b\varepsilon_2)}_{\text{error}}
@@ -306,4 +226,3 @@ where the last approximation assumes $|f(x)| \approx |f''(\xi)|$.
 | Single | $\sim 10^{-8}$ | $\sim 10^{-4}$ |
 | Double | $\sim 10^{-16}$ | $\sim 10^{-8}$ |
 :::
-

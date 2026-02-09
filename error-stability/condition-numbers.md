@@ -1,47 +1,14 @@
 # Condition Numbers
 
 :::{tip} Big Idea
-Some problems are inherently harder than others. Consider computing $f(x) = \tan(x)$ near $x = \pi/2$: even with infinite precision arithmetic, tiny uncertainties in $x$ cause huge changes in $\tan(x)$. This isn't a flaw in our algorithm — it's the nature of the tangent function near its pole. The **condition number** $\kappa$ quantifies this sensitivity: *if my input is slightly wrong, how wrong might my output be?* Large $\kappa$ signals trouble regardless of the algorithm used.
+Every computation — whether evaluating a mathematical function or performing a step in an algorithm — amplifies input errors by some factor. The **condition number** $\kappa$ measures that amplification: *if my input has relative error $\varepsilon$, how large is the relative error in the output?* When $\kappa$ is large, the computation is **ill-conditioned** and accuracy is lost.
 :::
 
-## Absolute and Relative Error
-
-Before measuring problem sensitivity, we need precise definitions of error.
-
-:::{prf:definition} Absolute and Relative Error
-:label: def-error-types
-
-Let $x$ be the true value and $x^*$ be a numerical approximation.
-
-**Absolute error:**
-$$
-\text{Abs}(x) = |x - x^*|
-$$
-
-**Relative error:**
-$$
-\text{Rel}(x) = \frac{|x - x^*|}{|x|}, \quad x \neq 0
-$$
-:::
-
-### Why Relative Error Matters
-
-:::{prf:example} Same Absolute Error, Different Quality
-:label: ex-rel-error
-:class: dropdown
-
-| | $x = 1$, $x^* = 2$ | $x = 10^6$, $x^* = 10^6 + 1$ |
-|--|--|--|
-| Absolute error | $1$ | $1$ |
-| Relative error | $100\%$ | $0.0001\%$ |
-| Quality | Terrible | Excellent |
-
-Both have the same absolute error, but the first is off by 100% while the second is nearly perfect. **Relative error captures what matters.**
-:::
+In the [previous section](floating-point.md), we saw that floating-point inputs carry small [relative errors](floating-point.md#def-error-types) bounded by [machine epsilon](floating-point.md#def-machine-epsilon), and that subtracting nearly equal numbers [amplifies those errors catastrophically](floating-point.md#rmk-cancellation-subtraction). The condition number makes this precise — and applies to *any* computation, not just subtraction.
 
 ## Condition of $f$ at $x$
 
-When we want to evaluate $f(x)$, even if $x^*$ is close to $x$, the value $f(x^*)$ may be far from $f(x)$. The **condition number** quantifies this sensitivity.
+When we evaluate $f(x)$ but only have an approximation $x^*$ to the input, the output $f(x^*)$ may be far from $f(x)$. The **condition number** is the worst-case ratio of [relative error](floating-point.md#def-error-types) in the output to relative error in the input.
 
 :::{prf:definition} Condition Number
 :label: def-condition-number
@@ -58,10 +25,10 @@ $$
 
 ## Simplified Formula via Taylor's Theorem
 
-:::{prf:proposition} Condition Number Formula
+:::{prf:proposition} Condition Number for Function Evaluation
 :label: prop-condition-formula
 
-For a differentiable function $f$, the condition number at $x$ is:
+Consider the problem of **evaluating** a differentiable function $f$ at a point $x$. The condition number of this problem is:
 
 $$
 \kappa = \left| \frac{x f'(x)}{f(x)} \right|
@@ -150,6 +117,30 @@ As $x \to 1$, we have $\ln(x) \to 0$, so $\kappa \to \infty$.
 **Result:** $\kappa \to \infty$ — evaluating $\ln(x)$ near $x = 1$ is **ill-conditioned**.
 :::
 
+## Intrinsic vs. Algorithmic Ill-Conditioning
+
+The examples above show **intrinsic** ill-conditioning: the mathematical problem itself amplifies errors, and no algorithm can avoid it. But ill-conditioning can also arise from an **algorithmic choice** — even when the underlying problem is well-conditioned.
+
+:::{prf:example} Computing $f'(x)$ — Well-Conditioned Problem, Ill-Conditioned Algorithm
+:label: ex-fd-intrinsic-vs-algorithmic
+
+Consider computing $f'(x)$ for $f(x) = \sin(x)$ at $x = 1$. Treating $g(x) = f'(x) = \cos(x)$ as the function to evaluate, its condition number is:
+
+$$
+\kappa_{\text{problem}} = \left|\frac{x\,g'(x)}{g(x)}\right| = \left|\frac{x\,f''(x)}{f'(x)}\right| = \left|\frac{-\sin(1)}{\cos(1)}\right| = |\tan(1)| \approx 1.56
+$$
+
+The *problem* is well-conditioned. But the forward difference *algorithm* computes $f'(x)$ via the subtraction $f(x+h) - f(x)$, whose condition number is (see [below](#ex-subtraction-condition)):
+
+$$
+\kappa_{\text{subtraction}} \approx \frac{2|f(x)|}{h|f'(x)|} \sim \frac{1}{h} \to \infty \quad \text{as } h \to 0
+$$
+
+The problem is fine — the algorithm is the bottleneck. A different method (e.g., automatic differentiation) avoids the ill-conditioned subtraction entirely.
+:::
+
+Recognizing this distinction — *is the problem sensitive, or is the algorithm choosing a sensitive path?* — is one of the central skills in numerical analysis.
+
 ## Condition Number of Subtraction
 
 The condition number formula $\kappa = |xf'(x)/f(x)|$ works for functions of one variable. For a function of **two** variables $g(a, b) = a - b$, we generalize: the condition number measures how the relative error in $g$ relates to the relative errors in $a$ and $b$.
@@ -184,7 +175,7 @@ This is precisely the [catastrophic cancellation](floating-point.md#rmk-cancella
 
 ## Condition Number of the Finite Difference
 
-We can now give a **condition number explanation** of the [finite difference trade-off](floating-point.md#application-the-finite-difference-trade-off).
+We can now give a **condition number explanation** of the [finite difference trade-off](floating-point.md#solving-the-mystery-the-finite-difference-trade-off).
 
 :::{prf:example} Finite Difference Condition Number
 :label: ex-fd-condition
@@ -209,12 +200,12 @@ This matches exactly the round-off term we derived from the floating-point analy
 
 ## Summary
 
-The condition number is a property of the **mathematical problem** — it tells us
-the best possible accuracy any algorithm could achieve. The question of
-algorithm quality (forward and backward error, stability) will come up when we
-study [linear systems](../qr-least-squares/forward-backward-error.md).
+The condition number measures error amplification. It can describe **intrinsic**
+sensitivity (a property of the mathematical problem — the best any algorithm
+could achieve) or **algorithmic** sensitivity (a property of a particular
+computational step). The question of overall algorithm quality (forward and
+backward error, stability) will come up when we study
+[linear systems](../qr-least-squares/forward-backward-error.md).
 
-For now, we have all the tools we need to understand the [fast inverse square
-root](fast-inverse-sqrt.md): the floating-point representation from the previous
-section, and condition numbers to appreciate the Newton refinement step.
+Now that we understand *why* numerical computations lose accuracy, the [next section](fast-inverse-sqrt.md) shows a spectacular example of turning floating-point representation into an *advantage*: the fast inverse square root algorithm.
 

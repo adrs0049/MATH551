@@ -14,11 +14,9 @@ Test your understanding with these conceptual questions:
 
 4. **Machine Epsilon:** What is the approximate machine epsilon for single and double precision? What does it tell us about the accuracy of floating point computations?
 
-5. **Binary Representation:** How do you convert a positive integer to its negative two's complement representation?
+5. **Subtractive Cancellation:** When subtracting two numbers $a$ and $b$, under what conditions is the result reliable?
 
-6. **Subtractive Cancellation:** When subtracting two numbers $a$ and $b$, under what conditions is the result reliable?
-
-7. **Trade-offs:** In finite differences, why can't we just use an extremely small $h$ to get arbitrary accuracy?
+6. **Trade-offs:** In finite differences, why can't we just use an extremely small $h$ to get arbitrary accuracy?
 
 
 ## Floating-Point Arithmetic
@@ -33,11 +31,11 @@ Test your understanding with these conceptual questions:
 
 ---
 
-### Q2.2: Representation Errors
+### Q2.2: Floating-Point Surprises
 
-- **(a)** Show that $0.1$ cannot be represented exactly in binary floating-point.
-- **(b)** Compute `0.1 + 0.1 + 0.1 - 0.3` in Python. Explain the result.
-- **(c)** Why might `sum([0.1] * 10)` not equal `1.0`?
+- **(a)** Compute `0.1 + 0.1 + 0.1 - 0.3` in Python. Is the result exactly zero? Explain why or why not using machine epsilon.
+- **(b)** Why might `sum([0.1] * 10)` not equal `1.0`?
+- **(c)** How could you reliably test whether two floating-point numbers are "equal"?
 
 ---
 
