@@ -1,3 +1,9 @@
+---
+kernelspec:
+  name: python3
+  display_name: Python 3
+---
+
 # Fast Inverse Square Root
 
 :::{tip} Big Idea
@@ -91,6 +97,75 @@ where $m = M/2^{23} \in [0, 1)$ is the fractional mantissa. The "$1 +$" comes fr
 :label: rmk-double-precision
 
 Double precision (64-bit) uses the same idea with 1 sign bit, 11 exponent bits (bias 1023), and 52 mantissa bits.
+:::
+
+### The Floating-Point Number Line
+
+Every floating-point number is a rational number of the form $m \cdot 2^e$, so the set of representable numbers $\mathbb{F} \subset \mathbb{Q}$ is finite. But unlike a uniform grid, floating-point numbers are **not evenly spaced**. Within each exponent range $[2^e, 2^{e+1})$, the $2^t$ mantissa values divide the interval into equally spaced points, with gap size:
+
+$$
+\Delta = 2^{e - t}
+$$
+
+where $t$ is the number of mantissa bits. When the exponent increases by 1, the gap doubles. The result is a logarithmic distribution: dense near zero, sparse for large magnitudes.
+
+The figure below illustrates this for a toy system with 3-bit mantissa and exponents $e \in \{0, 1, 2, 3\}$. Notice how the spacing doubles at each power of 2.
+
+```{code-cell} python
+:tags: [hide-input]
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Toy floating-point system: 3-bit mantissa, exponents 0..3
+t = 3  # mantissa bits
+floats = []
+for e in range(4):  # exponents 0, 1, 2, 3
+    for m in range(2**t):  # mantissa values 0, 1, ..., 7
+        x = (1 + m / 2**t) * 2**e
+        floats.append(x)
+
+floats = sorted(set(floats))
+
+fig, ax = plt.subplots(figsize=(10, 1.5))
+ax.scatter(floats, np.zeros_like(floats), marker='|', s=400, linewidths=2.5, color='C0')
+
+# Mark powers of 2 to show exponent boundaries
+for e in range(5):
+    ax.axvline(2**e, color='gray', linestyle='--', linewidth=0.7, alpha=0.5)
+    ax.text(2**e, 0.25, f'$2^{e}$', ha='center', fontsize=10, color='gray')
+
+ax.set_xlim(0.8, 17)
+ax.set_ylim(-0.3, 0.45)
+ax.set_xlabel('Value')
+ax.set_title('Floating-point numbers (3-bit mantissa): spacing doubles at each power of 2')
+ax.set_yticks([])
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.spines['left'].set_visible(False)
+plt.tight_layout()
+plt.show()
+```
+
+:::{prf:remark} Relative Spacing is Constant
+:label: rmk-relative-spacing
+
+The absolute gap $\Delta = 2^{e-t}$ varies with magnitude, but the **relative** gap is nearly constant:
+
+$$
+\frac{\Delta}{2^e} = 2^{-t}
+$$
+
+This is why [machine epsilon](floating-point.md#def-machine-epsilon) — a *relative* error bound — characterizes floating-point precision. No matter how large or small a number is, the nearest representable neighbor is within a fixed relative distance.
+:::
+
+:::{prf:remark} Floating Point as a Finite Approximation to $\mathbb{R}$
+:label: rmk-fp-approximation-reals
+:class: dropdown
+
+In analysis, the real numbers $\mathbb{R}$ are constructed as the **completion** of the rationals $\mathbb{Q}$ — every gap between rationals is filled by taking limits of Cauchy sequences. The reals are the smallest set where every convergent sequence has a limit.
+
+Floating-point arithmetic attempts something analogous with finite resources: approximate $\mathbb{R}$ using a finite subset $\mathbb{F} \subset \mathbb{Q}$, chosen so that every real number has a nearby representative. The logarithmic spacing ensures this works across many orders of magnitude — but unlike $\mathbb{R}$, the gaps never close. Machine epsilon is the price we pay for finiteness: no matter how many bits we use, there is always a smallest relative gap below which distinct real numbers become indistinguishable.
 :::
 
 ### The Key Insight
