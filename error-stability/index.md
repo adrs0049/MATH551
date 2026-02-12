@@ -37,7 +37,9 @@ This chapter is driven by a mystery from [Chapter 1](../approximation-theory/num
 
 2. **Condition numbers** — Could we have predicted the finite difference problem before running any code? Yes — the condition number $\kappa$ measures how much a computation amplifies input errors. We'll see that subtraction is ill-conditioned when operands are close, giving a deeper theoretical explanation of the trade-off.
 
-3. **Fast inverse square root** — Now we look *inside* the floating-point representation (IEEE 754 bit layout) and discover that reinterpreting float bits as an integer gives an approximate logarithm. This insight, combined with Newton's method, produces one of the most famous algorithms in computer science.
+3. **Stable and unstable algorithms** — The condition number measures the problem's sensitivity, but the algorithm matters too. We define stable and unstable algorithms, see how the same well-conditioned problem can give terrible results with a bad algorithm, and identify the three most dangerous floating-point operations.
+
+4. **Fast inverse square root** — Now we look *inside* the floating-point representation (IEEE 754 bit layout) and discover that reinterpreting float bits as an integer gives an approximate logarithm. This insight, combined with Newton's method, produces one of the most famous algorithms in computer science.
 
 ## Learning Outcomes
 
@@ -47,4 +49,5 @@ After completing this chapter, you should be able to:
 - **L2.2:** State the floating-point guarantee ($\text{fl}(x) = x(1+\varepsilon)$) and define machine epsilon.
 - **L2.3:** Explain the finite difference error trade-off between truncation and round-off.
 - **L2.4:** Compute condition numbers for simple functions and identify ill-conditioned problems.
-- **L2.5:** Explain how the fast inverse square root exploits IEEE 754 bit representation.
+- **L2.5:** Explain the difference between a stable and unstable algorithm, and give an example of each for the same problem.
+- **L2.6:** Explain how the fast inverse square root exploits IEEE 754 bit representation.

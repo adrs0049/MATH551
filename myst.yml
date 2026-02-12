@@ -47,6 +47,7 @@ project:
       children:
         - file: error-stability/floating-point.md
         - file: error-stability/condition-numbers.md
+        - file: error-stability/stability.md
         - file: error-stability/fast-inverse-sqrt.md
         - file: error-stability/exercises.md
     # PART II: ODES

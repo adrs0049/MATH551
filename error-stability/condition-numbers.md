@@ -115,31 +115,9 @@ $$
 As $x \to 1$, we have $\ln(x) \to 0$, so $\kappa \to \infty$.
 
 **Result:** $\kappa \to \infty$ — evaluating $\ln(x)$ near $x = 1$ is **ill-conditioned**.
+
+But note *why* this happens: the condition number blows up because $f(x) = \ln(x) \to 0$, so the relative error $|f(x) - f(x^*)|/|f(x)|$ has a denominator going to zero. The absolute error is perfectly well-behaved — $|f'(1)| = 1$, so a small input perturbation produces a small absolute output perturbation. The "ill-conditioning" here is really that **relative error is undefined at a zero of $f$**. This happens for any function near one of its roots, and is an artifact of measuring error in relative terms rather than a genuine sensitivity of the computation.
 :::
-
-## Intrinsic vs. Algorithmic Ill-Conditioning
-
-The examples above show **intrinsic** ill-conditioning: the mathematical problem itself amplifies errors, and no algorithm can avoid it. But ill-conditioning can also arise from an **algorithmic choice** — even when the underlying problem is well-conditioned.
-
-:::{prf:example} Computing $f'(x)$ — Well-Conditioned Problem, Ill-Conditioned Algorithm
-:label: ex-fd-intrinsic-vs-algorithmic
-
-Consider computing $f'(x)$ for $f(x) = \sin(x)$ at $x = 1$. Treating $g(x) = f'(x) = \cos(x)$ as the function to evaluate, its condition number is:
-
-$$
-\kappa_{\text{problem}} = \left|\frac{x\,g'(x)}{g(x)}\right| = \left|\frac{x\,f''(x)}{f'(x)}\right| = \left|\frac{-\sin(1)}{\cos(1)}\right| = |\tan(1)| \approx 1.56
-$$
-
-The *problem* is well-conditioned. But the forward difference *algorithm* computes $f'(x)$ via the subtraction $f(x+h) - f(x)$, whose condition number is (see [below](#ex-subtraction-condition)):
-
-$$
-\kappa_{\text{subtraction}} \approx \frac{2|f(x)|}{h|f'(x)|} \sim \frac{1}{h} \to \infty \quad \text{as } h \to 0
-$$
-
-The problem is fine — the algorithm is the bottleneck. A different method (e.g., automatic differentiation) avoids the ill-conditioned subtraction entirely.
-:::
-
-Recognizing this distinction — *is the problem sensitive, or is the algorithm choosing a sensitive path?* — is one of the central skills in numerical analysis.
 
 ## Condition Number of Subtraction
 
@@ -200,12 +178,10 @@ This matches exactly the round-off term we derived from the floating-point analy
 
 ## Summary
 
-The condition number measures error amplification. It can describe **intrinsic**
-sensitivity (a property of the mathematical problem — the best any algorithm
-could achieve) or **algorithmic** sensitivity (a property of a particular
-computational step). The question of overall algorithm quality (forward and
-backward error, stability) will come up when we study
-[linear systems](../qr-least-squares/forward-backward-error.md).
-
-Now that we understand *why* numerical computations lose accuracy, the [next section](fast-inverse-sqrt.md) shows a spectacular example of turning floating-point representation into an *advantage*: the fast inverse square root algorithm.
+The condition number $\kappa$ measures how much a problem amplifies input errors.
+It is a property of the **mathematical problem**, not the algorithm — if $\kappa$
+is large, no algorithm can avoid accuracy loss. But what if $\kappa$ is small and
+we still get poor results? Then the problem isn't to blame — the algorithm is.
+In the [next section](stability.md), we make this precise with the concept of
+**stable and unstable algorithms**.
 

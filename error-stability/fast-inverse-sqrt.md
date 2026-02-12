@@ -168,10 +168,6 @@ In analysis, the real numbers $\mathbb{R}$ are constructed as the **completion**
 Floating-point arithmetic attempts something analogous with finite resources: approximate $\mathbb{R}$ using a finite subset $\mathbb{F} \subset \mathbb{Q}$, chosen so that every real number has a nearby representative. The logarithmic spacing ensures this works across many orders of magnitude — but unlike $\mathbb{R}$, the gaps never close. Machine epsilon is the price we pay for finiteness: no matter how many bits we use, there is always a smallest relative gap below which distinct real numbers become indistinguishable.
 :::
 
-### The Key Insight
-
-Here is the observation that makes the fast inverse square root possible: if we read those same 32 bits as an **integer** rather than a float, we get something closely related to $\log_2(x)$. The next two sections make this precise.
-
 ## The Strategy: Turn Multiplication into Addition
 
 We want to compute $y = x^{-1/2}$. Taking $\log_2$ of both sides:
@@ -180,7 +176,7 @@ $$
 \log_2(y) = -\tfrac{1}{2}\log_2(x)
 $$
 
-If we had a cheap way to compute $\log_2$, we could replace the expensive power $x^{-1/2}$ with a simple multiply-by-$(-1/2)$, then exponentiate back. Of course, computing $\log_2$ is itself expensive — unless the hardware is already doing it for us.
+If we had a cheap way to compute $\log_2$, we could replace the expensive power $x^{-1/2}$ with a simple multiply by $(-1/2)$, then exponentiate back. Of course, computing $\log_2$ is itself expensive — unless the hardware is already doing it for us.
 
 ## Integer Interpretation of Float Bits
 
@@ -206,7 +202,7 @@ $$
 \log_2(x) = (E_x - 127) + \log_2(1 + m_x)
 $$
 
-Since $m_x \in [0, 1)$, we approximate $\log_2(1 + m_x) \approx m_x + \sigma$ where $\sigma \approx 0.0430$. Substituting $m_x = M_x / 2^{23}$:
+Since $m_x \in [0, 1)$, we approximate $\log_2(1 + m_x) \approx m_x + \sigma$ where $\sigma \approx 0.0430$. The first-order Taylor expansion gives $\log_2(1+m_x) \approx m_x / \ln 2 \approx 1.4427\, m_x$, but the algorithm approximates this with slope 1 instead. The constant $\sigma$ partially compensates for the error introduced by dropping the $1/\ln 2$ factor, and is chosen to minimize the approximation error over the entire interval $[0,1)$. Substituting $m_x = M_x / 2^{23}$:
 
 $$
 \log_2(x) \approx \frac{1}{2^{23}}\underbrace{(M_x + 2^{23} E_x)}_{\text{Int}(x)} + (\sigma - 127)
@@ -266,10 +262,7 @@ This is exactly line 12 of the code:
 y = y * (threehalfs - (x2 * y * y));
 ```
 
-## Why It Works
-
-1. **Bit manipulation** exploits the logarithmic relationship between a float's value and its bit pattern to get a rough initial guess
-2. **Newton's method** rapidly refines this guess (one iteration often suffices for graphics applications)
+## Efficiency
 
 The algorithm is remarkably accurate while using only:
 - One multiplication
@@ -277,9 +270,11 @@ The algorithm is remarkably accurate while using only:
 - One bit shift
 - One Newton iteration
 
-No expensive division or square root operations are needed.
+No expensive division or square root operations are needed. The [interactive notebook](../notebooks/fast-inverse-sqrt.ipynb) explores the algorithm in detail and plots the relative error across a wide range of inputs — the bit trick alone achieves ~3.4% relative error, and a single Newton iteration brings this below 0.2%.
 
-## Modern Relevance
+## Historical Context and Modern Relevance
 
-Modern CPUs have dedicated instructions for inverse square root (e.g., `rsqrtss` on x86), making this trick less necessary.
+This algorithm was essential for real-time 3D graphics in the 1990s. In that era, division and square root were roughly 10–40x slower than multiplication on consumer hardware, so avoiding them entirely was a significant win. The algorithm is attributed to the Quake III Arena source code (id Software, 1999), though similar tricks circulated earlier in the graphics community.
+
+Modern CPUs have dedicated instructions for inverse square root (e.g., `rsqrtss` on x86), making this trick less necessary. But the underlying idea — that the integer interpretation of float bits approximates a logarithm — remains a beautiful example of how understanding number representation enables creative algorithm design.
 
