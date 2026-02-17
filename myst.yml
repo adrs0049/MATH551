@@ -55,6 +55,7 @@ project:
       title: Numerical Methods for ODEs
       children:
         - file: odes/forward-euler.md
+        - file: odes/euler_maruyama.md
         # - file: odes/backward-euler.md        # NOT IN SCHEDULE
         # - file: odes/stability.md             # NOT IN SCHEDULE
         # - file: odes/runge-kutta.md           # NOT IN SCHEDULE
