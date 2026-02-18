@@ -33,10 +33,6 @@ Consider the problem of **evaluating** a differentiable function $f$ at a point 
 $$
 \kappa = \left| \frac{x f'(x)}{f(x)} \right|
 $$
-:::
-
-:::{prf:proof}
-:class: dropdown
 
 Since $x^*$ is close to $x$, we can write $x^* = x + h$ and apply Taylor's theorem:
 
@@ -56,6 +52,68 @@ $$
 \kappa = \sup_x \left| \frac{x f'(x)}{f(x)} \right|
 $$
 :::
+
+## Condition Number of a Differentiable Function
+
+For a differentiable function $f$, we can derive the condition number formula
+directly from the definition of relative error, without appealing to Taylor's
+theorem.
+
+### Absolute Condition Number
+
+The **absolute condition number** measures the ratio of absolute error in the
+output to absolute error in the input:
+
+$$
+\hat{\kappa} = |f'(x)|.
+$$
+
+If $|f'(x)|$ is large, a small absolute change in $x$ produces a large absolute change in $f(x)$.
+
+### Derivation from Relative Errors
+
+Starting from [](#def-condition-number), suppose $x$ is perturbed by a small
+amount $\Delta x$. The relative change in $x$ is $\frac{|\Delta x|}{|x|}$, while
+the relative change in the output is $\frac{|f(x + \Delta x) - f(x)|}{|f(x)|}$.
+Taking the ratio:
+
+$$
+\kappa = \frac{|f(x + \Delta x) - f(x)| / |f(x)|}{|\Delta x| / |x|} = \frac{|x|}{|f(x)|} \cdot \frac{|f(x + \Delta x) - f(x)|}{|\Delta x|}.
+$$
+
+The last factor is a **difference quotient**. In the limit $\Delta x \to 0$ it becomes $|f'(x)|$, recovering the formula from [](#prop-condition-formula).
+
+:::{prf:remark}
+:label: rmk-log-derivative
+:class: dropdown
+
+The formula $\kappa = |x f'(x) / f(x)|$ can be read as the ratio of the **logarithmic derivative** of $f$ to the logarithmic derivative of $x$:
+
+$$
+\kappa = \left| \frac{(\ln f)'}{(\ln x)'} \right|, \qquad \text{since } (\ln f)' = \frac{f'}{f} \text{ and } (\ln x)' = \frac{1}{x}.
+$$
+
+This makes intuitive sense: the logarithmic derivative measures the
+*infinitesimal rate of relative change*, so the condition number is the ratio of
+the relative rate of change of the output to that of the input.
+
+Note that if $f$ has a zero at $x$, then $\kappa \to \infty$. This is not
+necessarily because the computation is genuinely sensitive. The absolute error
+may be perfectly well-behaved, but relative error is undefined at
+a zero of $f$.
+:::
+
+### Several Variables
+
+For a differentiable map $f : \mathbb{R}^m \to \mathbb{R}^n$, the relative condition number generalises to
+
+$$
+\kappa = \frac{\|J(x)\|}{\|f(x)\| / \|x\|}
+$$
+
+where $J(x)$ is the **Jacobian matrix** of $f$ at $x$ and $\|\cdot\|$ denotes
+the induced matrix norm. The one-variable formula is the special case $m
+= n = 1$.
 
 ## Examples
 
