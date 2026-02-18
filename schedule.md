@@ -21,10 +21,10 @@ Class meets Monday & Wednesday, 75 minutes per session.
 | 2 | Feb 4 | Wed | Finite Differences | |
 | 3 | Feb 9 | Mon |  **Error & Stability** - Floating point | |
 | 4 | Feb 11 | Wed | Condition Numbers | |
-| 5 | Feb 18 | Wed | TBA | |
-| 6 | Feb 19 | Thu | TBA  **Quiz 1** | *Mon schedule* |
-| 7 | Feb 23 | Mon | **ODEs** - Euler's method | |
-| 8 | Feb 25 | Wed | Euler-Maruyama | |
+| 5 | Feb 18 | Wed | Fast-Inverse Square Root | |
+| 6 | Feb 19 | Thu | **ODEs** Forward Euler Method  **Quiz 1** | *Mon schedule* |
+| 7 | Feb 23 | Mon | Euler-Maruyama | |
+| 8 | Feb 25 | Wed | **TBD** | |
 | 9 | Mar 2 | Mon | **Nonlinear Equations** - Bisection | |
 | 10 | Mar 4 | Wed | Fixed-point & Newton | |
 | 11 | Mar 9 | Mon | Convergence analysis + **Quiz 2** | |

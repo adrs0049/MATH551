@@ -55,10 +55,10 @@ project:
       title: Numerical Methods for ODEs
       children:
         - file: odes/forward-euler.md
+        - file: odes/runge-kutta.md
         - file: odes/euler_maruyama.md
         # - file: odes/backward-euler.md        # NOT IN SCHEDULE
         # - file: odes/stability.md             # NOT IN SCHEDULE
-        # - file: odes/runge-kutta.md           # NOT IN SCHEDULE
     # PART III: NONLINEAR EQUATIONS
     - file: nonlinear-equations/index.md
       title: Nonlinear Equations
@@ -136,6 +136,7 @@ project:
         - file: notebooks/taylor-series.ipynb
         - file: notebooks/finite-difference-demo.ipynb
         - file: notebooks/fast-inverse-sqrt.ipynb
+        - file: notebooks/euler-method.ipynb
         - file: notebooks/bisection-demo.ipynb
         - file: notebooks/fixed-point-iteration.ipynb
         - file: notebooks/CondNumberEst.ipynb
