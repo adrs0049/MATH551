@@ -71,7 +71,7 @@ The colored curves in the figure above are exact solutions of the same ODE with 
 ### Lipschitz Continuity
 
 :::{prf:definition} Lipschitz Continuity
-:label: def-lipschitz
+:label: def-ode-lipschitz
 
 A function $f$ is **Lipschitz continuous** on a domain $D$ if there exists a constant $L \geq 0$ such that
 
@@ -112,7 +112,7 @@ $$
 \frac{d}{dt}(u - v) = f(t, u) - f(t, v)
 $$
 
-If $f$ is Lipschitz continuous in $u$ with constant $L$ ([](#def-lipschitz)), then $\frac{d}{dt}|u - v| \leq L\,|u - v|$. By Gronwall's inequality:
+If $f$ is Lipschitz continuous in $u$ with constant $L$ ([](#def-ode-lipschitz)), then $\frac{d}{dt}|u - v| \leq L\,|u - v|$. By Gronwall's inequality:
 
 $$
 |u(T) - v(T)| \leq e^{LT}\,|u_0 - v_0|
@@ -297,7 +297,7 @@ The exponential $e^{\lambda t}$ becomes the power $R^n = (1+h\lambda)^n$, and th
 :::{prf:theorem} Convergence of One-Step Methods
 :label: thm-one-step-convergence
 
-Consider forward Euler ([](#def-forward-euler)) applied to $u' = f(t,u)$, where $f$ is Lipschitz continuous in $u$ with constant $L$ ([](#def-lipschitz)). If the method has consistency order $p$, i.e.,
+Consider forward Euler ([](#def-forward-euler)) applied to $u' = f(t,u)$, where $f$ is Lipschitz continuous in $u$ with constant $L$ ([](#def-ode-lipschitz)). If the method has consistency order $p$, i.e.,
 
 $$
 |\tau_n| \leq Ch^{p} \quad \text{for all } h \in (0, h_0] \text{ and all } n
