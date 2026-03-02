@@ -116,8 +116,8 @@ Recall from the [Banach Fixed Point Theorem](fixed-point.md#theoretical-foundati
 - Far from the root: $|g'(x)|$ may be large (not a contraction!)
 
 This explains Newton's behavior:
-- **Good initial guess:** You're in the contraction region → rapid convergence
-- **Bad initial guess:** You're outside the contraction region → possible divergence
+- **Good initial guess:** You're in the contraction region $\rightarrow$ rapid convergence
+- **Bad initial guess:** You're outside the contraction region $\rightarrow$ possible divergence
 
 The condition $|g'(x)| < 1$ from fixed-point theory tells us exactly when Newton iterates move closer to the root. Newton's special feature is that $g'(c) = 0$, giving **quadratic** rather than just linear convergence.
 :::

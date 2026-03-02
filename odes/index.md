@@ -63,10 +63,10 @@ For **stiff problems**, where $|\lambda|$ is large, explicit methods require imp
 
 After completing this chapter, you should be able to:
 
-- **L5.1:** Derive forward Euler from the forward difference approximation and interpret it geometrically
-- **L5.2:** Compute the local truncation error $\tau_n$ and distinguish it from the one-step error $h\tau_n$
-- **L5.3:** State the Lipschitz condition and explain its role in both existence/uniqueness and convergence
-- **L5.4:** Derive the condition number $e^{LT}$ of an initial value problem from Gronwall's inequality
-- **L5.5:** State and interpret the convergence theorem: consistency of order $p$ implies convergence of order $p$
-- **L5.6:** Determine the stability region of forward Euler and compute the step-size restriction $h \leq 2/|\lambda|$
-- **L5.7:** Recognize stiff problems and explain why they require implicit methods or adaptive step sizes
+- **L3.1:** Derive forward Euler from the forward difference approximation and interpret it geometrically
+- **L3.2:** Compute the local truncation error $\tau_n$ and distinguish it from the one-step error $h\tau_n$
+- **L3.3:** State the Lipschitz condition and explain its role in both existence/uniqueness and convergence
+- **L3.4:** Derive the condition number $e^{LT}$ of an initial value problem from Grönwall's inequality
+- **L3.5:** State and interpret the convergence theorem: consistency of order $p$ implies convergence of order $p$
+- **L3.6:** Determine the stability region of forward Euler and compute the step-size restriction $h \leq 2/|\lambda|$
+- **L3.7:** Recognize stiff problems and explain why they require implicit methods or adaptive step sizes

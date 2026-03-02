@@ -329,8 +329,8 @@ def chebfun(f, tol=1e-14):
 
 | Operation | Cost |
 |-----------|------|
-| Values → Coefficients | $O(n \log n)$ via DCT |
-| Coefficients → Values | $O(n \log n)$ via inverse DCT |
+| Values $\to$ Coefficients | $O(n \log n)$ via DCT |
+| Coefficients $\to$ Values | $O(n \log n)$ via inverse DCT |
 | Evaluate at one point | $O(n)$ via Clenshaw or barycentric |
 | Differentiate (value space) | $O(n^2)$ matrix-vector product |
 | Integrate (coefficient space) | $O(n)$ |

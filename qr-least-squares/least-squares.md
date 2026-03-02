@@ -35,9 +35,9 @@ The least squares solution finds the point in $\text{R}(A)$ closest to $b$:
 ```
         b
        /|
-      / |  residual r = b - Ax̂
+      / |  residual r = b - Ax_hat
      /  |  is perpendicular to R(A)
-    Ax̂--+---- R(A) (column space)
+    Ax_hat--+---- R(A) (column space)
 ```
 
 **Key insight:** The residual $r = b - A\hat{x}$ is orthogonal to the column space of $A$.
@@ -87,7 +87,7 @@ When $A$ has full column rank:
 | Symmetric | $(A^T A)^T = A^T A$ |
 | Positive definite | $x^T A^T A x = \|Ax\|_2^2 > 0$ for $x \neq 0$ |
 | Invertible | Follows from positive definiteness |
-| Condition number | $\kappa(A^T A) = \kappa(A)^2$ ⚠️ |
+| Condition number | $\kappa(A^T A) = \kappa(A)^2$ (warning!) |
 
 :::{prf:proposition} Condition Number Squaring
 :label: prop-condition-squaring

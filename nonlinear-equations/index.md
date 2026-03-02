@@ -96,7 +96,7 @@ Newton's method, bisection, and fixed-point iteration may seem like three unrela
 
 The key insight is that convergence happens when the iteration *shrinks* errors:
 
-:::{admonition} Contraction → Convergence
+:::{admonition} Contraction Implies Convergence
 :class: tip
 
 If each step of an iteration reduces the error by a factor $L < 1$:

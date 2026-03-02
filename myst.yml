@@ -1,6 +1,8 @@
 # See docs at: https://mystmd.org/guide/frontmatter
 version: 1
 project:
+  plugins:
+    - latex-handlers.mjs
   settings:
     output_matplotlib_strings: remove  # Clean up matplotlib output strings
   jupyter:
@@ -21,6 +23,112 @@ project:
   github: https://github.com/adrs0049/MATH551
   bibliography:
     - references.bib
+  exports:
+    - format: pdf
+      template: ./_templates/lecture
+      output: exports/MATH551-full.pdf
+      id: full-book-pdf
+      articles:
+        # Local Approximation
+        - file: approximation-theory/index.md
+          level: 1
+        - file: approximation-theory/taylor.md
+          level: 2
+        - file: approximation-theory/numerical-differentiation.md
+          level: 2
+        - file: approximation-theory/numerical-integration.md
+          level: 2
+        - file: approximation-theory/exercises.md
+          level: 2
+        # Floating Point and Error Analysis
+        - file: error-stability/index.md
+          level: 1
+        - file: error-stability/floating-point.md
+          level: 2
+        - file: error-stability/condition-numbers.md
+          level: 2
+        - file: error-stability/stability.md
+          level: 2
+        - file: error-stability/fast-inverse-sqrt.md
+          level: 2
+        - file: error-stability/exercises.md
+          level: 2
+        # Numerical Methods for ODEs
+        - file: odes/index.md
+          level: 1
+        - file: odes/forward-euler.md
+          level: 2
+        - file: odes/runge-kutta.md
+          level: 2
+        - file: odes/euler_maruyama.md
+          level: 2
+        # Nonlinear Equations
+        - file: nonlinear-equations/index.md
+          level: 1
+        - file: nonlinear-equations/bisection.md
+          level: 2
+        - file: nonlinear-equations/fixed-point.md
+          level: 2
+        - file: nonlinear-equations/newton.md
+          level: 2
+        - file: nonlinear-equations/error-analysis.md
+          level: 2
+        - file: nonlinear-equations/exercises.md
+          level: 2
+        # Linear Algebra and QR Factorization
+        - file: qr-least-squares/index.md
+          level: 1
+        - file: qr-least-squares/linear-algebra-fundamentals.md
+          level: 2
+        - file: qr-least-squares/forward-backward-error.md
+          level: 2
+        - file: qr-least-squares/condition-stability.md
+          level: 2
+        - file: qr-least-squares/iterative-methods.md
+          level: 2
+        - file: qr-least-squares/orthogonality.md
+          level: 2
+        - file: qr-least-squares/gram-schmidt.md
+          level: 2
+        - file: qr-least-squares/qr-factorization.md
+          level: 2
+        - file: qr-least-squares/least-squares.md
+          level: 2
+        - file: qr-least-squares/qr-solving.md
+          level: 2
+        - file: qr-least-squares/exercises.md
+          level: 2
+        # Approximation Theory (Interpolation)
+        - file: interpolation/index.md
+          level: 1
+        - file: interpolation/lagrange.md
+          level: 2
+        - file: interpolation/chebyshev.md
+          level: 2
+        - file: interpolation/values-coefficients.md
+          level: 2
+        - file: interpolation/spectral-accuracy.md
+          level: 2
+        - file: interpolation/gibbs.md
+          level: 2
+        - file: interpolation/spectral-methods.md
+          level: 2
+        - file: interpolation/adaptive-qr.md
+          level: 2
+        - file: interpolation/exercises.md
+          level: 2
+        # Neural Networks
+        - file: neural-networks/index.md
+          level: 1
+        - file: neural-networks/universal-approximation.md
+          level: 2
+        - file: neural-networks/barron-spaces.md
+          level: 2
+        - file: neural-networks/exercises.md
+          level: 2
+  downloads:
+    - id: full-book-pdf
+      title: Download Full Book (PDF)
   abbreviations:
     FD: Finite Difference
     LU: Lower-Upper (decomposition)
@@ -55,9 +163,9 @@ project:
       title: Numerical Methods for ODEs
       children:
         - file: odes/forward-euler.md
+        - file: odes/backward-euler.md
         - file: odes/runge-kutta.md
         - file: odes/euler_maruyama.md
-        # - file: odes/backward-euler.md        # NOT IN SCHEDULE
         # - file: odes/stability.md             # NOT IN SCHEDULE
     # PART III: NONLINEAR EQUATIONS
     - file: nonlinear-equations/index.md
@@ -83,15 +191,15 @@ project:
         - file: qr-least-squares/qr-solving.md
         - file: qr-least-squares/exercises.md
     # NONLINEAR SYSTEMS - NOT IN SCHEDULE
-    # - file: nonlinear-systems/index.md
-    #   title: Nonlinear Systems
-    #   children:
-    #     - file: nonlinear-systems/newton-systems.md
-    #     - file: nonlinear-systems/globalization.md
-    #     - file: nonlinear-systems/convergence.md
-    #     - file: nonlinear-systems/quasi-newton.md
-    #     - file: nonlinear-systems/constrained-optimization.md
-    #     - file: nonlinear-systems/exercises.md
+    - file: nonlinear-systems/index.md
+      title: Nonlinear Systems
+      children:
+        - file: nonlinear-systems/newton-systems.md
+        - file: nonlinear-systems/globalization.md
+        - file: nonlinear-systems/convergence.md
+        - file: nonlinear-systems/quasi-newton.md
+        - file: nonlinear-systems/constrained-optimization.md
+        - file: nonlinear-systems/exercises.md
     # PART V: APPROXIMATION THEORY (ADVANCED)
     - file: interpolation/index.md
       title: Approximation Theory
@@ -137,6 +245,8 @@ project:
         - file: notebooks/finite-difference-demo.ipynb
         - file: notebooks/fast-inverse-sqrt.ipynb
         - file: notebooks/euler-method.ipynb
+        - file: notebooks/monte-carlo.ipynb
+        - file: notebooks/euler-maruyama.ipynb
         - file: notebooks/bisection-demo.ipynb
         - file: notebooks/fixed-point-iteration.ipynb
         - file: notebooks/CondNumberEst.ipynb

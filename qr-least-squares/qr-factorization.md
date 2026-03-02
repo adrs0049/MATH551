@@ -153,12 +153,12 @@ The error is proportional to $\|x\|$, not amplified.
 
 Gram-Schmidt computes:
 $$
-v_j = a_j - \sum_{i<j} \langle a_j, q_i \rangle \, q_i \quad \text{(subtraction → cancellation risk)}
+v_j = a_j - \sum_{i<j} \langle a_j, q_i \rangle \, q_i \quad \text{(subtraction} \to \text{cancellation risk)}
 $$
 
 Householder computes:
 $$
-H_k a = \|a\|_2 e_1 \quad \text{(orthogonal transformation → no cancellation)}
+H_k a = \|a\|_2 e_1 \quad \text{(orthogonal transformation} \to \text{no cancellation)}
 $$
 
 The reflector introduces zeros by rotation/reflection, not by subtracting nearly equal quantities.

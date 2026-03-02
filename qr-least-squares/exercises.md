@@ -343,9 +343,9 @@ Consider the system $\mathcal{A}\mathbf{x} = \mathbf{b}$ where $\mathcal{A} = \b
 When solving $A\mathbf{x} = \mathbf{b}$, **iterative refinement** improves an approximate solution $\hat{\mathbf{x}}$ by repeatedly correcting it:
 
 ```
-1. Compute residual: r = b - A*x̂
-2. Solve for correction: A*δ = r
-3. Update solution: x̂ ← x̂ + δ
+1. Compute residual: r = b - A*x_hat
+2. Solve for correction: A*delta = r
+3. Update solution: x_hat <- x_hat + delta
 4. Repeat until ||r|| is small enough
 ```
 

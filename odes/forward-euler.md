@@ -1,7 +1,12 @@
 # Forward Euler Method
 
 :::{tip} Big Idea
-Forward Euler is the simplest time-stepping method: replace the derivative with a forward difference. It's **explicit**—we compute $u_{n+1}$ directly from $u_n$—making it cheap per step. But this simplicity comes at a cost: forward Euler is only **conditionally stable**, requiring step sizes small enough that $|1 + h\lambda| \leq 1$. For stiff problems, this constraint becomes impractical.
+Forward Euler is the simplest time-stepping method: replace the derivative with
+a forward difference. It's **explicit**—we compute $u_{n+1}$ directly from
+$u_n$—making it cheap per step. But this simplicity comes at a cost: forward
+Euler is only **conditionally stable**, requiring step sizes small enough that
+$|1 + h\lambda| \leq 1$. For stiff problems, this constraint becomes
+impractical.
 :::
 
 ---
@@ -38,6 +43,30 @@ u_{n+1} = u_n + h f(t_n, u_n)
 $$
 
 Starting from $u_0$, we can march forward in time: given $u_n$, we compute $u_{n+1}$ directly.
+:::
+
+:::{prf:remark} Derivation via Duhamel's Principle
+:label: rmk-duhamel-fwd-euler
+:class: dropdown
+
+An equivalent derivation starts from the integral form of the ODE.
+Integrate $u' = f(t,u)$ over one step:
+
+$$
+u(t_{n+1}) = u(t_n) + \int_{t_n}^{t_{n+1}} f(s, u(s))\,ds
+$$
+
+Approximate the integral by a **left rectangle rule**, freezing the
+integrand at $s = t_n$:
+
+$$
+\int_{t_n}^{t_{n+1}} f(s, u(s))\,ds \approx h\,f(t_n, u(t_n))
+$$
+
+This recovers forward Euler. Freezing at the **right** endpoint
+$s = t_{n+1}$ instead gives [backward Euler](backward-euler.md).
+Higher-order quadrature rules (midpoint, Simpson, etc.) lead to
+higher-order ODE methods.
 :::
 
 ### Geometric Interpretation
@@ -112,7 +141,7 @@ $$
 \frac{d}{dt}(u - v) = f(t, u) - f(t, v)
 $$
 
-If $f$ is Lipschitz continuous in $u$ with constant $L$ ([](#def-ode-lipschitz)), then $\frac{d}{dt}|u - v| \leq L\,|u - v|$. By Gronwall's inequality:
+If $f$ is Lipschitz continuous in $u$ with constant $L$ ([](#def-ode-lipschitz)), then $\frac{d}{dt}|u - v| \leq L\,|u - v|$. By Grönwall's inequality:
 
 $$
 |u(T) - v(T)| \leq e^{LT}\,|u_0 - v_0|
@@ -215,24 +244,6 @@ The global error is the cumulative effect of all one-step errors. Two things det
 1. **Error accumulation:** Recall that the one-step error is $\mathcal{L}_n = h\tau_n = O(h^{p+1})$. Over $N = T/h$ steps, these pile up: $N \times O(h^{p+1}) = O(h^p)$.
 2. **Stability:** Local errors don't just add up; each one gets *amplified* by subsequent steps. If the amplification factor is bounded, errors accumulate gently ($O(h^p)$). If it exceeds 1, errors grow exponentially and the method is useless.
 
-:::{prf:remark} Looking Ahead: Backward and Forward Error
-:label: rmk-lte-backward-error
-:class: dropdown
-
-We will formalize the concepts of **backward error** and **forward error** later in the course when we study [linear systems](../qr-least-squares/forward-backward-error.md). For now, here is the intuition in the ODE setting.
-
-The **backward error** is the local truncation error $\tau_n$. The numerical solution doesn't satisfy the original ODE, but it *does* satisfy a nearby, perturbed ODE:
-
-$$
-\frac{du}{dt} = f(t, u) + \tau(t)
-$$
-
-where $\tau(t)$ is a small perturbation at each step. A method with small $\tau$ solves a problem *close* to the original.
-
-The **forward error** is the global error $E_n = u_n - u(t_n)$, the quantity we actually care about: how far is our numerical answer from the true answer?
-
-The relationship between the two is the central question of this section: small backward error (accurate per step) does not automatically guarantee small forward error (accurate overall). It depends on whether the problem amplifies or damps those per-step perturbations.
-:::
 
 ::::{prf:example} Error Propagation for the Linear Test Problem
 :label: ex-error-propagation
@@ -268,28 +279,6 @@ Both ingredients are visible here:
 - **Accumulation:** Each $\tau_j$ contributes to $E_n$. The sum has $n$ terms.
 - **Stability:** Each $\tau_j$ is amplified by $R^{n-1-j}$. If $|R| \leq 1$, these powers are bounded and errors stay controlled. If $|R| > 1$, the earliest errors get amplified the most and the sum explodes.
 
-:::{prf:remark} Connection to Neumann Series
-:label: rmk-duhamel-neumann
-:class: dropdown
-
-This structure is identical to the **Neumann series** from iterative methods! Compare:
-
-| Context | Recurrence | Solution |
-|---------|------------|----------|
-| Iterative methods | $x_{k+1} = Ax_k + b$ | $x_n = A^n x_0 + \sum_{j=0}^{n-1} A^{n-1-j}b$ |
-| ODE error | $E_{n+1} = RE_n - h\tau_n$ | $E_n = R^n E_0 - h\sum_{j=0}^{n-1} R^{n-1-j}\tau_j$ |
-
-where $R = 1 + h\lambda$ is the amplification factor.
-
-Both are **discrete convolutions with a geometric kernel**. The convergence/stability condition is the same: $|R| < 1$ (ODE stability) parallels $\|A\| < 1$ (Neumann series convergence).
-
-This also discretizes the **continuous variation of constants formula**:
-$$
-u(t) = e^{\lambda t}u_0 + \int_0^t e^{\lambda(t-s)}g(s)\,ds
-$$
-
-The exponential $e^{\lambda t}$ becomes the power $R^n = (1+h\lambda)^n$, and the integral becomes a sum.
-:::
 ::::
 
 ### Convergence Theorem
@@ -339,7 +328,12 @@ $$
 $$
 
 **Step 4: Bound the geometric sum.**
-Using $(1 + hL)^k \leq e^{khL}$ and $\sum_{j=0}^{n-1}(1+hL)^j \leq \frac{(1+hL)^n - 1}{hL}$:
+The inequality $(1 + hL)^k \leq e^{khL}$ follows from the elementary
+bound $1 + x \leq e^x$ (valid for all $x \in \mathbb{R}$), raised to
+the $k$-th power. The sum is a finite geometric series with ratio
+$r = 1 + hL$:
+$\sum_{j=0}^{n-1} r^j = \frac{r^n - 1}{r - 1} = \frac{(1+hL)^n - 1}{hL}$.
+Applying both estimates:
 $$
 |E_n| \leq e^{nhL}|E_0| + \frac{e^{nhL} - 1}{L}\tau_{\max}
 $$
@@ -373,7 +367,7 @@ The key point: the constant $\frac{C}{L}(e^{LT} - 1)$ depends on the problem (th
 :::
 ::::
 
-:::{prf:remark} Looking Ahead: The Error Framework for ODEs
+:::{prf:remark} Backward Error, Forward Error, and the Condition Number
 :label: rmk-fwd-bwd-error-ode
 :class: dropdown
 
@@ -383,14 +377,22 @@ $$
 \underbrace{\text{Global error}}_{\text{what we care about}} \;\leq\; \underbrace{e^{LT}}_{\text{problem sensitivity}} \;\times\; \underbrace{O(h^p)}_{\text{per-step accuracy}}
 $$
 
-In the ODE setting:
-- **Per-step accuracy** = Local truncation error $\tau_n = O(h^p)$ — how well the algorithm approximates the ODE at each step
-- **Problem sensitivity** = $e^{L(t_n - t_0)}$ — how much the ODE amplifies perturbations over time
-- **Global error** = $\|E_n\| = O(h^p)$ — the combined effect
+The three ingredients have names that we will formalize when we study
+[linear systems](../qr-least-squares/forward-backward-error.md):
 
-The Lipschitz constant $L$ measures how sensitive the ODE is to perturbations. The factor $e^{LT}$ is the **condition number for time evolution** — a property of the *problem*, not the algorithm.
+- **Backward error** = the local truncation error $\tau_n = O(h^p)$.
+  The numerical solution does not satisfy the original ODE, but it
+  *does* satisfy a nearby, perturbed ODE $u' = f(t,u) + \tau(t)$. A
+  method with small $\tau$ solves a problem *close* to the original.
+- **Forward error** = the global error $E_n = u_n - u(t_n)$, the
+  quantity we actually care about: how far is our answer from the truth?
+- **Condition number** = $e^{LT}$, the amplification factor. The
+  Lipschitz constant $L$ measures how sensitive the ODE is to
+  perturbations. This is a property of the *problem*, not the algorithm.
 
-Later in the course, when we study [linear systems](../qr-least-squares/forward-backward-error.md), we will give these ideas precise names — **backward error** (per-step residual), **forward error** (global effect), and **condition number** (amplification factor). The structure is universal.
+Small backward error does not automatically guarantee small forward
+error. It depends on whether the problem amplifies or damps per-step
+perturbations.
 :::
 
 ---
@@ -419,6 +421,14 @@ $$
 $$
 
 This is a disk of radius 1 centered at $(-1, 0)$ in the complex plane.
+
+```{figure} ../img/stability_fwd_euler.png
+:width: 50%
+:align: center
+
+Stability region of forward Euler: the disk $|1 + z| \leq 1$. For stability, $z = h\lambda$ must lie inside this region.
+```
+
 :::
 
 For real $\lambda < 0$, stability requires $-2 \leq h\lambda \leq 0$, giving the step-size restriction
@@ -429,12 +439,71 @@ $$
 
 Forward Euler is **conditionally stable**: the step size is restricted by the problem's eigenvalues.
 
+### Stiffness
+
+When $|\lambda|$ is large, the stability constraint $h \leq 2/|\lambda|$
+forces extremely small step sizes even when the solution itself varies
+slowly.
+
+:::{prf:definition} Stiff Problem
+:label: def-stiff-problem
+
+A problem is **stiff** when an explicit method must use a step size
+far smaller than what accuracy alone would require. Two step sizes are
+in play:
+
+- $h_{\text{accuracy}}$: the largest $h$ that resolves the solution to
+  the desired tolerance. This is set by the truncation error and how
+  rapidly the solution varies.
+- $h_{\text{stability}}$: the largest $h$ for which the method does not
+  blow up. This is set by the stability region and the eigenvalues of
+  the problem.
+
+The problem is stiff when
+
+$$
+h_{\text{stability}} \ll h_{\text{accuracy}}
+$$
+
+so that stability, not accuracy, dictates the step size.
+:::
+
+:::{prf:example} Stiffness in Action
+:label: ex-stiffness-fwd-euler
+
+Consider $u' = \lambda(u - \cos t) - \sin t$ with $u(0) = 1$ and
+$\lambda = -1000$. The exact solution is $u(t) = \cos t$ regardless of
+$\lambda$: a smooth, slowly varying function that a step size of
+$h = 0.1$ would track accurately ($h_{\text{accuracy}} \approx 0.1$).
+Yet forward Euler's stability constraint demands
+$h < 2/|\lambda| = 0.002$ ($h_{\text{stability}} = 0.002$). To
+integrate to $T = 1$ we need at least 500 steps, all dictated by
+stability rather than accuracy.
+
+:::
+
+```{figure} ../img/stiffness.png
+:width: 95%
+:align: center
+
+Forward Euler applied to $u' = \lambda(u - \cos t) - \sin t$ with fixed $h = 10^{-3}$. The exact solution is $u(t) = \cos t$ (dashed) for all $\lambda$. **Left/center:** $\lambda = 0$ and $\lambda = -10$ satisfy the stability condition $h < 2/|\lambda|$ and track the solution accurately. **Right:** $\lambda = -2100$ violates the stability condition ($h|\lambda| = 2.1 > 2$) and the numerical solution oscillates with exponentially growing amplitude.
+```
 ---
 
 ## Limitations
 
-**Low order.** Forward Euler is only $O(h)$ accurate. Just as central differences improved on forward differences by averaging, we can build higher-order ODE methods by evaluating $f$ at cleverly chosen intermediate points and combining the results. This is the idea behind **Runge-Kutta methods**; see the [optional section on Runge-Kutta and adaptive methods](runge-kutta.md).
+**Low order.** Forward Euler is only $O(h)$ accurate. Just as central
+differences improved on forward differences by averaging, we can build
+higher-order ODE methods by evaluating $f$ at cleverly chosen intermediate
+points and combining the results. This is the idea behind **Runge-Kutta
+methods**; see the
+[optional section on Runge-Kutta and adaptive methods](runge-kutta.md).
 
-**Fixed step size.** For a nonlinear ODE, the effective $\lambda$ changes along the solution. A step size that is stable in one region may be unstable in another, and a step size that is accurate during rapid transients may be wasteful during slow evolution. With a fixed $h$, there is no way to adapt. This motivates **adaptive time-stepping**, where we estimate the local truncation error at each step and adjust $h$ automatically; see the [optional section on Runge-Kutta and adaptive methods](runge-kutta.md).
+**Fixed step size.** For a nonlinear ODE, the effective $\lambda$ changes along
+the solution. A step size that is stable in one region may be unstable in
+another, and a step size that is accurate during rapid transients may be
+wasteful during slow evolution. With a fixed $h$, there is no way to adapt. This
+motivates **adaptive time-stepping**, where we estimate the local truncation
+error at each step and adjust $h$ automatically; see the
+[optional section on Runge-Kutta and adaptive methods](runge-kutta.md).
 
-**Stiff problems.** Forward Euler's conditional stability requires $h \leq 2/|\lambda|$. When $|\lambda|$ is large, this forces extremely small step sizes even when the solution itself varies slowly. For example, with $\lambda = -1000$, stability demands $h < 0.002$, yet the solution $e^{-1000t}$ has already decayed to negligible levels by $t = 0.01$. We are forced to take thousands of tiny steps tracking a transient we don't care about. **Implicit methods** avoid this restriction by evaluating $f$ at the *next* time step, allowing stable integration with much larger step sizes.

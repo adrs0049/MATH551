@@ -100,8 +100,8 @@ After completing this chapter, you should be able to:
 | Chebyshev polynomial | $T_n(x) = \cos(n \arccos x)$ |
 | Chebyshev nodes | $x_k = \cos\left(\frac{k\pi}{n}\right)$, $k = 0, \ldots, n$ |
 | Barycentric weights | $w_k = (-1)^k \cdot \begin{cases} 1/2 & k = 0, n \\ 1 & \text{otherwise} \end{cases}$ |
-| Values → Coefficients | DCT (Type I) |
-| Coefficients → Values | Inverse DCT |
+| Values $\to$ Coefficients | DCT (Type I) |
+| Coefficients $\to$ Values | Inverse DCT |
 | Chebyshev integral | $\int_{-1}^{1} T_k(x)\,dx = \frac{2}{1-k^2}$ (even $k$) |
 | Coefficient decay | $\|c_k\| = O(k^{-p-1})$ if $f^{(p)}$ has bounded variation |
 

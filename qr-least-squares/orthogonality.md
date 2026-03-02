@@ -173,7 +173,7 @@ $$
 \|x - z\|^2 + \|z - u\|^2 = \|x - u\|^2
 $$
 
-Since $\|z - u\|^2 \geq 0$, we have $\|x - z\| \leq \|x - u\|$ for all $u \in U$. ∎
+Since $\|z - u\|^2 \geq 0$, we have $\|x - z\| \leq \|x - u\|$ for all $u \in U$.
 :::
 
 **Geometric Picture:**

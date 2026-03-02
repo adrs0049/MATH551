@@ -1,0 +1,56 @@
+myst: v1
+title: MATH 551 Lecture Notes
+description: Custom template using lecture.cls for Introduction to Scientific Computing
+version: '1.0.0'
+authors:
+  - name: Andreas Buttenschoen
+license: CC-BY-4.0
+tags:
+  - book
+build:
+  engine: -pdflatex
+doc:
+  - id: title
+    required: true
+  - id: subtitle
+  - id: authors
+    required: true
+  - id: bibliography
+files:
+  - template.tex
+  - lecture.cls
+  - Commons.sty
+packages:
+  - amsmath
+  - amsthm
+  - amssymb
+  - amsfonts
+  - babel
+  - booktabs
+  - cancel
+  - caption
+  - changepage
+  - cleveref
+  - csquotes
+  - enumitem
+  - fancyhdr
+  - fontenc
+  - framed
+  - geometry
+  - graphicx
+  - hyperref
+  - inputenc
+  - kpfonts
+  - longtable
+  - mathrsfs
+  - mathtools
+  - microtype
+  - natbib
+  - setspace
+  - stmaryrd
+  - tikz
+  - titlesec
+  - tocloft
+  - url
+  - xcolor
+  - xfrac

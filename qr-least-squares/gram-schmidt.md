@@ -84,7 +84,7 @@ where:
 - $r_{ij} = \langle a_j, q_i \rangle$ for $i < j$ (the projection coefficients)
 - $r_{jj} = \|v_j\|$ (the normalization factor)
 
-:::{prf:remark} The Parallel: Gaussian Elimination → LU, Gram-Schmidt → QR
+:::{prf:remark} The Parallel: Gaussian Elimination to LU, Gram-Schmidt to QR
 :label: rmk-gs-lu-parallel
 :class: dropdown
 

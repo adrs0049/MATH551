@@ -15,8 +15,8 @@ where $T_k$ are Chebyshev polynomials and $c_k$ are unknown coefficients we need
 
 **The challenge:** We don't know $n$ in advance!
 
-- Choose $n$ too small → the solution is inaccurate
-- Choose $n$ too large → we waste computation solving a bigger system
+- Choose $n$ too small $\rightarrow$ the solution is inaccurate
+- Choose $n$ too large $\rightarrow$ we waste computation solving a bigger system
 
 ### The Naive Approach: Double and Retry
 

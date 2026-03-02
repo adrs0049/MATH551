@@ -204,8 +204,8 @@ This is the central equation of numerical analysis. It cleanly separates:
 | Backward error | The algorithm | Yes! |
 
 **Practical implications:**
-- **Well-conditioned + backward stable → accurate:** Small $\kappa$ and small backward error guarantee small forward error
-- **Ill-conditioned → trouble:** Even perfect algorithms give poor forward error when $\kappa$ is large
+- **Well-conditioned + backward stable $\rightarrow$ accurate:** Small $\kappa$ and small backward error guarantee small forward error
+- **Ill-conditioned $\rightarrow$ trouble:** Even perfect algorithms give poor forward error when $\kappa$ is large
 - **Focus on backward stability:** Write algorithms with small backward error; that's all you can control
 
 ## Unstable Algorithms: Common Pitfalls

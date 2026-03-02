@@ -118,9 +118,9 @@ There's a beautiful analogy:
 
 | Classical | Neural Networks |
 |-----------|-----------------|
-| Continuous → Weierstrass theorem | Continuous → Universal approximation |
-| Bounded variation → Chebyshev bound | Barron norm → Barron bound |
-| $C^k$ → $O(n^{-k})$ convergence | Spectral Barron → $O(n^{-k/2})$ |
+| Continuous $\to$ Weierstrass theorem | Continuous $\to$ Universal approximation |
+| Bounded variation $\to$ Chebyshev bound | Barron norm $\to$ Barron bound |
+| $C^k$ $\to$ $O(n^{-k})$ convergence | Spectral Barron $\to$ $O(n^{-k/2})$ |
 
 Both theories have:
 1. **Qualitative density results** (existence)

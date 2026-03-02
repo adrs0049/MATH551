@@ -166,8 +166,8 @@ Example: The function $f(x) = x^{2^L}$ can be computed by:
 ## Summary
 
 The universal approximation theorem tells us:
-- ✅ Neural networks **can** approximate any continuous function
-- ❌ It doesn't say **how** or **how efficiently**
-- 🔑 The real power comes from Barron's theorem (next section)
+- Neural networks **can** approximate any continuous function
+- It doesn't say **how** or **how efficiently**
+- The real power comes from Barron's theorem (next section)
 
 The theorem is like knowing "there exists a polynomial approximation"—useful, but we need quantitative bounds to do practical computation.

@@ -1,11 +1,11 @@
 # Runge-Kutta Methods and Adaptive Time-Stepping
 
-:::{note} Optional Section
-This section is supplementary material. It covers higher-order methods and adaptive step-size control, which are important for practical ODE solving but are not required for the core course.
-:::
-
 :::{tip} Big Idea
-Runge-Kutta methods achieve higher order accuracy by evaluating $f$ at multiple points within each step—no derivatives of $f$ required. **Embedded pairs** compute two approximations of different orders using (nearly) the same work, enabling automatic error estimation. This powers **adaptive time-stepping**: adjust $h$ to maintain accuracy while minimizing computational cost.
+Runge-Kutta methods achieve higher order accuracy by evaluating $f$ at multiple
+points within each step—no derivatives of $f$ required. **Embedded pairs**
+compute two approximations of different orders using (nearly) the same work,
+enabling automatic error estimation. This powers **adaptive time-stepping**:
+adjust $h$ to maintain accuracy while minimizing computational cost.
 :::
 
 ## Beyond Euler: The Need for Higher Order
@@ -137,7 +137,11 @@ Both methods have local truncation error $O(h^2)$, i.e. second order.
 
 ## Embedded Pairs and Error Estimation
 
-Fixed step sizes are inefficient: too small wastes work, too large loses accuracy. We need to estimate the error to choose $h$ adaptively.
+Fixed step sizes are inefficient: too small wastes work, too large loses
+accuracy. To adapt $h$ locally, we need an estimate of the local
+truncation error at each step. But $\tau_n$ depends on the unknown exact
+solution, so we cannot compute it directly. The key idea is to obtain a
+cheap error estimate by comparing two methods of different order.
 
 ### The Embedded Pair Idea
 
@@ -221,25 +225,7 @@ With an error estimate, we can adjust $h$ automatically.
 5. **Repeat** from step 1 (with rejected step) or continue to next time step (if accepted).
 :::
 
-## Rounding Errors in ODE Integration
-
-When integrating over long times or with very small step sizes, rounding errors accumulate.
-
-```{figure} ../img/rk_round.png
-:width: 95%
-:align: center
-
-**Rounding error accumulation in ODE integration.** The Arenstorf orbit (a periodic three-body problem) integrated over one period with $2^k$ steps. **Left:** The orbit trajectory. **Right:** Error vs. number of steps showing three regimes: (1) Under-resolved—discretization too coarse; (2) Resolved—error decreases rapidly with order; (3) Over-resolved—rounding errors accumulate and error *increases*.
-```
-
-There are three regimes:
-1. **Under-resolved:** Too few steps, discretization error dominates
-2. **Resolved:** Error decreases as $O(h^p)$
-3. **Over-resolved:** Rounding errors accumulate, error *increases* with more steps
-
-This motivates using higher-order methods: they achieve accuracy with fewer steps, avoiding the over-resolved regime.
-
-## Generalizations
+## Generalizations to Higher Order Methods
 
 The RK2 derivation extends to higher orders:
 
