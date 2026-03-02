@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/exercises.pdf
+    id: nonlinear-equations-exercises-pdf
+downloads:
+  - id: nonlinear-equations-exercises-pdf
+    title: Download PDF
+---
+
 # Exercises
 
 Practice implementing and analyzing root-finding algorithms.

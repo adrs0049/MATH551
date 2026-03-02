@@ -1,0 +1,32 @@
+\documentclass{article}
+\usepackage[left=0.75in,right=0.75in,top=1in,bottom=1in]{geometry}
+\usepackage{amsmath,amsthm,amssymb,amsfonts}
+\usepackage{hyperref}
+\usepackage{datetime}
+\usepackage{graphicx}
+\usepackage{natbib}
+\bibliographystyle{abbrvnat}
+
+[-IMPORTS-]
+
+% colors for hyperlinks
+\hypersetup{colorlinks=true, allcolors=blue}
+
+\title{[-doc.title-]}
+
+\author{[-doc.authors|join(" \\and ", "name")-]}
+
+\newdate{articleDate}{[-doc.date.day-]}{[-doc.date.month-]}{[-doc.date.year-]}
+\date{\displaydate{articleDate}}
+
+\begin{document}
+\maketitle
+[# if parts.abstract #]\begin{abstract}[-parts.abstract-]\end{abstract}[# endif #]
+
+[-CONTENT-]
+
+
+[# if doc.bibliography #]
+\bibliography{[- doc.bibliography | join(", ") -]}
+[# endif #]
+\end{document}

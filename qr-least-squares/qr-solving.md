@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/qr-solving.pdf
+    id: qr-least-squares-qr-solving-pdf
+downloads:
+  - id: qr-least-squares-qr-solving-pdf
+    title: Download PDF
+---
+
 # Solving Least Squares via QR
 
 :::{tip} Big Idea

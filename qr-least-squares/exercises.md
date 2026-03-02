@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/exercises.pdf
+    id: qr-least-squares-exercises-pdf
+downloads:
+  - id: qr-least-squares-exercises-pdf
+    title: Download PDF
+---
+
 # Exercises
 
 Practice QR factorization and least squares.

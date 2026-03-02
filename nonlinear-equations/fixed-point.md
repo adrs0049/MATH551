@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/fixed-point.pdf
+    id: nonlinear-equations-fixed-point-pdf
+downloads:
+  - id: nonlinear-equations-fixed-point-pdf
+    title: Download PDF
+---
+
 # Fixed Point Iteration
 
 :::{tip} Big Idea

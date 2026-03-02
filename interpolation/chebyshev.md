@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/chebyshev.pdf
+    id: interpolation-chebyshev-pdf
+downloads:
+  - id: interpolation-chebyshev-pdf
+    title: Download PDF
+---
+
 # Chebyshev Polynomials
 
 :::{tip} Big Idea

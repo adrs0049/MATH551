@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/error-analysis.pdf
+    id: nonlinear-equations-error-analysis-pdf
+downloads:
+  - id: nonlinear-equations-error-analysis-pdf
+    title: Download PDF
+---
+
 # Error Analysis for Root Finding
 
 :::{tip} Big Idea

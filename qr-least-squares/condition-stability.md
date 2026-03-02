@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/condition-stability.pdf
+    id: qr-least-squares-condition-stability-pdf
+downloads:
+  - id: qr-least-squares-condition-stability-pdf
+    title: Download PDF
+---
+
 # Condition Numbers and Stability for Linear Systems
 
 :::{tip} Big Idea

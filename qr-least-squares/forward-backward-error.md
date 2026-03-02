@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/forward-backward-error.pdf
+    id: qr-least-squares-forward-backward-error-pdf
+downloads:
+  - id: qr-least-squares-forward-backward-error-pdf
+    title: Download PDF
+---
+
 # Forward and Backward Error
 
 :::{tip} Big Idea

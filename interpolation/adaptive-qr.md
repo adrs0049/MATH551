@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/adaptive-qr.pdf
+    id: interpolation-adaptive-qr-pdf
+downloads:
+  - id: interpolation-adaptive-qr-pdf
+    title: Download PDF
+---
+
 # Adaptive QR: Automatic Accuracy for Spectral Methods
 
 :::{tip} Big Idea

@@ -1,4 +1,12 @@
 ---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/floating-point.pdf
+    id: error-stability-floating-point-pdf
+downloads:
+  - id: error-stability-floating-point-pdf
+    title: Download PDF
 kernelspec:
   name: python3
   display_name: Python 3

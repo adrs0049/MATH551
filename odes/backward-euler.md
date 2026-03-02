@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/backward-euler.pdf
+    id: odes-backward-euler-pdf
+downloads:
+  - id: odes-backward-euler-pdf
+    title: Download PDF
+---
+
 # Backward Euler Method
 
 :::{tip} Big Idea

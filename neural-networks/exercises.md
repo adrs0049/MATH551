@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/exercises.pdf
+    id: neural-networks-exercises-pdf
+downloads:
+  - id: neural-networks-exercises-pdf
+    title: Download PDF
+---
+
 # Exercises
 
 Practice with neural network approximation theory.

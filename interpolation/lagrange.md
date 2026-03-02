@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/lagrange.pdf
+    id: interpolation-lagrange-pdf
+downloads:
+  - id: interpolation-lagrange-pdf
+    title: Download PDF
+---
+
 # Lagrange Interpolation
 
 :::{tip} Big Idea

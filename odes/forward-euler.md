@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/forward-euler.pdf
+    id: odes-forward-euler-pdf
+downloads:
+  - id: odes-forward-euler-pdf
+    title: Download PDF
+---
+
 # Forward Euler Method
 
 :::{tip} Big Idea

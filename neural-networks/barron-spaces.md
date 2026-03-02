@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/barron-spaces.pdf
+    id: neural-networks-barron-spaces-pdf
+downloads:
+  - id: neural-networks-barron-spaces-pdf
+    title: Download PDF
+---
+
 # Barron Spaces
 
 :::{tip} Big Idea

@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/qr-factorization.pdf
+    id: qr-least-squares-qr-factorization-pdf
+downloads:
+  - id: qr-least-squares-qr-factorization-pdf
+    title: Download PDF
+---
+
 # QR Factorization
 
 :::{tip} Big Idea

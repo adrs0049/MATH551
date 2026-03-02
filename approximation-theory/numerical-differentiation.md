@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/numerical-differentiation.pdf
+    id: approximation-theory-numerical-differentiation-pdf
+downloads:
+  - id: approximation-theory-numerical-differentiation-pdf
+    title: Download PDF
+---
+
 # Numerical Differentiation
 
 :::{tip} Big Idea

@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/gram-schmidt.pdf
+    id: qr-least-squares-gram-schmidt-pdf
+downloads:
+  - id: qr-least-squares-gram-schmidt-pdf
+    title: Download PDF
+---
+
 # Gram-Schmidt Orthogonalization
 
 :::{tip} Big Idea

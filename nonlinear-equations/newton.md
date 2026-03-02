@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/newton.pdf
+    id: nonlinear-equations-newton-pdf
+downloads:
+  - id: nonlinear-equations-newton-pdf
+    title: Download PDF
+---
+
 # Newton's Method
 
 :::{tip} Big Idea

@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/exercises.pdf
+    id: interpolation-exercises-pdf
+downloads:
+  - id: interpolation-exercises-pdf
+    title: Download PDF
+---
+
 # Exercises
 
 Practice polynomial interpolation and spectral methods.

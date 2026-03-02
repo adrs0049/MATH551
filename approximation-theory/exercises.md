@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/exercises.pdf
+    id: approximation-theory-exercises-pdf
+downloads:
+  - id: approximation-theory-exercises-pdf
+    title: Download PDF
+---
+
 # Exercises
 
 Practice applying Taylor's theorem and implementing finite difference methods. These exercises build both theoretical understanding and computational skills.

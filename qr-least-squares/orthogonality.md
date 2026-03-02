@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/orthogonality.pdf
+    id: qr-least-squares-orthogonality-pdf
+downloads:
+  - id: qr-least-squares-orthogonality-pdf
+    title: Download PDF
+---
+
 # Orthogonality and Projections
 
 :::{tip} Big Idea

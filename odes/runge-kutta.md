@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/runge-kutta.pdf
+    id: odes-runge-kutta-pdf
+downloads:
+  - id: odes-runge-kutta-pdf
+    title: Download PDF
+---
+
 # Runge-Kutta Methods and Adaptive Time-Stepping
 
 :::{tip} Big Idea

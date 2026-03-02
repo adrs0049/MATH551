@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/linear-algebra-fundamentals.pdf
+    id: qr-least-squares-linear-algebra-fundamentals-pdf
+downloads:
+  - id: qr-least-squares-linear-algebra-fundamentals-pdf
+    title: Download PDF
+---
+
 # Linear Algebra Fundamentals
 
 :::{tip} Big Idea

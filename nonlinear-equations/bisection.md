@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/bisection.pdf
+    id: nonlinear-equations-bisection-pdf
+downloads:
+  - id: nonlinear-equations-bisection-pdf
+    title: Download PDF
+---
+
 # Bisection Method
 
 :::{tip} Big Idea

@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/gibbs.pdf
+    id: interpolation-gibbs-pdf
+downloads:
+  - id: interpolation-gibbs-pdf
+    title: Download PDF
+---
+
 # The Gibbs Phenomenon
 
 :::{tip} Big Idea

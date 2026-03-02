@@ -1,4 +1,12 @@
 ---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/euler_maruyama.pdf
+    id: odes-euler-maruyama-pdf
+downloads:
+  - id: odes-euler-maruyama-pdf
+    title: Download PDF
 authors:
   - name: Andreas Buttenschoen
 ---

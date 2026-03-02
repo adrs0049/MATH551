@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/stability.pdf
+    id: error-stability-stability-pdf
+downloads:
+  - id: error-stability-stability-pdf
+    title: Download PDF
+---
+
 # Stable and Unstable Algorithms
 
 :::{tip} Big Idea

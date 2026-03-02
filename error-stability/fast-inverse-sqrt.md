@@ -1,4 +1,12 @@
 ---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/fast-inverse-sqrt.pdf
+    id: error-stability-fast-inverse-sqrt-pdf
+downloads:
+  - id: error-stability-fast-inverse-sqrt-pdf
+    title: Download PDF
 kernelspec:
   name: python3
   display_name: Python 3

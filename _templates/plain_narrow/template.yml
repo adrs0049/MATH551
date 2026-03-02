@@ -1,0 +1,28 @@
+jtex: v1
+title: Plain LaTeX with narrow margins
+description: Minimal article template with 0.75in left/right margins
+version: 1.0.0
+license: CC-BY-4.0
+authors:
+  - name: Andreas Buttenschoen
+tags:
+  - article
+doc:
+  - id: title
+    required: true
+  - id: authors
+  - id: date
+  - id: bibliography
+parts:
+  - id: abstract
+files:
+  - template.tex
+packages:
+  - amsmath
+  - amsthm
+  - amssymb
+  - datetime
+  - geometry
+  - graphicx
+  - hyperref
+  - natbib

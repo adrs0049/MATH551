@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/spectral-accuracy.pdf
+    id: interpolation-spectral-accuracy-pdf
+downloads:
+  - id: interpolation-spectral-accuracy-pdf
+    title: Download PDF
+---
+
 # Spectral Accuracy and Coefficient Decay
 
 :::{tip} Big Idea

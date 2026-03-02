@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/universal-approximation.pdf
+    id: neural-networks-universal-approximation-pdf
+downloads:
+  - id: neural-networks-universal-approximation-pdf
+    title: Download PDF
+---
+
 # Universal Approximation Theorem
 
 :::{tip} Big Idea

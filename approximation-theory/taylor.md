@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/taylor.pdf
+    id: approximation-theory-taylor-pdf
+downloads:
+  - id: approximation-theory-taylor-pdf
+    title: Download PDF
+---
+
 # Taylor's Theorem
 
 :::{tip} Big Idea

@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/least-squares.pdf
+    id: qr-least-squares-least-squares-pdf
+downloads:
+  - id: qr-least-squares-least-squares-pdf
+    title: Download PDF
+---
+
 # Least Squares Problems
 
 :::{tip} Big Idea

@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/exercises.pdf
+    id: error-stability-exercises-pdf
+downloads:
+  - id: error-stability-exercises-pdf
+    title: Download PDF
+---
+
 # Exercises
 
 Practice analyzing errors, stability, and conditioning.

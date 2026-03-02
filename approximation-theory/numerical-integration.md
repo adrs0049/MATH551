@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/numerical-integration.pdf
+    id: approximation-theory-numerical-integration-pdf
+downloads:
+  - id: approximation-theory-numerical-integration-pdf
+    title: Download PDF
+---
+
 # Numerical Integration
 
 :::{tip} Big Idea

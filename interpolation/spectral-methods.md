@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/spectral-methods.pdf
+    id: interpolation-spectral-methods-pdf
+downloads:
+  - id: interpolation-spectral-methods-pdf
+    title: Download PDF
+---
+
 # Spectral Methods for Boundary Value Problems
 
 :::{tip} Big Idea

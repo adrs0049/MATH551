@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/iterative-methods.pdf
+    id: qr-least-squares-iterative-methods-pdf
+downloads:
+  - id: qr-least-squares-iterative-methods-pdf
+    title: Download PDF
+---
+
 # Iterative Methods for Linear Systems
 
 :::{tip} Big Idea

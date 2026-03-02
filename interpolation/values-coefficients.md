@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/values-coefficients.pdf
+    id: interpolation-values-coefficients-pdf
+downloads:
+  - id: interpolation-values-coefficients-pdf
+    title: Download PDF
+---
+
 # Values and Coefficients
 
 :::{tip} Big Idea

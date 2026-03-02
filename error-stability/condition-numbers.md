@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/condition-numbers.pdf
+    id: error-stability-condition-numbers-pdf
+downloads:
+  - id: error-stability-condition-numbers-pdf
+    title: Download PDF
+---
+
 # Condition Numbers
 
 :::{tip} Big Idea
