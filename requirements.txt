@@ -4,3 +4,4 @@ matplotlib
 scipy
 prettytable
 sympy
+ode-integrate @ git+https://github.com/adrs0049/ode-integrate.git

@@ -9,6 +9,7 @@ downloads:
     title: Download PDF
 authors:
   - name: Andreas Buttenschoen
+  - name: Thejani Gamage
 ---
 
 # The Euler–Maruyama Method
@@ -45,6 +46,92 @@ Many systems we want to model are not purely deterministic:
 ## Brownian Motion
 
 ### The Drunkard's Walk
+
+Imagine a person standing at the origin on the real line. At each tick of a
+clock (spaced $\delta t$ apart), they step right by $+\delta$ or left by
+$-\delta$, each with probability $\tfrac{1}{2}$. Let $\xi_j \in \{-\delta,\,+\delta\}$
+denote the $j$-th step. The steps are independent, and by symmetry each has
+
+$$\mathbb{E}[\xi_j]
+= \tfrac{1}{2}(+\delta) + \tfrac{1}{2}(-\delta) = 0,
+\qquad
+\mathbb{E}[\xi_j^2]
+= \tfrac{1}{2}\delta^2 + \tfrac{1}{2}\delta^2 = \delta^2.$$
+
+Here $\mathbb{E}[X]$ denotes the **expected value** (or mean) of a random
+variable $X$: the average over all possible outcomes, weighted by their
+probabilities. Since $\mathbb{E}[\xi_j] = 0$, the variance is
+$\operatorname{Var}(\xi_j) = \mathbb{E}[\xi_j^2] = \delta^2$.
+
+After $n$ steps the position is $S_n = \sum_{j=1}^n \xi_j$. Since
+$S_{n+1} = S_n + \xi_{n+1}$, we can ask: *if the walker is currently at
+position $s$, what is the expected position after one more step?* In
+general, the **conditional expectation** of a random variable $Y$ given
+that another random variable $X$ takes the value $x$ is
+
+$$\mathbb{E}[Y \mid X = x]
+= \sum_{y} y\;\mathbb{P}(Y = y \mid X = x),$$
+
+the average of $Y$ restricted to only those outcomes where $X = x$. In
+our case $Y = S_{n+1}$, $X = S_n$, and $x = s$. Given $S_n = s$, the
+only two possible values of $S_{n+1}$ are $s + \delta$ and $s - \delta$,
+each with conditional probability $\tfrac{1}{2}$. So:
+
+$$\mathbb{E}[S_{n+1} \mid S_n = s]
+= \tfrac{1}{2}(s + \delta) + \tfrac{1}{2}(s - \delta) = s.$$
+
+This says: *no matter where the walker currently stands, the expected
+position after one more step is unchanged.* To get the unconditional
+expectation, we average over all possible values of $S_n$, weighting each
+by its probability. Write $p_k = \mathbb{P}(S_n = k\delta)$ for the
+probability that the walker is at position $k\delta$ after $n$ steps. Then
+
+$$\mathbb{E}[S_{n+1}]
+= \sum_{k} \mathbb{E}[S_{n+1} \mid S_n = k\delta]\;p_k
+= \sum_{k} (k\delta)\,p_k
+= \mathbb{E}[S_n].$$
+
+In the second equality we used the conditional result above:
+$\mathbb{E}[S_{n+1} \mid S_n = k\delta] = k\delta$. The final sum is
+the definition of $\mathbb{E}[S_n]$: recall that $S_n$ takes the values
+$k\delta$ with probabilities $p_k$, so
+$\mathbb{E}[S_n] = \sum_k (k\delta)\,p_k$. (This argument is an instance
+of the **law of total expectation**.) Since
+$S_0 = 0$, unrolling gives $\mathbb{E}[S_n] = \mathbb{E}[S_{n-1}]
+= \cdots = \mathbb{E}[S_0] = 0$.
+
+For the **mean-square displacement** $\mathbb{E}[S_n^2]$ (the average
+squared distance from the origin, taken over many realizations), square
+$S_{n+1} = S_n + \xi_{n+1}$ and average over the two cases:
+
+$$\mathbb{E}[S_{n+1}^2 \mid S_n]
+= \tfrac{1}{2}(S_n + \delta)^2 + \tfrac{1}{2}(S_n - \delta)^2
+= S_n^2 + \delta^2.$$
+
+The cross term $2\,S_n\,\delta$ cancels between the two cases. Taking
+expectations gives the recursion
+$\mathbb{E}[S_{n+1}^2] = \mathbb{E}[S_n^2] + \delta^2$, so starting from
+$S_0 = 0$:
+
+$$\mathbb{E}[S_n^2] = n\,\delta^2.$$
+
+After time $t = n\,\delta t$ we have $n = t/\delta t$, so the mean-square
+displacement is
+
+$$\mathbb{E}[S_n^2] = \frac{t}{\delta t}\,\delta^2.$$
+
+For this to have a well-defined limit as the discretization is refined, we
+need $\delta^2 / \delta t$ to remain constant, i.e. $\delta \propto \sqrt{\delta t}$.
+The natural choice is $\delta = \sqrt{\delta t}$, giving
+$\mathbb{E}[S_n^2] = t$.
+
+This is precisely what is observed experimentally: if you track a pollen
+grain suspended in water under a microscope, the mean-square displacement
+grows linearly with time. Einstein (1905) explained this by the argument
+above, connecting the microscopic randomness of molecular collisions to the
+macroscopic diffusion rate.
+
+### The Drunkard's Walk (General Version)
 
 Imagine a person standing at the origin who, at regular time intervals
 $\delta t$, takes a step of random size. Let $\xi_j$ denote the $j$-th
@@ -109,6 +196,40 @@ grain suspended in water under a microscope, the mean-square displacement
 grows linearly with time. Einstein (1905) explained this by the argument
 above, connecting the microscopic randomness of molecular collisions to the
 macroscopic diffusion rate.
+
+### Why Gaussian? The Central Limit Theorem
+
+Nothing in the drunkard's walk argument used the shape of the step
+distribution — only that the steps are independent with mean zero and
+finite variance. The $\pm\delta$ coin flip, a uniform distribution, or
+any other zero-mean, finite-variance law all give the same linear growth
+of mean-square displacement. So why does Brownian motion have *Gaussian*
+increments?
+
+The answer is the **Central Limit Theorem (CLT)**: if
+$\xi_1, \xi_2, \ldots$ are i.i.d. with mean $0$ and variance $\sigma^2$,
+then the normalized sum converges in distribution to a Gaussian,
+
+$$\frac{S_n}{\sigma\sqrt{n}}
+= \frac{\xi_1 + \cdots + \xi_n}{\sigma\sqrt{n}}
+\;\xrightarrow{d}\; \mathcal{N}(0,1)
+\qquad \text{as } n \to \infty.$$
+
+Equivalently, $S_n \xrightarrow{d} \mathcal{N}(0, n\sigma^2)$.
+In our setting $n = t/\delta t$ steps of variance
+$\sigma^2 = \delta t$ give $S_n \xrightarrow{d} \mathcal{N}(0, t)$,
+regardless of the step distribution. The Gaussian emerges as the
+*universal* limit of many small independent kicks — a coin-flip walk,
+a uniform walk, or molecular collisions all produce the same Gaussian
+in the continuum limit.
+
+This universality is made precise by **Donsker's theorem** (the functional
+CLT): the rescaled random walk converges to Brownian motion *as a
+continuous process*, not just at a single time. Brownian motion is the
+unique scaling limit of every finite-variance random walk, in the same way
+the Gaussian is the universal limit for sums of independent random
+variables. Using Gaussian increments from the start simply gives exact
+Brownian increments at every scale, rather than only in the limit.
 
 ### From the Random Walk to Continuous Noise
 

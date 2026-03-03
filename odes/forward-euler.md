@@ -13,8 +13,8 @@ downloads:
 
 :::{tip} Big Idea
 Forward Euler is the simplest time-stepping method: replace the derivative with
-a forward difference. It's **explicit**—we compute $u_{n+1}$ directly from
-$u_n$—making it cheap per step. But this simplicity comes at a cost: forward
+a forward difference. It's **explicit**: we compute $u_{n+1}$ directly from
+$u_n$, making it cheap per step. But this simplicity comes at a cost: forward
 Euler is only **conditionally stable**, requiring step sizes small enough that
 $|1 + h\lambda| \leq 1$. For stiff problems, this constraint becomes
 impractical.
@@ -294,19 +294,21 @@ Both ingredients are visible here:
 
 ### Convergence Theorem
 
-:::{prf:theorem} Convergence of One-Step Methods
+::::{prf:theorem} Convergence of Forward Euler
 :label: thm-one-step-convergence
 
-Consider forward Euler ([](#def-forward-euler)) applied to $u' = f(t,u)$, where $f$ is Lipschitz continuous in $u$ with constant $L$ ([](#def-ode-lipschitz)). If the method has consistency order $p$, i.e.,
+Consider forward Euler ([](#def-forward-euler)) applied to $u' = f(t,u)$,
+where $f$ is Lipschitz continuous in $u$ with constant $L$
+([](#def-ode-lipschitz)). If the one-step error satisfies
 
 $$
-|\tau_n| \leq Ch^{p} \quad \text{for all } h \in (0, h_0] \text{ and all } n
+|\mathcal{L}_n| \leq Ch^{2} \quad \text{for all } h \in (0, h_0] \text{ and all } n
 $$
 
 then the global discretization error satisfies:
 
 $$
-|E_n| \leq \frac{C}{L}\left(e^{L(t_n - t_0)} - 1\right) h^p
+|E_n| \leq \frac{C\bigl(e^{L(t_n - t_0)} - 1\bigr)}{L}\,h = O(h)
 $$
 
 :::{prf:proof}
@@ -314,69 +316,65 @@ $$
 
 **Step 1: Error recurrence.**
 The numerical method gives $u_{n+1} = u_n + hf(t_n, u_n)$.
-The exact solution satisfies $u(t_{n+1}) = u(t_n) + hf(t_n, u(t_n)) + h\tau_n$.
+The exact solution satisfies
+$u(t_{n+1}) = u(t_n) + hf(t_n, u(t_n)) + \mathcal{L}_n$,
+where $\mathcal{L}_n$ is the one-step error.
 
-Subtracting the numerical solution from the exact solution:
+Subtracting:
+
 $$
-E_{n+1} = E_n + h[f(t_n, u_n) - f(t_n, u(t_n))] - h\tau_n
+E_{n+1} = E_n + h\bigl[f(t_n, u(t_n)) - f(t_n, u_n)\bigr] + \mathcal{L}_n
 $$
 
 **Step 2: Lipschitz bound.**
 Since $f$ is Lipschitz with constant $L$:
-$$
-|f(t_n, u_n) - f(t_n, u(t_n))| \leq L|E_n|
-$$
 
-Thus:
 $$
-|E_{n+1}| \leq |E_n| + hL|E_n| + h|\tau_n| = (1 + hL)|E_n| + h|\tau_n|
+|E_{n+1}| \leq (1 + hL)|E_n| + |\mathcal{L}_n|
 $$
 
 **Step 3: Unroll the recurrence.**
-Let $\tau_{\max} = \max_j |\tau_j|$. Then:
+Let $\mathcal{L}_{\max} = \max_j |\mathcal{L}_j|$. Then:
+
 $$
-|E_n| \leq (1 + hL)^n|E_0| + h\tau_{\max}\sum_{j=0}^{n-1}(1 + hL)^j
+|E_n| \leq (1 + hL)^n|E_0| + \mathcal{L}_{\max}\sum_{j=0}^{n-1}(1 + hL)^j
 $$
 
 **Step 4: Bound the geometric sum.**
-The inequality $(1 + hL)^k \leq e^{khL}$ follows from the elementary
-bound $1 + x \leq e^x$ (valid for all $x \in \mathbb{R}$), raised to
-the $k$-th power. The sum is a finite geometric series with ratio
-$r = 1 + hL$:
+The inequality $(1 + hL)^k \leq e^{khL}$ follows from
+$1 + x \leq e^x$ (valid for all $x \in \mathbb{R}$). The sum is a
+finite geometric series with ratio $r = 1 + hL$:
 $\sum_{j=0}^{n-1} r^j = \frac{r^n - 1}{r - 1} = \frac{(1+hL)^n - 1}{hL}$.
 Applying both estimates:
+
 $$
-|E_n| \leq e^{nhL}|E_0| + \frac{e^{nhL} - 1}{L}\tau_{\max}
+|E_n| \leq e^{nhL}|E_0| + \frac{e^{nhL} - 1}{hL}\,\mathcal{L}_{\max}
 $$
 
-**Step 5: Substitute $nh = t_n - t_0$ and $\tau_{\max} = O(h^p)$.**
+**Step 5: Substitute $nh = t_n - t_0$ and $\mathcal{L}_{\max} \leq Ch^2$.**
 With $E_0 = 0$ (exact initial condition):
+
 $$
-|E_n| \leq \frac{e^{L(t_n - t_0)} - 1}{L} \cdot Ch^p = O(h^p)
+|E_n| \leq \frac{e^{L(t_n - t_0)} - 1}{hL} \cdot Ch^2
+  = \frac{C\bigl(e^{L(t_n - t_0)} - 1\bigr)}{L}\,h = O(h)
 $$
+
 :::
 
-::::{prf:corollary} Consistency Implies Convergence
+::::
+
+:::{prf:corollary} Consistency of Order $p$ Implies Convergence of Order $p$
 :label: cor-consistency-convergence
 
-For one-step methods applied to an ODE with Lipschitz continuous $f$:
+The proof above extends to any one-step method. If the one-step error
+satisfies $|\mathcal{L}_n| \leq Ch^{p+1}$, the same argument gives
 
 $$
-\text{Consistency of order } p \implies \text{Convergence of order } p
+|E_n| \leq \frac{C\bigl(e^{LT} - 1\bigr)}{L}\,h^p = O(h^p)
 $$
 
-:::{prf:proof}
-:class: dropdown
-
-This follows directly from [](#thm-one-step-convergence). If the method has consistency order $p$, then $|\tau_n| \leq Ch^p$. The theorem gives:
-
-$$
-|E_n| \leq \frac{C}{L}\left(e^{LT} - 1\right) h^p = O(h^p)
-$$
-
-The key point: the constant $\frac{C}{L}(e^{LT} - 1)$ depends on the problem (through $L$ and $T$) but not on $h$. Thus consistency of order $p$ implies convergence of order $p$.
+A consistent method of order $p$ is therefore convergent of order $p$.
 :::
-::::
 
 :::{prf:remark} Backward Error, Forward Error, and the Condition Number
 :label: rmk-fwd-bwd-error-ode
@@ -385,16 +383,16 @@ The key point: the constant $\frac{C}{L}(e^{LT} - 1)$ depends on the problem (th
 The convergence theorem is an instance of a pattern that runs through all of numerical analysis:
 
 $$
-\underbrace{\text{Global error}}_{\text{what we care about}} \;\leq\; \underbrace{e^{LT}}_{\text{problem sensitivity}} \;\times\; \underbrace{O(h^p)}_{\text{per-step accuracy}}
+\underbrace{\text{Global error}}_{\text{what we care about}} \;\leq\; \underbrace{e^{LT}}_{\text{problem sensitivity}} \;\times\; \underbrace{O(h)}_{\text{per-step accuracy}}
 $$
 
 The three ingredients have names that we will formalize when we study
 [linear systems](../qr-least-squares/forward-backward-error.md):
 
-- **Backward error** = the local truncation error $\tau_n = O(h^p)$.
+- **Backward error** = the one-step error $\mathcal{L}_n = O(h^2)$.
   The numerical solution does not satisfy the original ODE, but it
-  *does* satisfy a nearby, perturbed ODE $u' = f(t,u) + \tau(t)$. A
-  method with small $\tau$ solves a problem *close* to the original.
+  *does* satisfy a nearby, perturbed ODE. A method with small
+  $\mathcal{L}_n$ solves a problem *close* to the original.
 - **Forward error** = the global error $E_n = u_n - u(t_n)$, the
   quantity we actually care about: how far is our answer from the truth?
 - **Condition number** = $e^{LT}$, the amplification factor. The
@@ -454,7 +452,9 @@ Forward Euler is **conditionally stable**: the step size is restricted by the pr
 
 When $|\lambda|$ is large, the stability constraint $h \leq 2/|\lambda|$
 forces extremely small step sizes even when the solution itself varies
-slowly.
+slowly. Stiffness is not about the solution being complicated; it is
+about the equation pulling toward a slow manifold so aggressively that
+explicit methods cannot keep up.
 
 :::{prf:definition} Stiff Problem
 :label: def-stiff-problem
@@ -479,19 +479,52 @@ $$
 so that stability, not accuracy, dictates the step size.
 :::
 
-:::{prf:example} Stiffness in Action
+:::{prf:example} Stiffness in Action (Prothero-Robinson)
 :label: ex-stiffness-fwd-euler
 
-Consider $u' = \lambda(u - \cos t) - \sin t$ with $u(0) = 1$ and
-$\lambda = -1000$. The exact solution is $u(t) = \cos t$ regardless of
-$\lambda$: a smooth, slowly varying function that a step size of
-$h = 0.1$ would track accurately ($h_{\text{accuracy}} \approx 0.1$).
-Yet forward Euler's stability constraint demands
-$h < 2/|\lambda| = 0.002$ ($h_{\text{stability}} = 0.002$). To
-integrate to $T = 1$ we need at least 500 steps, all dictated by
-stability rather than accuracy.
+Consider $u' = \lambda(u - \cos t) - \sin t$ with $u(0) = 1$. The
+exact solution is $u(t) = \cos t$ **regardless of** $\lambda$: the
+same smooth, slowly varying function whether $\lambda = -1$ or
+$\lambda = -10^6$.
 
-:::
+Since $u(t) = \cos t$, we have $|u''(t)| = |\cos t| \leq 1$.
+
+**Accuracy step size.** By [](#prop-lte-forward-euler), the one-step
+error is $\mathcal{L}_n = h\tau_n = \frac{h^2}{2}u''(t_n) + O(h^3)$.
+For the Prothero-Robinson problem $|u''(t)| = |\cos t| \leq 1$, so
+
+$$
+|\mathcal{L}_n| \leq \frac{h^2}{2}
+$$
+
+To keep the per-step error below a tolerance $\delta$, we need
+$h \leq \sqrt{2\delta}$. This depends only on the smoothness of the
+solution, not on $\lambda$.
+
+Over $N = T/h$ steps, the one-step errors accumulate to a global error
+of roughly $|E_N| \approx N \cdot |\mathcal{L}| = \frac{T}{h} \cdot \frac{h^2}{2} = \frac{Th}{2}$.
+For a global tolerance $\varepsilon = 10^{-2}$ over $T = 2$:
+
+$$
+h_{\text{accuracy}} \approx \frac{2\varepsilon}{T} = \frac{2 \times 10^{-2}}{2} = 10^{-2}
+$$
+
+This does not involve $\lambda$ at all.
+
+**Stability step size.** From the stability analysis above, forward
+Euler requires $h < 2/|\lambda|$:
+
+| $\lambda$ | $h_{\text{stability}}$ | $h_{\text{accuracy}}$ | Ratio | Steps needed |
+|-----------|----------------------|---------------------|-------|-------------|
+| $-10$ | $0.2$ | $0.01$ | $0.05$ (not stiff) | $200$ |
+| $-1000$ | $0.002$ | $0.01$ | $5$ (**stiff**) | $1000$ |
+| $-10^6$ | $2 \times 10^{-6}$ | $0.01$ | $5000$ | $10^6$ |
+
+The solution is *identical* in every row; only the stability constraint
+changes. With $\lambda = -10^6$, forward Euler needs a million steps
+to integrate to $T = 2$, all wasted on stability rather than accuracy.
+An implicit method ([backward Euler](backward-euler.md)) can take
+$h = 0.01$ and finish in 200 steps.
 
 ```{figure} ../img/stiffness.png
 :width: 95%
@@ -499,6 +532,52 @@ stability rather than accuracy.
 
 Forward Euler applied to $u' = \lambda(u - \cos t) - \sin t$ with fixed $h = 10^{-3}$. The exact solution is $u(t) = \cos t$ (dashed) for all $\lambda$. **Left/center:** $\lambda = 0$ and $\lambda = -10$ satisfy the stability condition $h < 2/|\lambda|$ and track the solution accurately. **Right:** $\lambda = -2100$ violates the stability condition ($h|\lambda| = 2.1 > 2$) and the numerical solution oscillates with exponentially growing amplitude.
 ```
+
+:::
+
+#### Why the convergence theorem cannot see stiffness
+
+The convergence theorem ([](#thm-one-step-convergence)) uses the
+Lipschitz constant $L = |\lambda|$ as its measure of problem
+sensitivity. For stiff problems this gives a catastrophically
+pessimistic bound.
+
+:::{prf:example} The Convergence Bound for Prothero-Robinson
+:label: ex-convergence-bound-pr
+
+Take $\lambda = -1000$ and $T = 2$ in the Prothero-Robinson problem.
+The Lipschitz constant is $L = |\partial f / \partial u| = |\lambda| = 1000$
+and the one-step error satisfies $|\mathcal{L}_n| \leq \frac{1}{2}h^2$.
+The convergence theorem ([](#thm-one-step-convergence)) bounds the
+global error by accumulating one-step errors with per-step
+amplification $(1 + hL)$:
+
+$$
+|E_n| \leq \frac{(1+hL)^n - 1}{hL}\max|\mathcal{L}_j|
+  \leq \frac{e^{LT} - 1}{L} \cdot \frac{h}{2}
+  = \frac{e^{2000} - 1}{2000}\,h
+  \approx 10^{866}\,h
+$$
+
+With the stability-limited step size $h = 0.002$, this "guarantees"
+the error is below $\approx 10^{863}$. The actual error is
+$\approx 0.002$.
+
+To *guarantee* $|E_n| < \varepsilon$ using this bound, we would need
+$h \lesssim \varepsilon \cdot e^{-LT} \approx \varepsilon \cdot 10^{-868}$,
+a step size no computer can take. The theorem is mathematically
+correct (it proves $E_n \to 0$ as $h \to 0$), but for stiff problems
+the $h$ it demands is computationally meaningless.
+
+:::
+
+:::{seealso}
+The [Stiffness Detection and Auto-Switching notebook](../notebooks/stiffness.ipynb) explores this
+further: adaptive integrators on the Prothero-Robinson problem reveal the
+$h_{\text{accuracy}}$ vs $h_{\text{stability}}$ gap quantitatively, and
+demonstrate how BS3 stage differences can detect stiffness at zero extra cost.
+:::
+
 ---
 
 ## Limitations

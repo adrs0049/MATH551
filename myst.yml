@@ -165,6 +165,8 @@ project:
         - file: odes/forward-euler.md
         - file: odes/backward-euler.md
         - file: odes/runge-kutta.md
+        - file: notebooks/stiffness.ipynb
+          title: "Stiffness Detection and Auto-Switching"
         - file: odes/euler_maruyama.md
         # - file: odes/stability.md             # NOT IN SCHEDULE
     # PART III: NONLINEAR EQUATIONS
@@ -245,6 +247,7 @@ project:
         - file: notebooks/finite-difference-demo.ipynb
         - file: notebooks/fast-inverse-sqrt.ipynb
         - file: notebooks/euler-method.ipynb
+        - file: notebooks/stiffness.ipynb
         - file: notebooks/monte-carlo.ipynb
         - file: notebooks/euler-maruyama.ipynb
         - file: notebooks/bisection-demo.ipynb

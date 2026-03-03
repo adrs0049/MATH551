@@ -77,6 +77,7 @@ jobs:
 
     # Build the book
     - name: Build the book
+      timeout-minutes: 30
       run: |
         jupyter-book build --execute --html
     - name: Upload artifact
