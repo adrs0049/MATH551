@@ -46,7 +46,7 @@ jobs:
 
     - name: Install dependencies
       if: steps.nb-cache.outputs.cache-hit != 'true'
-      run: pip install -r requirements.txt
+      run: pip install -r requirements-notebooks.txt
 
     - name: Execute notebooks
       if: steps.nb-cache.outputs.cache-hit != 'true'
