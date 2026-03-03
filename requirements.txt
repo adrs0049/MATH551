@@ -2,6 +2,7 @@ jupyter-book>=2.0.0
 numpy
 matplotlib
 scipy
+pandas
 prettytable
 sympy
 ode-integrate @ git+https://github.com/adrs0049/ode-integrate.git

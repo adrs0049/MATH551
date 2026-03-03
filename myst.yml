@@ -165,8 +165,6 @@ project:
         - file: odes/forward-euler.md
         - file: odes/backward-euler.md
         - file: odes/runge-kutta.md
-        - file: notebooks/stiffness.ipynb
-          title: "Stiffness Detection and Auto-Switching"
         - file: odes/euler_maruyama.md
         # - file: odes/stability.md             # NOT IN SCHEDULE
     # PART III: NONLINEAR EQUATIONS
