@@ -23,12 +23,12 @@ Class meets Monday & Wednesday, 75 minutes per session.
 | 4 | Feb 11 | Wed | Condition Numbers | |
 | 5 | Feb 18 | Wed | Fast-Inverse Square Root | |
 | 6 | Feb 19 | Thu | **ODEs** Forward Euler Method  **Quiz 1** | *Mon schedule* |
-| 7 | Feb 23 | Mon | Euler-Maruyama | |
-| 8 | Feb 25 | Wed | **TBD** | |
+| 7 | Feb 23 | Mon | Snow-day | |
+| 8 | Feb 25 | Wed | Stability of Euler's method | |
 | 9 | Mar 2 | Mon | **Nonlinear Equations** - Bisection | |
-| 10 | Mar 4 | Wed | Fixed-point & Newton | |
-| 11 | Mar 9 | Mon | Convergence analysis + **Quiz 2** | |
-| 12 | Mar 11 | Wed | TBD | |
+| 10 | Mar 4 | Wed | Euler-Maruyama | |
+| 11 | Mar 9 | Mon | **Nonlinear Equations** - Bisection | |
+| 12 | Mar 11 | Wed | Fixed Point Methods + **Quiz 2** | |
 | | Mar 15-22 | | **SPRING BREAK** | |
 | 13 | Mar 23 | Mon | **QR & Least Squares** - Norms, conditioning | |
 | 14 | Mar 25 | Wed | Orthogonality, Gram-Schmidt | |
