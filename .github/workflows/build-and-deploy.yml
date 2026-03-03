@@ -9,7 +9,6 @@ on:
       - main
 
 env:
-  # BASE_URL determines the website is served from, including CSS & JS assets
   BASE_URL: /${{ github.event.repository.name }}
   NODE_OPTIONS: '--max-old-space-size=4096'
 
@@ -23,7 +22,93 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy-book:
+  # ── Job 1: Execute notebooks ────────────────────────────────────────
+  execute-notebooks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Execute notebooks
+      run: bash scripts/execute-notebooks.sh
+
+    - name: Upload executed notebooks
+      uses: actions/upload-artifact@v4
+      with:
+        name: executed-notebooks
+        path: notebooks/
+        retention-days: 1
+
+  # ── Job 2: Build PDFs (needs executed notebooks) ────────────────────
+  build-pdfs:
+    needs: execute-notebooks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Download executed notebooks
+      uses: actions/download-artifact@v4
+      with:
+        name: executed-notebooks
+        path: notebooks/
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: myst-theme/package-lock.json
+
+    - name: Build myst-theme
+      run: |
+        cd myst-theme
+        npm ci
+        npm run build
+        cd themes/book
+        npm run prod:build
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Patch mystmd for algorithm/property environments
+      run: bash scripts/patch-mystmd.sh
+
+    - name: Install LaTeX
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-science texlive-xetex latexmk librsvg2-bin
+
+    - name: Build PDFs
+      run: jupyter-book build --pdf
+
+    - name: Upload PDF exports
+      uses: actions/upload-artifact@v4
+      with:
+        name: pdf-exports
+        path: exports/
+        retention-days: 1
+
+  # ── Job 3: Build HTML + Deploy (needs notebooks + PDFs) ─────────────
+  build-html-deploy:
+    needs: [execute-notebooks, build-pdfs]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -33,16 +118,28 @@ jobs:
       with:
         submodules: true
 
+    - name: Download executed notebooks
+      uses: actions/download-artifact@v4
+      with:
+        name: executed-notebooks
+        path: notebooks/
+
+    - name: Download PDF exports
+      uses: actions/download-artifact@v4
+      with:
+        name: pdf-exports
+        path: exports/
+
     - name: Setup Pages
       uses: actions/configure-pages@v3
 
-    # Set up Node.js for building myst-theme
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         cache: 'npm'
         cache-dependency-path: myst-theme/package-lock.json
+
     - name: Build myst-theme
       run: |
         cd myst-theme
@@ -51,39 +148,51 @@ jobs:
         cd themes/book
         npm run prod:build
 
-    # Install dependencies
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
         cache: 'pip'
+
     - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
+      run: pip install -r requirements.txt
 
     - name: Patch mystmd for algorithm/property environments
-      run: |
-        bash scripts/patch-mystmd.sh
+      run: bash scripts/patch-mystmd.sh
 
-    - name: Install LaTeX
+    # Memory monitoring for debugging OOM issues
+    - name: Start memory monitor
       run: |
-        sudo apt-get update
-        sudo apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-science texlive-xetex latexmk librsvg2-bin
+        echo "=== Runner memory ==="
+        free -h
+        echo ""
+        while true; do
+          echo "$(date -u +%H:%M:%S) $(free -m | awk '/Mem:/{printf "used=%sMB free=%sMB available=%sMB", $3, $4, $7}')"
+          sleep 10
+        done > /tmp/memlog.txt &
+        echo $! > /tmp/memmon.pid
 
-    # Build PDFs first so HTML can bundle them as downloads
-    - name: Build PDFs
-      run: |
-        jupyter-book build --pdf
-
-    # Build the book
     - name: Build the book
       timeout-minutes: 30
+      run: jupyter-book build --html
+
+    - name: Print memory log
+      if: always()
       run: |
-        jupyter-book build --html
+        echo "=== Memory usage over time ==="
+        cat /tmp/memlog.txt || true
+        echo ""
+        echo "=== Final memory state ==="
+        free -h
+        echo ""
+        echo "=== dmesg OOM messages ==="
+        dmesg | grep -i -E "oom|killed|memory" || echo "No OOM messages found"
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
         path: './_build/html'
+
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
