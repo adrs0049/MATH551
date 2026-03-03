@@ -10,7 +10,7 @@ on:
 
 env:
   BASE_URL: /${{ github.event.repository.name }}
-  NODE_OPTIONS: '--max-old-space-size=4096'
+  NODE_OPTIONS: '--max-old-space-size=8192'
 
 permissions:
   contents: read
