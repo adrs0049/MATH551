@@ -22,3 +22,9 @@ _build/
 
 # Local myst config (use myst.full.yml for full TOC)
 myst.yml
+
+# ignore exports
+*/exports/*
+
+# Ignore pdfs by defualt
+*.pdf
