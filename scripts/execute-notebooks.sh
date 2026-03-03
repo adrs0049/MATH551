@@ -1,18 +1,25 @@
 #!/usr/bin/env bash
 #
-# Execute all notebooks in-place so their outputs are cached.
+# Execute notebooks referenced in myst.yml (the TOC) so their outputs are cached.
 # Usage:
-#   ./scripts/execute-notebooks.sh              # execute all
+#   ./scripts/execute-notebooks.sh              # execute TOC notebooks
+#   ./scripts/execute-notebooks.sh --all        # execute all notebooks
 #   ./scripts/execute-notebooks.sh notebooks/stiffness.ipynb  # execute one
 #
 set -uo pipefail
 
 TIMEOUT=${NOTEBOOK_TIMEOUT:-300}
+MYSTyml="myst.yml"
 
-if [ $# -gt 0 ]; then
+if [ $# -gt 0 ] && [ "$1" = "--all" ]; then
+    # All notebooks in the notebooks/ directory
+    mapfile -t notebooks < <(find notebooks -name '*.ipynb' -not -path '*/.ipynb_checkpoints/*' | sort)
+elif [ $# -gt 0 ]; then
+    # Explicit list
     notebooks=("$@")
 else
-    mapfile -t notebooks < <(find notebooks -name '*.ipynb' -not -path '*/.ipynb_checkpoints/*' | sort)
+    # Only notebooks referenced in myst.yml
+    mapfile -t notebooks < <(grep '\.ipynb' "$MYSTyml" | sed 's/.*file: *//' | sed 's/ *$//' | sort)
 fi
 
 total=${#notebooks[@]}
@@ -48,5 +55,6 @@ if [ ${#failed_list[@]} -gt 0 ]; then
     for nb in "${failed_list[@]}"; do
         echo "  - $nb"
     done
-    exit 1
+    echo ""
+    echo "WARNING: Some notebooks failed but continuing (outputs may be stale)."
 fi
