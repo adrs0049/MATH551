@@ -10,7 +10,7 @@ on:
 
 env:
   BASE_URL: /${{ github.event.repository.name }}
-  NODE_OPTIONS: '--max-old-space-size=8192'
+  NODE_OPTIONS: '--max-old-space-size=16384'
 
 permissions:
   contents: read
@@ -30,16 +30,26 @@ jobs:
       with:
         submodules: true
 
+    - name: Cache executed notebooks
+      uses: actions/cache@v4
+      id: nb-cache
+      with:
+        path: notebooks/
+        key: notebooks-${{ hashFiles('notebooks/**/*.ipynb', 'requirements.txt') }}
+
     - name: Set up Python
+      if: steps.nb-cache.outputs.cache-hit != 'true'
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
         cache: 'pip'
 
     - name: Install dependencies
+      if: steps.nb-cache.outputs.cache-hit != 'true'
       run: pip install -r requirements.txt
 
     - name: Execute notebooks
+      if: steps.nb-cache.outputs.cache-hit != 'true'
       run: bash scripts/execute-notebooks.sh
 
     - name: Upload executed notebooks
@@ -64,7 +74,17 @@ jobs:
         name: executed-notebooks
         path: notebooks/
 
+    - name: Cache PDF exports
+      uses: actions/cache@v4
+      id: pdf-cache
+      with:
+        path: |
+          exports/
+          */exports/
+        key: pdfs-${{ hashFiles('**/*.md', 'myst.yml', '_templates/**', 'notebooks/**/*.ipynb') }}
+
     - name: Set up Node.js
+      if: steps.pdf-cache.outputs.cache-hit != 'true'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
@@ -72,6 +92,7 @@ jobs:
         cache-dependency-path: myst-theme/package-lock.json
 
     - name: Build myst-theme
+      if: steps.pdf-cache.outputs.cache-hit != 'true'
       run: |
         cd myst-theme
         npm ci
@@ -80,30 +101,37 @@ jobs:
         npm run prod:build
 
     - name: Set up Python
+      if: steps.pdf-cache.outputs.cache-hit != 'true'
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
         cache: 'pip'
 
     - name: Install dependencies
+      if: steps.pdf-cache.outputs.cache-hit != 'true'
       run: pip install -r requirements.txt
 
     - name: Patch mystmd for algorithm/property environments
+      if: steps.pdf-cache.outputs.cache-hit != 'true'
       run: bash scripts/patch-mystmd.sh
 
     - name: Install LaTeX
+      if: steps.pdf-cache.outputs.cache-hit != 'true'
       run: |
         sudo apt-get update
         sudo apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-science texlive-xetex latexmk librsvg2-bin
 
     - name: Build PDFs
+      if: steps.pdf-cache.outputs.cache-hit != 'true'
       run: jupyter-book build --pdf
 
     - name: Upload PDF exports
       uses: actions/upload-artifact@v4
       with:
         name: pdf-exports
-        path: exports/
+        path: |
+          exports/
+          */exports/
         retention-days: 1
 
   # ── Job 3: Build HTML + Deploy (needs notebooks + PDFs) ─────────────
@@ -128,7 +156,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: pdf-exports
-        path: exports/
+        path: .
 
     - name: Setup Pages
       uses: actions/configure-pages@v3
