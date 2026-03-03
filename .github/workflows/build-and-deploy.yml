@@ -79,7 +79,7 @@ jobs:
     - name: Build the book
       timeout-minutes: 30
       run: |
-        jupyter-book build --execute --html
+        jupyter-book build --html
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
