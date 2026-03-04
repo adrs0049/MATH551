@@ -530,7 +530,12 @@ $h = 0.01$ and finish in 200 steps.
 :width: 95%
 :align: center
 
-Forward Euler applied to $u' = \lambda(u - \cos t) - \sin t$ with fixed $h = 10^{-3}$. The exact solution is $u(t) = \cos t$ (dashed) for all $\lambda$. **Left/center:** $\lambda = 0$ and $\lambda = -10$ satisfy the stability condition $h < 2/|\lambda|$ and track the solution accurately. **Right:** $\lambda = -2100$ violates the stability condition ($h|\lambda| = 2.1 > 2$) and the numerical solution oscillates with exponentially growing amplitude.
+Forward Euler applied to $u' = \lambda(u - \cos t) - \sin t$ with fixed $h
+= 10^{-3}$. The exact solution is $u(t) = \cos t$ (dashed) for all $\lambda$.
+**Left/center:** $\lambda = 0$ and $\lambda = -10$ satisfy the stability
+condition $h < 2/|\lambda|$ and track the solution accurately. **Right:**
+$\lambda = -2100$ violates the stability condition ($h|\lambda| = 2.1 > 2$) and
+the numerical solution oscillates with exponentially growing amplitude.
 ```
 
 :::
@@ -576,6 +581,63 @@ The [Stiffness Detection and Auto-Switching notebook](../notebooks/stiffness.ipy
 further: adaptive integrators on the Prothero-Robinson problem reveal the
 $h_{\text{accuracy}}$ vs $h_{\text{stability}}$ gap quantitatively, and
 demonstrate how BS3 stage differences can detect stiffness at zero extra cost.
+:::
+
+---
+
+## What About Rounding Errors?
+
+The convergence theorem ([](#thm-one-step-convergence)) assumes exact arithmetic. On a computer, each step incurs a rounding error $\mu_n$ in addition to the truncation error.
+
+:::{prf:theorem} Total Error with Rounding
+:label: thm-total-error-rounding
+
+Let a single-step method have consistency order $p$, and let the method function $\phi$ be Lipschitz with constant $L_\phi$. If each step incurs a rounding error $\mu_n$, the total error satisfies
+
+$$
+\|u(t_n) - v_n\| \leq e^{L_\phi(t_n - t_0)}\|r_0\| + \frac{e^{L_\phi(t_n - t_0)} - 1}{L_\phi}\left(Ch^p + \max_{0 \leq l \leq n-1}\frac{\|\mu_l\|}{h}\right)
+$$
+
+where $r_0$ is the initial error and $v_n$ is the computed solution.
+:::
+
+The bound has two competing terms as $h \to 0$:
+
+- **Truncation error** $Ch^p$: decreases with smaller $h$.
+- **Rounding error** $\max \|\mu_l\|/h$: *increases* with smaller $h$, since we divide the per-step rounding error (roughly machine epsilon) by an ever-smaller step size.
+
+This creates three regimes:
+
+1. **Large $h$** — the discretization is too coarse to resolve the solution; errors decrease as $h$ shrinks.
+2. **Moderate $h$** — the "sweet spot" where truncation error dominates and convergence at rate $O(h^p)$ is observed.
+3. **Very small $h$** — rounding errors dominate and the total error *increases* as $h$ shrinks further.
+
+```{figure} ../img/rk_round.png
+:width: 95%
+:align: center
+:label: fig-rounding-errors
+
+**Left:** The Arenstorf orbit, a periodic solution of the restricted three-body problem for a satellite travelling around the earth and moon (dots). Due to its sensitivity this system is a standard test case. **Right:** Error after integrating one full period with $2^k$ steps using a Runge-Kutta method. Three regimes are visible: (1) for small $k$ the discretization is too coarse; (2) at moderate $k$ the error decreases rapidly at the expected convergence rate; (3) at large $k$ rounding errors accumulate and the error *increases*.
+```
+
+There is an **optimal step size** $h_{\text{opt}}$ that balances the two contributions. Below $h_{\text{opt}}$, making $h$ smaller makes things worse.
+
+:::{prf:remark} Practical Consequences
+:label: rmk-rounding-practical
+
+- Too-small step sizes must be avoided: they waste computation *and* degrade accuracy.
+- This is another reason why **stiffness** ([](#def-stiff-problem)) is so dangerous: a stiff problem forces an explicit method to use a step size $h_{\text{stability}} \ll h_{\text{accuracy}}$, pushing us deep into the regime where rounding errors dominate. The method is not only wasting work — it is actively losing accuracy.
+- This motivates higher-order methods ([Runge-Kutta](runge-kutta.md)): a method of order $p$ achieves a given accuracy with a larger $h$, staying further from the rounding-error floor.
+- Rounding error accumulation is not just a hardware limitation — it also depends on the implementation. Each Euler step computes $u_{n+1} = u_n + h\phi(t_n, u_n, h)$, which is a *running sum*: we repeatedly add a small increment to a large accumulator. This is exactly the setting where floating-point summation errors accumulate. A **compensated** variant tracks the rounding error explicitly, applying the same idea as Kahan summation (see [exercises Q2.4](../error-stability/exercises.md)):
+
+$$
+\left\{\begin{aligned}
+u_{n+1} &= u_n + \bigl(h\,\phi(t_n, u_n, h) + \mu_n\bigr) \\
+\mu_{n+1} &= (u_{n+1} - u_n) - h\,\phi(t_n, u_n, h)
+\end{aligned}\right.
+$$
+
+with $\mu_0 = 0$. Just as Kahan summation recovers the low-order bits lost when adding a small number to a large running total, this scheme feeds the per-step rounding error back into the next step.
 :::
 
 ---
