@@ -14,6 +14,12 @@ authors:
 
 # The Euler–Maruyama Method
 
+:::{warning} Optional Material
+This section is an **experimental addition** and is **optional material** for MATH 551.
+It is included to give a glimpse of how the ideas from this chapter extend to stochastic settings,
+but it is not part of the core curriculum or assessments.
+:::
+
 :::{tip} Big Idea
 Euler–Maruyama extends forward Euler to **stochastic differential equations** (SDEs):
 at each step we add a deterministic contribution (the *drift*) and a random

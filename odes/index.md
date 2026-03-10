@@ -63,10 +63,12 @@ For **stiff problems**, where $|\lambda|$ is large, explicit methods require imp
 
 After completing this chapter, you should be able to:
 
-- **L3.1:** Derive forward Euler from the forward difference approximation and interpret it geometrically
-- **L3.2:** Compute the local truncation error $\tau_n$ and distinguish it from the one-step error $h\tau_n$
-- **L3.3:** State the Lipschitz condition and explain its role in both existence/uniqueness and convergence
-- **L3.4:** Derive the condition number $e^{LT}$ of an initial value problem from Grönwall's inequality
-- **L3.5:** State and interpret the convergence theorem: consistency of order $p$ implies convergence of order $p$
-- **L3.6:** Determine the stability region of forward Euler and compute the step-size restriction $h \leq 2/|\lambda|$
-- **L3.7:** Recognize stiff problems and explain why they require implicit methods or adaptive step sizes
+- **L3.1:** Derive forward Euler from the forward difference approximation and interpret it geometrically.
+- **L3.2:** Derive backward Euler from the backward finite difference and from integral approximations (right rectangle rule).
+- **L3.3:** Compute the local truncation error $\tau_n$ and distinguish it from the one-step error $h\tau_n$.
+- **L3.4:** State the Lipschitz condition and explain its role in convergence of Euler's method.
+- **L3.5:** Derive the condition number $e^{LT}$ of an initial value problem from Grönwall's inequality.
+- **L3.6:** State and interpret the convergence theorem for forward Euler: the global error satisfies $|E_n| = O(h)$ when $f$ is Lipschitz and the one-step error is $O(h^2)$.
+- **L3.7:** Determine the stability region of forward Euler and compute the step-size restriction $h \leq 2/|\lambda|$. Explain that different ODE methods have stability regions of different sizes, and that larger stability regions allow larger step sizes for stiff problems.
+- **L3.8:** Recognize stiff problems and explain why they require methods with large stability regions or adaptive step sizes.
+- **L3.9:** Given guidance, derive higher-order methods (Runge–Kutta, Rosenbrock) and adaptive time-stepping schemes by Taylor expanding the solution, matching terms to cancel lower-order error, and explaining how this yields higher-order accuracy. *(Practiced on homework—you are not expected to derive these from scratch, but should be able to carry out the derivation in a guided setting.)*

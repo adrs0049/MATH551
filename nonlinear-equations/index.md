@@ -119,14 +119,13 @@ The same idea recurs throughout this course: in ODE integrators, optimization al
 
 After completing this chapter, you should be able to:
 
-- **L3.1:** Derive Newton's method from Taylor series.
-- **L3.2:** Implement Newton's method in code.
-- **L3.3:** Explain quadratic convergence.
-- **L3.4:** Identify when Newton's method fails.
-- **L3.5:** State the Intermediate Value Theorem.
-- **L3.6:** Derive the bisection algorithm.
-- **L3.7:** Calculate required bisection iterations.
-- **L3.8:** Define fixed points and restate root-finding.
-- **L3.9:** State the Banach Fixed Point Theorem.
-- **L3.10:** Apply convergence conditions.
-- **L3.11:** Compute condition numbers for roots.
+- **L4.1:** Explain how iterative methods generate sequences of approximations converging to a solution, and state a stopping criterion.
+- **L4.2:** Define order of convergence (linear, superlinear, quadratic) and determine how many iterations are needed to achieve a desired accuracy.
+- **L4.3:** State the Intermediate Value Theorem and derive the bisection algorithm from it.
+- **L4.4:** Calculate the number of bisection iterations required for a given tolerance.
+- **L4.5:** Define fixed points, restate root finding as a fixed-point problem, and explain why the choice of $g$ matters.
+- **L4.6:** State the Banach Fixed Point Theorem and verify its hypotheses for a given iteration.
+- **L4.7:** Derive Newton's method from Taylor series and identify it as a fixed-point iteration.
+- **L4.8:** Explain why Newton's method converges quadratically for simple roots and identify when it fails (e.g., $f'(x^*) = 0$, bad initial guess).
+- **L4.9:** Compute the condition number $\kappa = 1/|f'(x^*)|$ of a root and explain why multiple roots are ill-conditioned.
+- **L4.10:** Define forward error ($|\hat{x} - x^*|$) and backward error ($|f(\hat{x})|$) for root finding, and relate them via the condition number: forward $\approx \kappa \times$ backward.
