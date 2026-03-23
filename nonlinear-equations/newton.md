@@ -193,42 +193,15 @@ $$
 
 Each Newton step requires solving a linear system—this motivates the linear algebra chapters!
 
-## Multiple Roots
+## Summary
 
-:::{prf:proposition} Reduced Convergence for Multiple Roots
-:label: prop-multiple-roots
+Newton's method is a fixed point iteration engineered so that $g'(c) = 0$, giving **quadratic convergence** near simple roots. The cost of this speed is **locality** — convergence is only guaranteed when $x_0$ is close enough to the root.
 
-When $c$ is a root of multiplicity $p \geq 2$:
-$$
-f(x) = (x-c)^p h(x), \quad h(c) \neq 0
-$$
+| Requirement | Why |
+|-------------|-----|
+| $f'(c) \neq 0$ (simple root) | Otherwise $g'(c) \neq 0$ and quadratic convergence is lost |
+| $f \in \mathcal{C}^2$ | Taylor expansion in the convergence proof needs two derivatives |
+| $x_0$ near $c$ | $g$ is a contraction only locally; far away it may diverge |
+| $f'(x_n) \neq 0$ | Division by zero kills the iteration |
 
-Newton's method only converges **linearly** with rate $C = 1 - 1/p$.
-:::
-
-:::{prf:remark} Modified Newton for Multiple Roots
-:label: rmk-modified-newton
-:class: dropdown
-
-If the multiplicity $p$ is known, the modified iteration:
-$$
-x_{n+1} = x_n - p\frac{f(x_n)}{f'(x_n)}
-$$
-restores quadratic convergence.
-:::
-
-## Advantages and Disadvantages
-
-**Advantages:**
-- **Fast** — Quadratic convergence; digits double each iteration
-- **Generalizes** — Extends naturally to systems in $\mathbb{R}^n$
-- **Foundation** — Basis for many advanced optimization methods
-
-**Disadvantages:**
-- **Requires derivative** — Need $f'(x)$; can approximate with finite differences
-- **Local only** — May diverge with bad initial guess
-- **Singular points** — Fails where $f'(x) \approx 0$
-
-**Variants:**
-- **Secant method:** Approximates $f'(x_n)$ using finite differences. Order $\approx 1.618$ (the golden ratio!)
-- **Quasi-Newton:** For systems, approximate the Jacobian to reduce cost
+When these conditions hold, Newton's method is hard to beat: typically 4–6 iterations to reach machine precision. When they don't, consider bisection (safe but slow) or the secant method (no derivative needed, order $\approx 1.618$).

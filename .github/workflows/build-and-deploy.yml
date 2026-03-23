@@ -202,7 +202,7 @@ jobs:
 
     - name: Build the book
       timeout-minutes: 30
-      run: jupyter-book build --html
+      run: jupyter-book build --execute --html
 
     - name: Print memory log
       if: always()

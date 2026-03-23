@@ -12,7 +12,7 @@ downloads:
 # Error Analysis for Root Finding
 
 :::{tip} Big Idea
-Understanding *how* errors behave in root finding connects three ideas: **condition numbers** tell us how sensitive the root is to perturbations, **forward/backward error** gives us a framework for interpreting computed results, and **convergence rates** tell us how quickly our iterates approach the root.
+A computed root is never exact. The question is: how wrong can it be? **Condition numbers** tell us how sensitive the root is to perturbations in the problem, and **forward/backward error** gives us a framework for interpreting what our algorithm actually computed.
 :::
 
 ## Condition Number for Roots
@@ -65,31 +65,25 @@ The sensitivity to the perturbation is $1/|f'(x^*)|$.
 ::::
 ::::::
 
-### Multiple Roots: A Warning
+:::{prf:remark} Geometric Interpretation
+:label: rmk-condition-number-geometry
 
-::::::{prf:remark} Ill-Conditioning at Multiple Roots
-:label: rmk-ill-conditioning-multiple-roots
+The condition number has a simple geometric meaning:
 
-If $f(x^*) = 0$ and $f'(x^*) = 0$ (a **multiple root**), the condition number is infinite. Multiple roots are inherently ill-conditioned.
+- **Well-conditioned** ($\kappa$ small): $f$ crosses zero steeply. A small vertical perturbation of the curve barely moves the root horizontally.
+- **Ill-conditioned** ($\kappa$ large): $f$ crosses zero at a shallow angle. The same small vertical perturbation slides the root far along the $x$-axis.
 
-::::{dropdown} Why?
-At a double root, $f(x) \approx c(x - x^*)^2$ near $x^*$. A small perturbation $\epsilon$ to the function can:
-- Split the double root into two simple roots
-- Eliminate the root entirely
-- Move the root by $\mathcal{O}(\sqrt{\epsilon})$ instead of $\mathcal{O}(\epsilon)$
-
-This $\sqrt{\epsilon}$ sensitivity means the condition number is effectively $1/\sqrt{\epsilon} \to \infty$.
-::::
-::::::
+This is why nearly-tangent crossings are dangerous: the root sits on a nearly flat part of $f$, so it's easy to perturb.
+:::
 
 ### Examples
 
-::::{admonition} Example: Well-Conditioned Root
-:class: note
+::::{prf:example} Well-Conditioned Root
+:label: ex-well-conditioned-root
+:class: dropdown
 
 Consider $f(x) = x - 1$ with root $x^* = 1$.
 
-:::{dropdown} Analysis
 Since $f'(x) = 1$, we have $f'(x^*) = 1$, so:
 
 $$
@@ -97,15 +91,14 @@ $$
 $$
 
 This is perfectly conditioned. A perturbation of size $\epsilon$ in $f$ causes a perturbation of size $\epsilon$ in the root.
-:::
 ::::
 
-::::{admonition} Example: Ill-Conditioned Root
-:class: note
+::::{prf:example} Ill-Conditioned Root
+:label: ex-ill-conditioned-root
+:class: dropdown
 
 Consider $f(x) = (x-1)^2 - 10^{-10}$ with roots near $x = 1$.
 
-:::{dropdown} Analysis
 The roots are at $x^* = 1 \pm 10^{-5}$.
 
 At these roots, $f'(x^*) = 2(x^* - 1) = \pm 2 \times 10^{-5}$, so:
@@ -115,57 +108,119 @@ $$
 $$
 
 A perturbation of size $10^{-16}$ (machine epsilon) could move the root by $5 \times 10^{-12}$. We can expect to lose about 5 digits of accuracy!
-:::
 ::::
+
+## Multiple Roots
+
+Multiple roots deserve special attention because they are **both ill-conditioned and slow to converge** — a double penalty.
+
+:::{prf:definition} Root Multiplicity
+:label: def-root-multiplicity
+
+A root $x^*$ of $f$ has **multiplicity** $m$ if:
+
+$$
+f(x) = (x - x^*)^m h(x), \quad h(x^*) \neq 0
+$$
+
+Equivalently, $f(x^*) = f'(x^*) = \cdots = f^{(m-1)}(x^*) = 0$ but $f^{(m)}(x^*) \neq 0$.
+:::
+
+::::::{prf:theorem} Ill-Conditioning at Multiple Roots
+:label: thm-ill-conditioning-multiple-roots
+
+If $x^*$ is a root of multiplicity $m \geq 2$, the condition number is **infinite**: the root is infinitely sensitive to perturbations.
+
+::::{prf:proof}
+:class: dropdown
+
+At a multiple root, $f'(x^*) = 0$, so $\kappa = 1/|f'(x^*)| = \infty$.
+
+More precisely, near a double root $f(x) \approx c(x - x^*)^2$. A perturbation $f \to f + \epsilon$ shifts the root by:
+
+$$
+c(\tilde{x}^* - x^*)^2 \approx -\epsilon \implies \tilde{x}^* - x^* \approx \pm\sqrt{\epsilon/c}
+$$
+
+The root moves by $\mathcal{O}(\sqrt{\epsilon})$ instead of $\mathcal{O}(\epsilon)$ — much worse. For a root of multiplicity $m$, the sensitivity is $\mathcal{O}(\epsilon^{1/m})$.
+::::
+::::::
+
+:::{prf:proposition} Reduced Convergence for Multiple Roots
+:label: prop-multiple-roots
+
+When $x^*$ is a root of multiplicity $m \geq 2$, Newton's method converges only **linearly** with rate $\rho = 1 - 1/m$.
+:::
+
+:::{prf:proof}
+:class: dropdown
+
+Write $f(x) = (x - x^*)^m h(x)$ with $h(x^*) \neq 0$. Newton's iteration function is $g(x) = x - f(x)/f'(x)$. A calculation shows:
+
+$$
+g'(x^*) = 1 - \frac{1}{m}
+$$
+
+Since $g'(x^*) \neq 0$, convergence is linear with rate $\rho = |g'(x^*)| = 1 - 1/m$.
+
+For a double root ($m = 2$), $\rho = 1/2$. For a triple root ($m = 3$), $\rho = 2/3$. As the multiplicity increases, convergence slows dramatically.
+:::
+
+:::{prf:remark} Modified Newton for Multiple Roots
+:label: rmk-modified-newton
+:class: dropdown
+
+If the multiplicity $m$ is known, the modified iteration:
+$$
+x_{n+1} = x_n - m\frac{f(x_n)}{f'(x_n)}
+$$
+restores quadratic convergence. This works because the modified iteration function $g(x) = x - mf(x)/f'(x)$ satisfies $g'(x^*) = 0$.
+
+In practice, $m$ is rarely known in advance. An alternative is to apply Newton's method to $u(x) = f(x)/f'(x)$, which has a simple root at $x^*$ regardless of the multiplicity of $f$.
+:::
 
 ## Forward and Backward Error
 
-The [forward/backward error framework](../qr-least-squares/forward-backward-error.md) from earlier applies naturally to root finding.
+Root-finding algorithms return an approximation $\hat{x} \approx x^*$. There are two natural ways to measure the quality of this approximation.
 
-### Forward Error
-
-:::{prf:definition} Forward Error for Root Finding
+:::{prf:definition} Forward Error
 :label: def-forward-error-root-finding
 
-Given an approximate root $\hat{x}$, the **forward error** is:
+The **forward error** is the distance from the computed root to the true root:
 
 $$
-\text{Forward Error} = |\hat{x} - x^*|
+\Delta x = |\hat{x} - x^*|
 $$
-
-This measures how far our approximation is from the true root.
 :::
 
-The forward error is what we ultimately care about, but it's hard to compute directly (we don't know $x^*$!).
-
-### Backward Error
-
-:::{prf:definition} Backward Error for Root Finding
+:::{prf:definition} Backward Error
 :label: def-backward-error-root-finding
 
-Given an approximate root $\hat{x}$, the **backward error** is:
+The **backward error** is the residual — how well $\hat{x}$ satisfies the equation:
 
 $$
-\text{Backward Error} = |f(\hat{x})|
+|f(\hat{x})|
 $$
 
-This measures how well $\hat{x}$ satisfies the equation $f(x) = 0$.
+This answers: *for what perturbation of the problem is $\hat{x}$ the exact answer?*
 :::
 
-The backward error is easy to compute: just evaluate $f(\hat{x})$.
+The forward error is what we care about but can't compute (we don't know $x^*$). The backward error is easy to compute — just evaluate $f(\hat{x})$.
 
 ### The Connection
 
-::::::{prf:theorem} Relating Forward and Backward Error
+::::::{prf:theorem} Forward Error $\approx$ Condition Number $\times$ Backward Error
 :label: thm-relating-forward-backward-error
 
-For root finding, the forward and backward errors are related by:
+For root finding near a simple root:
 
 $$
-|\hat{x} - x^*| \approx \frac{|f(\hat{x})|}{|f'(x^*)|} = \kappa \cdot |f(\hat{x})|
+\underbrace{|\hat{x} - x^*|}_{\text{forward error}} \approx \underbrace{\frac{1}{|f'(x^*)|}}_{\kappa} \cdot \underbrace{|f(\hat{x})|}_{\text{backward error}}
 $$
 
-::::{dropdown} Derivation
+::::{prf:proof}
+:class: dropdown
+
 By Taylor's theorem:
 
 $$
@@ -180,167 +235,22 @@ $$
 ::::
 ::::::
 
-### Practical Implications
+This is the fundamental relationship of numerical root finding, and it has immediate practical consequences.
 
-:::{admonition} Stopping Criteria
-:class: note
+### Stopping Criteria
 
-This relationship explains why we use **two stopping criteria** in practice:
+:::{prf:remark} Two Stopping Criteria
+:label: rmk-stopping-criteria
 
-1. **Residual test:** Stop when $|f(x_n)| < \epsilon_1$ (small backward error)
-2. **Step test:** Stop when $|x_{n+1} - x_n| < \epsilon_2$ (approximate forward error)
+In practice, we use **two** stopping criteria:
 
-For well-conditioned problems ($\kappa \approx 1$), these are equivalent. For ill-conditioned problems, a small residual doesn't guarantee a small forward error!
+1. **Residual test:** Stop when $|f(x_n)| < \varepsilon_1$ (small backward error)
+2. **Step test:** Stop when $|x_{n+1} - x_n| < \varepsilon_2$ (approximate forward error)
+
+For **well-conditioned** problems ($\kappa \approx 1$), these are equivalent: a small residual guarantees a small forward error.
+
+For **ill-conditioned** problems ($\kappa \gg 1$), they can disagree dramatically. A small residual $|f(\hat{x})| = 10^{-15}$ with $\kappa = 10^5$ means the forward error could be as large as $10^{-10}$.
+
+**Rule of thumb:** always check both. If the residual is small but the iterates are still moving, the problem is ill-conditioned.
 :::
 
-## Convergence Rates
-
-Different root-finding methods converge at different rates. Understanding these rates helps us choose the right method.
-
-### Linear Convergence
-
-::::::{prf:definition} Linear (First-Order) Convergence
-:label: def-linear-convergence
-
-A sequence $\{x_n\}$ converges **linearly** to $x^*$ if:
-
-$$
-|x_{n+1} - x^*| \leq L \, |x_n - x^*|
-$$
-
-for some constant $L < 1$.
-
-::::{dropdown} What this means
-Each iteration reduces the error by a constant factor $L$. If $L = 0.5$, we gain about 0.3 digits per iteration ($-\log_{10}(0.5) \approx 0.3$).
-
-After $n$ iterations:
-$$
-|x_n - x^*| \leq L^n |x_0 - x^*|
-$$
-
-To gain $d$ digits of accuracy, we need approximately $n \approx d / \log_{10}(1/L)$ iterations.
-::::
-::::::
-
-**Examples of linear convergence:**
-- **Bisection:** $L = 0.5$ (exactly halves error each step)
-- **Fixed-point iteration:** $L = |g'(x^*)|$ when $|g'(x^*)| < 1$
-
-### Quadratic Convergence
-
-::::::{prf:definition} Quadratic (Second-Order) Convergence
-:label: def-quadratic-convergence
-
-A sequence $\{x_n\}$ converges **quadratically** to $x^*$ if:
-
-$$
-|x_{n+1} - x^*| \leq C \, |x_n - x^*|^2
-$$
-
-for some constant $C$.
-
-::::{dropdown} What this means
-The number of correct digits approximately **doubles** each iteration!
-
-If the error is $10^{-3}$, the next error is roughly $10^{-6}$, then $10^{-12}$.
-
-To go from 3 correct digits to 12 correct digits takes only 2 iterations.
-::::
-::::::
-
-**Examples of quadratic convergence:**
-- **Newton's method** (for simple roots with good initial guess)
-
-### Superlinear Convergence
-
-::::::{prf:definition} Superlinear Convergence
-:label: def-superlinear-convergence
-
-A sequence $\{x_n\}$ converges **superlinearly** to $x^*$ if:
-
-$$
-\lim_{n \to \infty} \frac{|x_{n+1} - x^*|}{|x_n - x^*|} = 0
-$$
-
-::::{dropdown} What this means
-The ratio of consecutive errors goes to zero—faster than any geometric rate, but not necessarily quadratic.
-
-Superlinear convergence is "between" linear and quadratic: the effective contraction factor improves as we get closer to the root.
-::::
-::::::
-
-**Examples of superlinear convergence:**
-- **Secant method:** Order $\approx 1.618$ (the golden ratio)
-- **Quasi-Newton methods:** Achieve superlinear without computing exact derivatives
-
-### General Order of Convergence
-
-::::::{prf:definition} Order of Convergence
-:label: def-order-convergence
-
-A sequence $\{x_n\}$ converging to $x^*$ has **order of convergence** $p \geq 1$ if:
-
-$$
-\lim_{n \to \infty} \frac{|x_{n+1} - x^*|}{|x_n - x^*|^p} = C
-$$
-
-for some constant $C > 0$ (the **asymptotic error constant**).
-
-| Order $p$ | Name | Digits gained per iteration |
-|-----------|------|----------------------------|
-| $p = 1$ | Linear | $-\log_{10}(C)$ (constant) |
-| $1 < p < 2$ | Superlinear | Increasing |
-| $p = 2$ | Quadratic | Doubles |
-| $p = 3$ | Cubic | Triples |
-::::::
-
-::::::{prf:example} Orders of Common Methods
-:label: ex-convergence-orders
-
-| Method | Order $p$ | Asymptotic Error Constant |
-|--------|-----------|---------------------------|
-| Bisection | 1 | $C = 0.5$ |
-| Fixed-point ($g'(x^*) \neq 0$) | 1 | $C = \|g'(x^*)\|$ |
-| Secant | $\phi \approx 1.618$ | Depends on $f$ |
-| Newton (simple root) | 2 | $C = \|f''(x^*)\|/(2\|f'(x^*)\|)$ |
-| Newton (double root) | 1 | Degrades to linear! |
-| Halley | 3 | Uses second derivatives |
-
-:::{dropdown} Why the secant method has order $\phi$
-The secant method uses $x_{n+1} = x_n - f(x_n) \frac{x_n - x_{n-1}}{f(x_n) - f(x_{n-1})}$.
-
-The error satisfies $e_{n+1} \approx C \cdot e_n \cdot e_{n-1}$. Assuming $e_n \sim e_0^{p^n}$ leads to $p^2 = p + 1$, giving $p = \frac{1 + \sqrt{5}}{2} = \phi$.
-:::
-::::::
-
-### Comparison
-
-| Method | Convergence | Rate | Iterations for 10 digits |
-|--------|-------------|------|--------------------------|
-| Bisection | Linear | $L = 0.5$ | ~34 |
-| Fixed-point (typical) | Linear | $L = 0.9$ | ~220 |
-| Newton's method | Quadratic | doubles digits | ~4-5 |
-
-:::{admonition} The Trade-off
-:class: tip
-
-Faster convergence comes at a cost:
-- **Bisection:** Slow but guaranteed (only needs $f$ continuous, sign change)
-- **Fixed-point:** Moderate, needs $|g'| < 1$
-- **Newton:** Fast but needs $f'$, good initial guess, and $f'(x^*) \neq 0$
-
-In practice, a common strategy is: use bisection to get close, then switch to Newton for fast final convergence.
-:::
-
-## Summary
-
-| Concept | Formula | Interpretation |
-|---------|---------|----------------|
-| Condition number | $\kappa = 1/\|f'(x^*)\|$ | Sensitivity of root to perturbations |
-| Forward error | $\|\hat{x} - x^*\|$ | Distance from true root |
-| Backward error | $\|f(\hat{x})\|$ | Residual |
-| Error relationship | Forward $\approx \kappa \times$ Backward | Why both stopping criteria matter |
-| Linear convergence | $e_{n+1} \leq L \cdot e_n$ | Constant factor reduction |
-| Superlinear convergence | $e_{n+1}/e_n \to 0$ | Ratio improves each step |
-| Quadratic convergence | $e_{n+1} \leq C \cdot e_n^2$ | Digits double each step |
-| Order $p$ convergence | $e_{n+1} \sim C \cdot e_n^p$ | General framework |
