@@ -195,7 +195,10 @@ Each Newton step requires solving a linear system—this motivates the linear al
 
 ## Summary
 
-Newton's method is a fixed point iteration engineered so that $g'(c) = 0$, giving **quadratic convergence** near simple roots. The cost of this speed is **locality** — convergence is only guaranteed when $x_0$ is close enough to the root.
+Newton's method is a fixed point iteration engineered so that $g'(c) = 0$,
+giving **quadratic convergence** near simple roots. The cost of this speed is
+**locality** — convergence is only guaranteed when $x_0$ is close enough to the
+root.
 
 | Requirement | Why |
 |-------------|-----|
@@ -204,4 +207,7 @@ Newton's method is a fixed point iteration engineered so that $g'(c) = 0$, givin
 | $x_0$ near $c$ | $g$ is a contraction only locally; far away it may diverge |
 | $f'(x_n) \neq 0$ | Division by zero kills the iteration |
 
-When these conditions hold, Newton's method is hard to beat: typically 4–6 iterations to reach machine precision. When they don't, consider bisection (safe but slow) or the secant method (no derivative needed, order $\approx 1.618$).
+When these conditions hold, Newton's method typically reaches machine precision
+in 4--6 iterations. When they don't, consider bisection (safe but slow) or the
+secant method (no derivative needed, order $\approx 1.618$).
+

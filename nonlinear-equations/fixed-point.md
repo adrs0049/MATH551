@@ -37,7 +37,7 @@ There are many ways to do this! Given $f(x) = 0$, you could write:
 - $g(x) = x - cf(x)$ for any nonzero $c$
 - $g(x) = x - f(x)/f'(x)$ (this gives Newton's method!)
 
-**The choice of $g$ matters enormously** for convergence—as we'll see.
+**The choice of $g$ matters enormously** for convergence --as we'll see.
 
 ## The Algorithm
 
@@ -62,7 +62,7 @@ That's it. But this simplicity raises three fundamental questions:
 2. **Does the iteration converge?** Starting from $x_0$, will the sequence $\{x_n\}$ actually reach the fixed point?
 3. **How fast does it converge?** Can we do better than bisection's linear rate?
 
-The answer to all three turns on a single quantity: **$|g'(x)|$ near the fixed point**. When $|g'| < 1$, the map $g$ is a *contraction* — it pulls nearby points closer together, and the iteration spirals inward. When $|g'| \geq 1$, it pushes points apart, and the iteration diverges. The choice of $g$ controls $g'$, which is why different reformulations of the same problem can behave so differently.
+The answer to all three turns on a single quantity: **$|g'(x)|$ near the fixed point**. When $|g'| < 1$, the map $g$ is a *contraction*  -- it pulls nearby points closer together, and the iteration spirals inward. When $|g'| \geq 1$, it pushes points apart, and the iteration diverges. The choice of $g$ controls $g'$, which is why different reformulations of the same problem can behave so differently.
 
 ## Why the Choice of $g$ Matters
 
@@ -77,19 +77,21 @@ Here are three valid reformulations:
 All three have $\sqrt{3}$ as a fixed point. But their behavior is dramatically different:
 - **G1** cycles forever, never converging
 - **G2** converges slowly (linearly)
-- **G3** converges rapidly (quadratically—this is Newton's method!)
+- **G3** converges rapidly (quadratically --this is Newton's method!)
 
 :::{seealso}
-[Fixed Point Iteration Demo](fixed-point-iteration.ipynb) — Compare G1, G2, G3 convergence behavior
+[Fixed Point Iteration Demo](fixed-point-iteration.ipynb)  -- Compare G1, G2, G3 convergence behavior
 :::
 
 ## Existence and Uniqueness
 
-When does a fixed point exist? When is it unique? The answers come from two conditions, each with a clear geometric meaning.
+There are three separate questions to answer, each requiring its own condition:
 
-**Existence** requires that $g$ maps $[a,b]$ into itself: $g([a,b]) \subseteq [a,b]$. Geometrically, this traps the graph of $g$ inside the box $[a,b] \times [a,b]$. Since the graph enters the box with $g(a) \geq a$ and exits with $g(b) \leq b$, it *must* cross the diagonal $y = x$ somewhere — that crossing is a fixed point.
+**1. Existence**  -- *Does a fixed point exist at all?* This only requires that $g$ maps $[a,b]$ into itself: $g([a,b]) \subseteq [a,b]$. Geometrically, this traps the graph of $g$ inside the box $[a,b] \times [a,b]$. Since $g(a) \geq a$ and $g(b) \leq b$, the graph *must* cross the diagonal $y = x$  -- that crossing is a fixed point (left panel). But there could be many crossings.
 
-**Uniqueness** requires that $|g'(x)| < 1$ on the interval — the graph of $g$ is *flatter* than the diagonal. A curve flatter than the line it crosses can only cross it once.
+**2. Uniqueness**  -- *Is there only one fixed point?* This requires $|g'(x)| \leq \rho < 1$ on the interval. The map is then a *contraction*: it shrinks distances. If two fixed points $c_1, c_2$ existed, the MVT gives $|c_1 - c_2| = |g(c_1) - g(c_2)| = |g'(\xi)||c_1 - c_2| \leq \rho|c_1 - c_2|$, a contradiction since $\rho < 1$. Geometrically, $|g'| < 1$ means the graph is everywhere less steep than the diagonal, so it can only cross once (panel 2). When $|g'| > 1$, the graph can be steeper than the diagonal, allowing multiple crossings (panel 4).
+
+**3. Convergence**  -- *Does the iteration $x_{n+1} = g(x_n)$ actually reach the fixed point?* This is a question about the *dynamics* of iterating $g$, not just its graph. The same contraction condition $|g'| \leq \rho < 1$ guarantees convergence: each step shrinks the distance to the fixed point, so the cobweb spirals inward (panel 2). When $|g'| > 1$, the iteration *amplifies* errors  -- the cobweb diverges away from the fixed point even if you start nearby (panel 3).
 
 ```{code-cell} python
 :tags: [hide-input]
@@ -97,71 +99,86 @@ When does a fixed point exist? When is it unique? The answers come from two cond
 import numpy as np
 import matplotlib.pyplot as plt
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.5))
+fig, axes = plt.subplots(1, 4, figsize=(18, 4.5))
+ax1, ax2, ax3, ax4 = axes
 
 a, b = 0.5, 2.5
 x = np.linspace(a, b, 200)
 
-# --- Left panel: Existence (g maps [a,b] into [a,b]) ---
-g1 = lambda x: 0.4*np.sin(3*x) + 1.5  # maps [a,b] into [a,b], multiple fixed points
-y1 = g1(x)
-
-# The box
-ax1.plot([a, b, b, a, a], [a, a, b, b, a], 'k-', linewidth=1.5, label=r'Box $[a,b] \times [a,b]$')
-ax1.fill_between([a, b], a, b, alpha=0.08, color='blue')
-ax1.plot(x, x, 'k--', linewidth=1, alpha=0.6, label=r'$y = x$')
-ax1.plot(x, y1, 'b-', linewidth=2.5, label=r'$y = g(x)$')
-
-# Mark fixed points (where g(x) = x)
 from scipy.optimize import brentq
-# Find crossings
-crossings = []
-h1 = y1 - x
-for i in range(len(h1)-1):
-    if h1[i] * h1[i+1] < 0:
-        root = brentq(lambda t: g1(t) - t, x[i], x[i+1])
-        crossings.append(root)
 
-for c in crossings:
-    ax1.plot(c, c, 'ro', markersize=8, zorder=5)
+def plot_box(ax):
+    ax.plot([a, b, b, a, a], [a, a, b, b, a], 'k-', linewidth=1.5)
+    ax.fill_between([a, b], a, b, alpha=0.08, color='blue')
+    ax.plot(x, x, 'k--', linewidth=1, alpha=0.6)
 
-ax1.set_xlim(a - 0.15, b + 0.15)
-ax1.set_ylim(a - 0.15, b + 0.15)
-ax1.set_xlabel('$x$')
-ax1.set_ylabel('$y$')
-ax1.set_title('Existence: $g([a,b]) \\subseteq [a,b]$\ngraph must cross $y = x$')
-ax1.legend(fontsize=8, loc='upper left')
-ax1.set_aspect('equal')
+def find_and_mark_crossings(ax, g):
+    y = g(x)
+    h = y - x
+    for i in range(len(h)-1):
+        if h[i] * h[i+1] < 0:
+            root = brentq(lambda t: g(t) - t, x[i], x[i+1])
+            ax.plot(root, root, 'ro', markersize=8, zorder=5)
 
-# --- Right panel: Uniqueness (|g'| < 1 means flatter than diagonal) ---
-g2 = lambda x: 0.4*x + 0.9   # |g'| = 0.4 < 1, unique fixed point
-y2 = g2(x)
+def setup_ax(ax, title):
+    ax.set_xlim(a - 0.15, b + 0.15)
+    ax.set_ylim(a - 0.15, b + 0.15)
+    ax.set_xlabel('$x$')
+    ax.set_ylabel('$y$')
+    ax.set_title(title)
+    ax.legend(fontsize=7, loc='upper left')
+    ax.set_aspect('equal')
 
-ax2.plot([a, b, b, a, a], [a, a, b, b, a], 'k-', linewidth=1.5)
-ax2.fill_between([a, b], a, b, alpha=0.08, color='blue')
-ax2.plot(x, x, 'k--', linewidth=1, alpha=0.6, label=r'$y = x$ (slope 1)')
-ax2.plot(x, y2, 'b-', linewidth=2.5, label=r"$y = g(x)$, $|g'| = 0.4 < 1$")
+# --- Panel 1: Existence (g maps [a,b] into [a,b]) ---
+g1 = lambda x: 0.4*np.sin(3*x) + 1.5
+plot_box(ax1)
+ax1.plot(x, g1(x), 'b-', linewidth=2.5, label=r'$y = g(x)$')
+find_and_mark_crossings(ax1, g1)
+setup_ax(ax1, 'Existence: $g([a,b]) \\subseteq [a,b]$\ngraph must cross $y = x$')
 
-# Mark the unique fixed point
-c2 = 0.9 / 0.6  # g(x) = x => 0.4x + 0.9 = x => x = 1.5
-ax2.plot(c2, c2, 'ro', markersize=8, zorder=5, label='Unique fixed point')
+# --- Panel 2: Contraction (|g'| < 1) => unique + converges ---
+g2 = lambda x: 0.4*x + 0.9   # |g'| = 0.4 < 1
+plot_box(ax2)
+ax2.plot(x, g2(x), 'b-', linewidth=2.5, label=r"$|g'| = 0.4 < 1$")
+find_and_mark_crossings(ax2, g2)
 
-# Show slope comparison
-xm = 1.8
-ax2.annotate('', xy=(xm + 0.5, g2(xm) + 0.2), xytext=(xm, g2(xm)),
-            arrowprops=dict(arrowstyle='->', color='blue', lw=1.5))
-ax2.annotate('', xy=(xm + 0.5, xm + 0.5), xytext=(xm, xm),
-            arrowprops=dict(arrowstyle='->', color='gray', lw=1.5))
-ax2.text(xm + 0.52, g2(xm) + 0.05, "slope $< 1$", fontsize=9, color='blue')
-ax2.text(xm + 0.52, xm + 0.35, "slope $= 1$", fontsize=9, color='gray')
+# Cobweb showing contraction
+x_cob = 2.2
+for _ in range(6):
+    x_next = g2(x_cob)
+    ax2.plot([x_cob, x_cob], [x_cob, x_next], 'g-', alpha=0.5, linewidth=1)
+    ax2.plot([x_cob, x_next], [x_next, x_next], 'g-', alpha=0.5, linewidth=1)
+    x_cob = x_next
 
-ax2.set_xlim(a - 0.15, b + 0.15)
-ax2.set_ylim(a - 0.15, b + 0.15)
-ax2.set_xlabel('$x$')
-ax2.set_ylabel('$y$')
-ax2.set_title('Uniqueness: $|g\'| < 1$\nflatter than diagonal $\\Rightarrow$ one crossing')
-ax2.legend(fontsize=8, loc='upper left')
-ax2.set_aspect('equal')
+setup_ax(ax2, "Contraction: $|g'| < 1$\ncobweb spirals in, unique fixed point")
+
+# --- Panel 3: |g'| > 1 linear => cobweb diverges ---
+g3 = lambda x: 1.8*x - 1.2   # |g'| = 1.8 > 1
+plot_box(ax3)
+ax3.plot(x, g3(x), 'r-', linewidth=2.5, label=r"$|g'| = 1.8 > 1$", clip_on=True)
+find_and_mark_crossings(ax3, g3)
+
+# Cobweb showing divergence
+c3 = 1.2 / 0.8  # = 1.5
+x_cob = c3 + 0.1
+for _ in range(4):
+    x_next = g3(x_cob)
+    if x_next < a - 0.5 or x_next > b + 0.5:
+        break
+    ax3.plot([x_cob, x_cob], [x_cob, x_next], 'g-', alpha=0.5, linewidth=1)
+    ax3.plot([x_cob, x_next], [x_next, x_next], 'g-', alpha=0.5, linewidth=1)
+    x_cob = x_next
+
+setup_ax(ax3, "Not a contraction: $|g'| > 1$\ncobweb diverges")
+
+# --- Panel 4: Nonlinear with |g'| > 1 => multiple fixed points ---
+# Steep S-curve: maps [a,b] into [a,b] but |g'| > 1 in the middle
+g4 = lambda x: 1.5 + 0.95*np.tanh(2.5*(x - 1.5))
+plot_box(ax4)
+ax4.plot(x, g4(x), 'r-', linewidth=2.5, label=r"$|g'| > 1$ near crossings")
+find_and_mark_crossings(ax4, g4)
+
+setup_ax(ax4, "Multiple fixed points\n$|g'| > 1$ allows extra crossings")
 
 plt.tight_layout()
 plt.show()
@@ -182,7 +199,7 @@ Given $g: [a, b] \to \mathbb{R}$:
 
 Define $h(x) = x - g(x)$.
 
-If $g(a) = a$ or $g(b) = b$, we're done—we've found a fixed point.
+If $g(a) = a$ or $g(b) = b$, we're done --we've found a fixed point.
 
 Otherwise, since $g([a,b]) \subseteq [a,b]$:
 - $g(a) > a$, so $h(a) = a - g(a) < 0$
@@ -202,7 +219,7 @@ $$
 
 for some $\xi \in (c_1, c_2)$.
 
-This implies $(1-\rho)|c_1 - c_2| \leq 0$. But $\rho < 1$ and $c_1 \neq c_2$, so $(1-\rho)|c_1 - c_2| > 0$—a contradiction.
+This implies $(1-\rho)|c_1 - c_2| \leq 0$. But $\rho < 1$ and $c_1 \neq c_2$, so $(1-\rho)|c_1 - c_2| > 0$ --a contradiction.
 :::
 
 ## Convergence
@@ -245,7 +262,7 @@ $$
 |e_{n+1}| \leq \rho\, |e_n|
 $$
 
-The value of $\rho$ — the **contraction factor** — controls the speed:
+The value of $\rho$  -- the **contraction factor**  -- controls the speed:
 - $\rho$ close to $0$: fast convergence (each step eliminates most of the error)
 - $\rho$ close to $1$: painfully slow (each step barely improves the approximation)
 - $\rho = 1$: no guarantee of convergence at all
@@ -288,7 +305,7 @@ plt.show()
 :::{prf:remark} Local Convergence
 :label: rmk-local-convergence
 
-Even if $|g'(x)| < 1$ only *at* the fixed point (not on the whole interval), the iteration still converges—provided we start close enough. This is called **local convergence**.
+Even if $|g'(x)| < 1$ only *at* the fixed point (not on the whole interval), the iteration still converges --provided we start close enough. This is called **local convergence**.
 
 Specifically: if $g \in \mathcal{C}^1$, $g(c) = c$, and $|g'(c)| < 1$, then there exists $\delta > 0$ such that the iteration converges for any $x_0$ with $|x_0 - c| < \delta$.
 :::
@@ -299,11 +316,11 @@ The key insight: **$|g'(c)|$ determines everything**.
 
 For our three reformulations of $x^2 - 3 = 0$:
 
-- $g_1(x) = 3/x$: We have $g_1'(x) = -3/x^2$, so $|g_1'(\sqrt{3})| = 1$. Right on the boundary—no convergence guaranteed (and indeed, it fails).
+- $g_1(x) = 3/x$: We have $g_1'(x) = -3/x^2$, so $|g_1'(\sqrt{3})| = 1$. Right on the boundary --no convergence guaranteed (and indeed, it fails).
 
 - $g_2(x) = x - (x^2-3)/2$: We have $g_2'(x) = 1 - x$, so $|g_2'(\sqrt{3})| = |1 - \sqrt{3}| \approx 0.73$. Linear convergence with rate $\rho \approx 0.73$.
 
-- $g_3(x) = (x^2+3)/(2x)$: We have $g_3'(x) = 1/2 - 3/(2x^2)$, so $g_3'(\sqrt{3}) = 0$. The derivative vanishes—this signals faster-than-linear convergence.
+- $g_3(x) = (x^2+3)/(2x)$: We have $g_3'(x) = 1/2 - 3/(2x^2)$, so $g_3'(\sqrt{3}) = 0$. The derivative vanishes --this signals faster-than-linear convergence.
 
 ## Order of Convergence
 
@@ -355,9 +372,9 @@ The error relation $|e_{n+1}| \approx C|e_n|^p$ has dramatic consequences as $p$
 
 **Linear** ($p = 1$): Each step multiplies the error by $\rho$. To gain one digit of accuracy, you always need a fixed number of iterations. Progress is steady but slow.
 
-**Quadratic** ($p = 2$): Each step *squares* the error. If $e_n \approx 10^{-3}$, then $e_{n+1} \approx 10^{-6}$, then $e_{n+2} \approx 10^{-12}$. The number of correct digits **doubles** at every step. This is why Newton's method feels like it "suddenly" converges — the first few iterations seem slow, then accuracy explodes.
+**Quadratic** ($p = 2$): Each step *squares* the error. If $e_n \approx 10^{-3}$, then $e_{n+1} \approx 10^{-6}$, then $e_{n+2} \approx 10^{-12}$. The number of correct digits **doubles** at every step. This is why Newton's method feels like it "suddenly" converges  -- the first few iterations seem slow, then accuracy explodes.
 
-**Cubic** ($p = 3$): Each step *cubes* the error. The number of correct digits **triples** each step — even faster, but rarely worth the extra cost per iteration in practice.
+**Cubic** ($p = 3$): Each step *cubes* the error. The number of correct digits **triples** each step  -- even faster, but rarely worth the extra cost per iteration in practice.
 :::
 
 ```{code-cell} python
@@ -408,19 +425,6 @@ ax.semilogy(n, e_cubic, 'D-', color='#2ca02c', linewidth=2, markersize=6,
 ax.axhline(y=1e-15, color='gray', linestyle=':', linewidth=1, label='Machine epsilon')
 
 # Annotate the quadratic "doubling digits" effect
-ax.annotate('1 digit', xy=(1, e_quad[1]), xytext=(1.6, 1e-1),
-            fontsize=9, color='#1f77b4',
-            arrowprops=dict(arrowstyle='->', color='#1f77b4', lw=1.2))
-ax.annotate('2 digits', xy=(2, e_quad[2]), xytext=(2.6, 3e-3),
-            fontsize=9, color='#1f77b4',
-            arrowprops=dict(arrowstyle='->', color='#1f77b4', lw=1.2))
-ax.annotate('4 digits', xy=(3, e_quad[3]), xytext=(3.6, 3e-5),
-            fontsize=9, color='#1f77b4',
-            arrowprops=dict(arrowstyle='->', color='#1f77b4', lw=1.2))
-ax.annotate('8 digits', xy=(4, e_quad[4]), xytext=(4.6, 3e-7),
-            fontsize=9, color='#1f77b4',
-            arrowprops=dict(arrowstyle='->', color='#1f77b4', lw=1.2))
-
 ax.set_xlabel('Iteration $n$', fontsize=12)
 ax.set_ylabel('Error $|e_n|$', fontsize=12)
 ax.set_title('Linear vs quadratic vs cubic convergence')
@@ -472,11 +476,14 @@ Everything in this section comes down to one question: **how do you pick $g$?**
 
 Given $f(x) = 0$, there are infinitely many ways to rewrite it as $x = g(x)$. The right choice is governed by $|g'(c)|$ at the fixed point:
 
-| $|g'(c)|$ | Behavior | Convergence |
-|-----------|----------|-------------|
-| $> 1$ | Iteration diverges | None |
-| $= 1$ | Borderline — may or may not converge | Uncertain |
-| $0 < \rho < 1$ | Linear convergence with rate $\rho$ | Slow if $\rho \approx 1$, fast if $\rho \approx 0$ |
-| $= 0$ | At least quadratic convergence | Fast — digits of accuracy double each step |
+| Derivative at fixed point | Behavior | Convergence |
+|---------------------------|----------|-------------|
+| $\lvert g'(c) \rvert > 1$ | Iteration diverges | None |
+| $\lvert g'(c) \rvert = 1$ | Borderline, may or may not converge | Uncertain |
+| $0 < \lvert g'(c) \rvert < 1$ | Linear convergence with rate $\rho$ | Slow if $\rho \approx 1$, fast if $\rho \approx 0$ |
+| $g'(c) = 0$ | At least quadratic convergence | Fast, digits of accuracy double each step |
 
-**The design principle:** make $|g'(c)|$ as small as possible. The optimal choice is $g'(c) = 0$, which yields quadratic convergence. This is exactly what Newton's method achieves by setting $g(x) = x - f(x)/f'(x)$ — as we'll see in the next section.
+**The design principle:** make $|g'(c)|$ as small as possible. The optimal
+choice is $g'(c) = 0$, which yields quadratic convergence. This is exactly what
+Newton's method achieves by setting $g(x) = x - f(x)/f'(x)$.
+
