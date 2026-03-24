@@ -265,7 +265,7 @@ for nb_file in sorted(os.listdir('notebooks')):
 
     - name: Build the book
       timeout-minutes: 30
-      run: jupyter-book build --execute --html
+      run: jupyter-book build --execute --execute-parallel 2 --html
 
     - name: Print memory log
       if: always()
