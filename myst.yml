@@ -188,7 +188,6 @@ project:
         - file: qr-least-squares/qr-factorization.md
         - file: qr-least-squares/condition-stability.md
         - file: qr-least-squares/least-squares.md
-        - file: qr-least-squares/qr-solving.md
         - file: qr-least-squares/exercises.md
         - file: qr-least-squares/iterative-methods.md
     # NONLINEAR SYSTEMS - NOT IN SCHEDULE

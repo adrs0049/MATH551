@@ -76,6 +76,26 @@ For the matrix $A = \begin{pmatrix} 1 & 1 \\ 1 & 0 \\ 0 & 1 \end{pmatrix}$:
 
 ---
 
+### Q9.3b: Deriving the Normal Equations
+
+The least squares solution $\hat{\mathbf{x}}$ minimizes
+$\|A\mathbf{x} - \mathbf{b}\|_2$ over all $\mathbf{x} \in \mathbb{R}^n$.
+
+**(a)** The [best approximation theorem](orthogonality.md#thm-best-approximation)
+says $A\hat{\mathbf{x}}$ is the closest point in $\text{R}(A)$ to $\mathbf{b}$
+if and only if $\mathbf{b} - A\hat{\mathbf{x}} \perp \text{R}(A)$. Use this to
+show that $A^T(\mathbf{b} - A\hat{\mathbf{x}}) = \mathbf{0}$, and hence
+$A^TA\hat{\mathbf{x}} = A^T\mathbf{b}$.
+
+**(b)** Show that $A^TA$ is positive definite when $A$ has full column rank
+(use the fact that $\mathbf{x}^TA^TA\mathbf{x} = \|A\mathbf{x}\|^2$).
+
+**(c)** Give an alternative derivation: define
+$f(\mathbf{x}) = \|A\mathbf{x} - \mathbf{b}\|^2$, expand, take the gradient,
+and set it to zero.
+
+---
+
 ### Q9.4: Normal Equations
 
 Consider the least squares problem $\min_x \|Ax - b\|_2$ with:

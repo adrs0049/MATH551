@@ -217,27 +217,46 @@ LAPACK's routines (e.g., `dgecon`) implement this estimation automatically. When
 This gives you a **reliable error bound** essentially for free!
 :::
 
-## Stability of Algorithms: A Preview
+## Backward Stability
 
-An algorithm is **backward stable** if it produces a solution with backward error $\sim \varepsilon_{\text{mach}}$. Combined with the golden rule:
+We introduced [stability](../error-stability/stability.md#def-stable-algorithm)
+earlier as a property of algorithms. For linear systems, the relevant concept
+is **backward stability**.
+
+:::{prf:definition} Backward Stable Algorithm
+:label: def-backward-stable-linalg
+
+An algorithm for solving $A\mathbf{x} = \mathbf{b}$ is **backward stable** if
+the computed solution $\hat{\mathbf{x}}$ satisfies:
 
 $$
-\text{forward error} \lesssim \kappa(A) \cdot \varepsilon_{\text{mach}}
+(A + \delta A)\hat{\mathbf{x}} = \mathbf{b} + \delta\mathbf{b}, \quad
+\frac{\|\delta A\|}{\|A\|} = O(\varepsilon_{\text{mach}}), \quad
+\frac{\|\delta\mathbf{b}\|}{\|\mathbf{b}\|} = O(\varepsilon_{\text{mach}})
 $$
 
-This is the best we can hope for—any algorithm must contend with the condition number.
-
-:::{admonition} What About Forward Stability?
-:class: note
-
-An algorithm is **forward stable** if it achieves forward error $\lesssim \kappa(A) \cdot \varepsilon_{\text{mach}}$ directly.
-
-Backward stability *implies* forward stability (via the golden rule), but is a stronger guarantee: it tells us the computed answer is the *exact* answer to a nearby problem. This is more useful because:
-- It separates algorithm quality from problem sensitivity
-- It applies even when we can't compute the true answer
+That is, $\hat{\mathbf{x}}$ is the *exact* solution to a *nearby* problem.
 :::
 
-**Coming up:** We'll see that:
-- **Householder QR** is backward stable (the gold standard)
-- **LU with partial pivoting** is backward stable in practice (with caveats)
-- **Classical Gram-Schmidt** is *not* stable—orthogonality loss scales with $\kappa(A)$
+Combined with the sensitivity theorem ([](#thm-sensitivity-linear-systems)):
+
+$$
+\frac{\|\hat{\mathbf{x}} - \mathbf{x}\|}{\|\mathbf{x}\|} \lesssim \kappa(A) \cdot \varepsilon_{\text{mach}}
+$$
+
+This is the best any algorithm can achieve: the condition number $\kappa(A)$ is
+a property of the problem, not the algorithm. A backward stable algorithm
+achieves the optimal forward error bound.
+
+:::{prf:remark} Which Algorithms Are Backward Stable?
+:label: rmk-backward-stable-algorithms
+:class: dropdown
+
+- **Householder QR** is backward stable (see
+  [](#thm-householder-stability)). This is the gold standard.
+- **LU with partial pivoting** is backward stable in practice, though the
+  theoretical worst case allows growth factor $2^{n-1}$ (see the
+  [stability notebook](../notebooks/stability-ge.ipynb)).
+- **Classical Gram-Schmidt** is *not* backward stable: the loss of
+  orthogonality scales with $\kappa(A)$, not $\varepsilon_{\text{mach}}$.
+:::
