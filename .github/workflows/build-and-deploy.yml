@@ -52,11 +52,21 @@ jobs:
       if: steps.nb-cache.outputs.cache-hit != 'true'
       run: bash scripts/execute-notebooks.sh
 
+    - name: Populate MyST execution cache from executed notebooks
+      run: python3 scripts/populate-execute-cache.py
+
     - name: Upload executed notebooks
       uses: actions/upload-artifact@v4
       with:
         name: executed-notebooks
         path: notebooks/
+        retention-days: 1
+
+    - name: Upload execution cache
+      uses: actions/upload-artifact@v4
+      with:
+        name: execute-cache
+        path: _build/execute/
         retention-days: 1
 
   # ── Job 1b: Build myst-theme (runs in parallel with notebooks) ──────
@@ -180,6 +190,12 @@ jobs:
         name: executed-notebooks
         path: notebooks/
 
+    - name: Download execution cache
+      uses: actions/download-artifact@v4
+      with:
+        name: execute-cache
+        path: _build/execute/
+
     - name: Download built theme
       uses: actions/download-artifact@v4
       with:
@@ -191,9 +207,6 @@ jobs:
       with:
         name: pdf-exports
         path: .
-
-    - name: Populate MyST execution cache from pre-executed notebooks
-      run: python3 scripts/populate-execute-cache.py
 
     - name: Setup Pages
       uses: actions/configure-pages@v3
