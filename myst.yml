@@ -82,8 +82,6 @@ project:
           level: 1
         - file: qr-least-squares/linear-algebra-fundamentals.md
           level: 2
-        - file: qr-least-squares/forward-backward-error.md
-          level: 2
         - file: qr-least-squares/condition-stability.md
           level: 2
         - file: qr-least-squares/iterative-methods.md
@@ -184,7 +182,6 @@ project:
       title: Linear Algebra and QR Factorization
       children:
         - file: qr-least-squares/linear-algebra-fundamentals.md
-        - file: qr-least-squares/forward-backward-error.md
         - file: qr-least-squares/condition-stability.md
         - file: qr-least-squares/iterative-methods.md
         - file: qr-least-squares/orthogonality.md
