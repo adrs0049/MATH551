@@ -237,31 +237,7 @@ jobs:
         echo $! > /tmp/memmon.pid
 
     - name: Verify execution cache
-      run: |
-        echo "=== Execution cache contents ==="
-        ls -la _build/execute/ | head -20
-        echo "Total files: $(ls _build/execute/ | wc -l)"
-        echo ""
-        echo "=== Verifying cache hashes match ==="
-        python3 -c "
-import hashlib, json, os
-for nb_file in sorted(os.listdir('notebooks')):
-    if not nb_file.endswith('.ipynb'): continue
-    path = f'notebooks/{nb_file}'
-    with open(path) as f:
-        nb = json.load(f)
-    kernel = nb.get('metadata',{}).get('kernelspec',{}).get('name','python3')
-    items = []
-    for c in nb['cells']:
-        if c['cell_type'] != 'code': continue
-        items.append({'kind':'block','content':''.join(c['source']),'raisesException':False})
-    h = hashlib.md5()
-    h.update(kernel.encode())
-    h.update(json.dumps(items).encode())
-    hx = h.hexdigest()
-    exists = os.path.exists(f'_build/execute/{hx}.json')
-    print(f'  {nb_file}: hash={hx} cached={exists}')
-"
+      run: python3 scripts/verify-execute-cache.py
 
     - name: Build the book
       timeout-minutes: 30
