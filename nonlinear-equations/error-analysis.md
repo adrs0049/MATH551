@@ -130,6 +130,7 @@ not on the shape of the perturbation.
 
 :::{prf:remark} Geometric Interpretation
 :label: rmk-condition-number-geometry
+:class: dropdown
 
 The condition number has a simple geometric meaning:
 
@@ -418,7 +419,7 @@ The condition number connects them.
 
 ### Relating Forward and Backward Error
 
-:::{prf:theorem} Forward Error Bound
+:::{prf:theorem} Relating Forward and Backward Error
 :label: thm-relating-forward-backward-error
 
 Suppose $f \in \mathcal{C}^1$, $f(x^*) = 0$ is a simple root, and $\hat{x}$ is
@@ -440,30 +441,85 @@ $$
 f(\hat{x}) = f(\hat{x}) - f(x^*) = f'(\xi)(\hat{x} - x^*)
 $$
 
-for some $\xi$ between $\hat{x}$ and $x^*$. Since $x^*$ is a simple root,
-$f'(x^*) \neq 0$, and by continuity $|f'(\xi)| \geq |f'(x^*)|$ for $\hat{x}$
-sufficiently close to $x^*$. Therefore:
+for some $\xi$ in the interval $I = [x^*, \hat{x}]$ (or $[\hat{x}, x^*]$).
+Define $m = \min_{x \in I} |f'(x)|$ and $M = \max_{x \in I} |f'(x)|$. Since
+$\xi \in I$, we have $m \leq |f'(\xi)| \leq M$, so:
 
 $$
-|f(\hat{x})| = |f'(\xi)||\hat{x} - x^*| \geq |f'(x^*)||\hat{x} - x^*|
+m \, |\hat{x} - x^*| \leq |f(\hat{x})| \leq M \, |\hat{x} - x^*|
 $$
 
-Rearranging:
+Rearranging gives bounds on the forward error in both directions:
 
 $$
-|\hat{x} - x^*| \leq \frac{|f(\hat{x})|}{|f'(x^*)|} = \hat{\kappa} \cdot |f(\hat{x})|
+\frac{1}{M} \cdot |f(\hat{x})| \leq |\hat{x} - x^*| \leq \frac{1}{m} \cdot |f(\hat{x})|
 $$
+
+As $I$ shrinks around $x^*$, both $m$ and $M$ converge to $|f'(x^*)|$, so the
+upper bound becomes $|\hat{x} - x^*| \leq |f(\hat{x})| / |f'(x^*)| = \hat{\kappa} \cdot |f(\hat{x})|$.
 :::
 
-This is the fundamental relationship of numerical root finding: a small residual
-guarantees a small forward error *only when the problem is well-conditioned*.
+This is the fundamental relationship of numerical root finding: the forward
+error is bounded by the condition number times the backward error. A small
+residual guarantees a small forward error *only when the problem is
+well-conditioned* ($\hat{\kappa}$ small). This relationship reappears throughout
+scientific computing: in [linear systems](../direct-methods/index.md), the
+analogous result is $\|\Delta\mathbf{x}\|/\|\mathbf{x}\| \leq \kappa(\mathbf{A}) \cdot \|\Delta\mathbf{b}\|/\|\mathbf{b}\|$,
+and in [globalization strategies](../nonlinear-systems/globalization.md), the
+choice of *what to monitor* (residual vs. correction) determines the robustness
+of the solver.
 
 ### Stopping Criteria
 
-This relationship has immediate consequences for when to stop iterating.
+This relationship has immediate consequences for when to stop iterating. But
+first, we need to understand why the step size $|x_{n+1} - x_n|$ is a useful
+proxy for the forward error.
+
+:::{prf:lemma} Step Size Bounds the Forward Error
+:label: lem-step-size-error-bound
+
+Suppose an iterative method produces a sequence $\{x_n\}$ that is contractive:
+
+$$
+|x_{n+1} - x_n| \leq \theta |x_n - x_{n-1}| \quad \text{for some } \theta < 1
+$$
+
+Then the sequence converges to some limit $x^*$, and the forward error satisfies:
+
+$$
+|x_n - x^*| \leq \frac{|x_{n+1} - x_n|}{1 - \theta}
+$$
+:::
+
+:::{prf:proof}
+:class: dropdown
+
+Since the sequence converges, we can write the error as a telescoping sum:
+
+$$
+x_n - x^* = x_n - \lim_{k \to \infty} x_k = \sum_{k=0}^{\infty} (x_{n+k} - x_{n+k+1})
+$$
+
+Taking absolute values and using the contraction property
+$|x_{n+k} - x_{n+k+1}| \leq \theta^k |x_n - x_{n+1}|$:
+
+$$
+|x_n - x^*| \leq \sum_{k=0}^{\infty} \theta^k |x_n - x_{n+1}| = \frac{|x_{n+1} - x_n|}{1 - \theta}
+$$
+:::
+
+This is a consequence of the
+[Banach fixed point theorem](fixed-point.md#thm-banach) and applies to any
+contractive iteration (fixed point, Jacobi, Gauss-Seidel, Newton near the
+root). The step test $|x_{n+1} - x_n| < \varepsilon$ therefore guarantees
+$|x_n - x^*| < \varepsilon / (1 - \theta)$. When $\theta$ is small (fast
+convergence), this is close to $\varepsilon$. When $\theta$ is close to 1 (slow
+convergence), the factor $1/(1-\theta)$ can be large and the step test becomes
+unreliable.
 
 :::{prf:remark} Two Stopping Criteria
 :label: rmk-stopping-criteria
+:class: dropdown
 
 In practice, we use **two** stopping criteria:
 

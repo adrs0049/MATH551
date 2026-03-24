@@ -39,7 +39,7 @@ For a function $f(x)$, we perturbed the input $x$. But a linear system $A\mathbf
 
 So we must understand how errors in *both* $A$ and $\mathbf{b}$ propagate to errors in $\mathbf{x}$.
 
-:::::{ prf:theorem} Sensitivity of Linear Systems
+:::::{prf:theorem} Sensitivity of Linear Systems
 :label: thm-sensitivity-linear-systems
 
 For the linear system $A\mathbf{x} = \mathbf{b}$:
