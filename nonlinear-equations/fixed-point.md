@@ -201,7 +201,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-:::{figure} #
+:::{figure}
 :label: fig-fixed-point-geometry
 
 **Geometric intuition for fixed point iteration.** In the cobweb diagrams (center and right), the black star ($\star$) marks the starting point $x_0$ and the red square marks the final iterate. *Left:* If $g$ maps $[a,b]$ into itself, its graph stays inside the blue box and must cross the diagonal $y = x$ at least once, guaranteeing existence of a fixed point. *Center:* When $|g'| < 1$ everywhere on $[a,b]$, the graph is less steep than the diagonal, so there is exactly one crossing. The cobweb diagram shows the iteration spiraling inward from the start ($\star$) to the unique fixed point. *Right:* When $g([a,b]) \subseteq [a,b]$ but $|g'| > 1$ near the center, the graph is steep enough to cross the diagonal multiple times, creating three fixed points. The cobweb starting near the central (unstable) fixed point ($\star$) diverges away from it, eventually settling at one of the stable outer fixed points where $|g'| < 1$.
@@ -489,7 +489,6 @@ Newton's method achieves by setting $g(x) = x - f(x)/f'(x)$.
 
 The convergence results above are special cases of a fundamental principle that appears throughout mathematics.
 
-(theoretical-foundation-the-banach-fixed-point-theorem)=
 :::{prf:theorem} Banach Fixed Point Theorem
 :label: thm-banach
 
