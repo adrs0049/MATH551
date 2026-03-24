@@ -31,13 +31,13 @@ def build_cache_key(kernel_name: str, cells: list[dict], debug: bool = False) ->
     if debug:
         print(f"    kernel: {kernel_name}")
         print(f"    cells: {len(hashable_items)}")
-        serialized = json.dumps(hashable_items)
+        serialized = json.dumps(hashable_items, separators=(",", ":"))
         print(f"    json length: {len(serialized)}")
         print(f"    json preview: {serialized[:120]}...")
 
     h = hashlib.md5()
     h.update(kernel_name.encode())
-    h.update(json.dumps(hashable_items).encode())
+    h.update(json.dumps(hashable_items, separators=(',', ':')).encode())
     return h.digest().hex()
 
 
@@ -77,7 +77,7 @@ def populate_cache(notebook_path: str, cache_dir: str) -> None:
     # Write to cache
     cache_file = os.path.join(cache_dir, f"{cache_key}.json")
     with open(cache_file, "w") as f:
-        json.dump(outputs, f)
+        json.dump(outputs, f, separators=(",", ":"))
 
     print(f"  OK   {notebook_path} -> {cache_key}.json")
 

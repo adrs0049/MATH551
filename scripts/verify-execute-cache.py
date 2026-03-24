@@ -20,7 +20,7 @@ def build_cache_key(kernel_name, cells):
 
     h = hashlib.md5()
     h.update(kernel_name.encode())
-    h.update(json.dumps(hashable_items).encode())
+    h.update(json.dumps(hashable_items, separators=(",", ":")).encode())
     return h.hexdigest()
 
 
