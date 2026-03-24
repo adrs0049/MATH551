@@ -25,16 +25,16 @@ Class meets Monday & Wednesday, 75 minutes per session.
 | 6 | Feb 19 | Thu | **ODEs** Forward Euler Method  **Quiz 1** | *Mon schedule* |
 | 7 | Feb 23 | Mon | Snow-day | |
 | 8 | Feb 25 | Wed | Stability of Euler's method | |
-| 9 | Mar 2 | Mon | **Nonlinear Equations** - Bisection | |
+| 9 | Mar 2 | Mon | Stiffness | |
 | 10 | Mar 4 | Wed | Euler-Maruyama | |
-| 11 | Mar 9 | Mon | **Nonlinear Equations** - Bisection | |
-| 12 | Mar 11 | Wed | Fixed Point Methods + **Quiz 2** | |
+| 11 | Mar 9 | Mon | Euler-Maruyama + Intro to root finding | |
+| 12 | Mar 11 | Wed | **Nonlinear Equations** - Bisection + **Quiz 2** | |
 | | Mar 15-22 | | **SPRING BREAK** | |
-| 13 | Mar 23 | Mon | **QR & Least Squares** - Norms, conditioning | |
-| 14 | Mar 25 | Wed | Orthogonality, Gram-Schmidt | |
-| 15 | Mar 30 | Mon | QR factorization | |
-| 16 | Apr 1 | Wed | Least squares via QR | |
-| 17 | Apr 6 | Mon | TBD | |
+| 13 | Mar 23 | Mon | Fixed Point Methods | |
+| 14 | Mar 25 | Wed | Condition number of root finding | |
+| 15 | Mar 30 | Mon | **Linear Algebra** Orthogonality, Gram-Schmidt | |
+| 16 | Apr 1 | Wed | QR factorization | |
+| 17 | Apr 6 | Mon | Least squares via QR | |
 | 18 | Apr 8 | Wed | SVD, pseudo-inverse, low-rank approximation + **Quiz 3** | |
 | 19 | Apr 13 | Mon | **Interpolation** - Lagrange | |
 | 20 | Apr 15 | Wed | Chebyshev polynomials | |

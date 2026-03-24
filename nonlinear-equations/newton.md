@@ -235,38 +235,6 @@ Starting from $x_0 = 2$:
 [Fixed Point Iteration Demo](fixed-point-iteration.ipynb): Compares different iteration functions for $\sqrt{3}$
 :::
 
-## Newton's Method in Higher Dimensions
-
-For a vector-valued function $\mathbf{f}: \mathbb{R}^n \to \mathbb{R}^n$, Newton's method becomes:
-
-$$
-\mathbf{x}_{n+1} = \mathbf{x}_n - [D\mathbf{f}(\mathbf{x}_n)]^{-1}\mathbf{f}(\mathbf{x}_n)
-$$
-
-where $D\mathbf{f}$ is the **Jacobian matrix**.
-
-:::{prf:definition} Jacobian Matrix
-:label: def-jacobian
-
-For $\mathbf{f}: \mathbb{R}^n \to \mathbb{R}^m$, the **Jacobian matrix** is:
-
-$$
-D\mathbf{f}(\mathbf{x}) = \begin{pmatrix}
-\frac{\partial f_1}{\partial x_1} & \cdots & \frac{\partial f_1}{\partial x_n} \\
-\vdots & \ddots & \vdots \\
-\frac{\partial f_m}{\partial x_1} & \cdots & \frac{\partial f_m}{\partial x_n}
-\end{pmatrix}
-$$
-:::
-
-In 2D, for $\mathbf{f}(x,y) = \begin{pmatrix} f_1(x,y) \\ f_2(x,y) \end{pmatrix}$:
-
-$$
-\begin{pmatrix} x_{n+1} \\ y_{n+1} \end{pmatrix} = \begin{pmatrix} x_n \\ y_n \end{pmatrix} - \begin{pmatrix} \frac{\partial f_1}{\partial x} & \frac{\partial f_1}{\partial y} \\ \frac{\partial f_2}{\partial x} & \frac{\partial f_2}{\partial y} \end{pmatrix}^{-1} \begin{pmatrix} f_1(x_n, y_n) \\ f_2(x_n, y_n) \end{pmatrix}
-$$
-
-Each Newton step requires solving a linear system, which motivates the linear algebra chapters.
-
 ## Summary
 
 Newton's method is a fixed point iteration engineered so that $g'(c) = 0$,
