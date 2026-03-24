@@ -37,7 +37,7 @@ There are many ways to do this! Given $f(x) = 0$, you could write:
 - $g(x) = x - cf(x)$ for any nonzero $c$
 - $g(x) = x - f(x)/f'(x)$ (this gives Newton's method!)
 
-**The choice of $g$ matters enormously** for convergence --as we'll see.
+**The choice of $g$ matters enormously** for convergence, as we'll see.
 
 ## The Algorithm
 
@@ -62,7 +62,7 @@ That's it. But this simplicity raises three fundamental questions:
 2. **Does the iteration converge?** Starting from $x_0$, will the sequence $\{x_n\}$ actually reach the fixed point?
 3. **How fast does it converge?** Can we do better than bisection's linear rate?
 
-The answer to all three turns on a single quantity: **$|g'(x)|$ near the fixed point**. When $|g'| < 1$, the map $g$ is a *contraction*  -- it pulls nearby points closer together, and the iteration spirals inward. When $|g'| \geq 1$, it pushes points apart, and the iteration diverges. The choice of $g$ controls $g'$, which is why different reformulations of the same problem can behave so differently.
+The answer to all three turns on a single quantity: **$|g'(x)|$ near the fixed point**. When $|g'| < 1$, the map $g$ is a *contraction*: it pulls nearby points closer together, and the iteration spirals inward. When $|g'| \geq 1$, it pushes points apart, and the iteration diverges. The choice of $g$ controls $g'$, which is why different reformulations of the same problem can behave so differently.
 
 ## Why the Choice of $g$ Matters
 
@@ -77,21 +77,38 @@ Here are three valid reformulations:
 All three have $\sqrt{3}$ as a fixed point. But their behavior is dramatically different:
 - **G1** cycles forever, never converging
 - **G2** converges slowly (linearly)
-- **G3** converges rapidly (quadratically --this is Newton's method!)
+- **G3** converges rapidly (quadratically, this is Newton's method!)
 
 :::{seealso}
-[Fixed Point Iteration Demo](fixed-point-iteration.ipynb)  -- Compare G1, G2, G3 convergence behavior
+[Fixed Point Iteration Demo](fixed-point-iteration.ipynb): Compare G1, G2, G3 convergence behavior
 :::
 
-## Existence and Uniqueness
+## Existence, Uniqueness and Convergence
 
 There are three separate questions to answer, each requiring its own condition:
 
-**1. Existence**  -- *Does a fixed point exist at all?* This only requires that $g$ maps $[a,b]$ into itself: $g([a,b]) \subseteq [a,b]$. Geometrically, this traps the graph of $g$ inside the box $[a,b] \times [a,b]$. Since $g(a) \geq a$ and $g(b) \leq b$, the graph *must* cross the diagonal $y = x$  -- that crossing is a fixed point (left panel). But there could be many crossings.
+**1. Existence:**  *Does a fixed point exist at all?* This only requires that
+$g$ maps $[a,b]$ into itself: $g([a,b]) \subseteq [a,b]$. Geometrically, this
+traps the graph of $g$ inside the box $[a,b] \times [a,b]$. Since $g(a) \geq a$
+and $g(b) \leq b$, the graph *must* cross the diagonal $y = x$. That crossing
+is a fixed point (left panel). But there could be many crossings.
 
-**2. Uniqueness**  -- *Is there only one fixed point?* This requires $|g'(x)| \leq \rho < 1$ on the interval. The map is then a *contraction*: it shrinks distances. If two fixed points $c_1, c_2$ existed, the MVT gives $|c_1 - c_2| = |g(c_1) - g(c_2)| = |g'(\xi)||c_1 - c_2| \leq \rho|c_1 - c_2|$, a contradiction since $\rho < 1$. Geometrically, $|g'| < 1$ means the graph is everywhere less steep than the diagonal, so it can only cross once (panel 2). When $|g'| > 1$, the graph can be steeper than the diagonal, allowing multiple crossings (panel 4).
+**2. Uniqueness:**  *Is there only one fixed point?* This requires $|g'(x)| \leq
+\rho < 1$ on the interval. The map is then a *contraction*: it shrinks
+distances. If two fixed points $c_1, c_2$ existed, the MVT gives $|c_1 - c_2|
+= |g(c_1) - g(c_2)| = |g'(\xi)||c_1 - c_2| \leq \rho|c_1 - c_2|$,
+a contradiction since $\rho < 1$. Geometrically, $|g'| < 1$ means the graph is
+everywhere less steep than the diagonal, so it can only cross once (center
+panel). When $|g'| > 1$, the graph can be steeper than the diagonal, allowing
+multiple crossings (right panel).
 
-**3. Convergence**  -- *Does the iteration $x_{n+1} = g(x_n)$ actually reach the fixed point?* This is a question about the *dynamics* of iterating $g$, not just its graph. The same contraction condition $|g'| \leq \rho < 1$ guarantees convergence: each step shrinks the distance to the fixed point, so the cobweb spirals inward (panel 2). When $|g'| > 1$, the iteration *amplifies* errors  -- the cobweb diverges away from the fixed point even if you start nearby (panel 3).
+**3. Convergence:**  *Does the iteration $x_{n+1} = g(x_n)$ actually reach the
+fixed point?* This is a question about the *dynamics* of iterating $g$, not just
+its graph. The same contraction condition $|g'| \leq \rho < 1$ guarantees
+convergence: each step shrinks the distance to the fixed point, so the cobweb
+spirals inward (center panel). When $|g'| > 1$, the iteration *amplifies* errors.
+The cobweb diverges away from the fixed point even if you start nearby (right
+panel).
 
 ```{code-cell} python
 :tags: [hide-input]
@@ -99,8 +116,8 @@ There are three separate questions to answer, each requiring its own condition:
 import numpy as np
 import matplotlib.pyplot as plt
 
-fig, axes = plt.subplots(1, 4, figsize=(18, 4.5))
-ax1, ax2, ax3, ax4 = axes
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+ax1, ax2, ax3 = axes
 
 a, b = 0.5, 2.5
 x = np.linspace(a, b, 200)
@@ -113,12 +130,16 @@ def plot_box(ax):
     ax.plot(x, x, 'k--', linewidth=1, alpha=0.6)
 
 def find_and_mark_crossings(ax, g):
+    """Find and mark fixed points; return list of roots."""
     y = g(x)
     h = y - x
+    roots = []
     for i in range(len(h)-1):
         if h[i] * h[i+1] < 0:
             root = brentq(lambda t: g(t) - t, x[i], x[i+1])
+            roots.append(root)
             ax.plot(root, root, 'ro', markersize=8, zorder=5)
+    return roots
 
 def setup_ax(ax, title):
     ax.set_xlim(a - 0.15, b + 0.15)
@@ -126,72 +147,79 @@ def setup_ax(ax, title):
     ax.set_xlabel('$x$')
     ax.set_ylabel('$y$')
     ax.set_title(title)
-    ax.legend(fontsize=7, loc='upper left')
     ax.set_aspect('equal')
 
 # --- Panel 1: Existence (g maps [a,b] into [a,b]) ---
 g1 = lambda x: 0.4*np.sin(3*x) + 1.5
 plot_box(ax1)
-ax1.plot(x, g1(x), 'b-', linewidth=2.5, label=r'$y = g(x)$')
+ax1.plot(x, g1(x), 'b-', linewidth=2.5)
 find_and_mark_crossings(ax1, g1)
 setup_ax(ax1, 'Existence: $g([a,b]) \\subseteq [a,b]$\ngraph must cross $y = x$')
 
 # --- Panel 2: Contraction (|g'| < 1) => unique + converges ---
 g2 = lambda x: 0.4*x + 0.9   # |g'| = 0.4 < 1
 plot_box(ax2)
-ax2.plot(x, g2(x), 'b-', linewidth=2.5, label=r"$|g'| = 0.4 < 1$")
+ax2.plot(x, g2(x), 'b-', linewidth=2.5)
 find_and_mark_crossings(ax2, g2)
 
 # Cobweb showing contraction
 x_cob = 2.2
+ax2.plot(x_cob, x_cob, 'k*', markersize=12, zorder=6)
 for _ in range(6):
     x_next = g2(x_cob)
     ax2.plot([x_cob, x_cob], [x_cob, x_next], 'g-', alpha=0.5, linewidth=1)
     ax2.plot([x_cob, x_next], [x_next, x_next], 'g-', alpha=0.5, linewidth=1)
     x_cob = x_next
+ax2.plot(x_cob, x_cob, 'rs', markersize=8, zorder=6)
 
 setup_ax(ax2, "Contraction: $|g'| < 1$\ncobweb spirals in, unique fixed point")
 
-# --- Panel 3: |g'| > 1 linear => cobweb diverges ---
-g3 = lambda x: 1.8*x - 1.2   # |g'| = 1.8 > 1
+# --- Panel 3: Nonlinear with |g'| > 1 in middle => multiple fixed points ---
+# Steep S-curve: maps [a,b] into [a,b] but |g'| > 1 in the middle
+g3 = lambda x: 1.5 + 0.95*np.tanh(2.5*(x - 1.5))
 plot_box(ax3)
-ax3.plot(x, g3(x), 'r-', linewidth=2.5, label=r"$|g'| = 1.8 > 1$", clip_on=True)
-find_and_mark_crossings(ax3, g3)
+ax3.plot(x, g3(x), 'r-', linewidth=2.5)
+roots = find_and_mark_crossings(ax3, g3)
 
-# Cobweb showing divergence
-c3 = 1.2 / 0.8  # = 1.5
-x_cob = c3 + 0.1
-for _ in range(4):
+# Cobweb starting near the central fixed point, showing divergence away from it
+# The middle root is the unstable one
+middle_root = sorted(roots)[1]
+x_cob = middle_root + 0.05
+ax3.plot(x_cob, x_cob, 'k*', markersize=12, zorder=6)
+for _ in range(12):
     x_next = g3(x_cob)
-    if x_next < a - 0.5 or x_next > b + 0.5:
+    if x_next < a - 0.3 or x_next > b + 0.3:
         break
     ax3.plot([x_cob, x_cob], [x_cob, x_next], 'g-', alpha=0.5, linewidth=1)
     ax3.plot([x_cob, x_next], [x_next, x_next], 'g-', alpha=0.5, linewidth=1)
     x_cob = x_next
+ax3.plot(x_cob, x_cob, 'rs', markersize=8, zorder=6)
 
-setup_ax(ax3, "Not a contraction: $|g'| > 1$\ncobweb diverges")
-
-# --- Panel 4: Nonlinear with |g'| > 1 => multiple fixed points ---
-# Steep S-curve: maps [a,b] into [a,b] but |g'| > 1 in the middle
-g4 = lambda x: 1.5 + 0.95*np.tanh(2.5*(x - 1.5))
-plot_box(ax4)
-ax4.plot(x, g4(x), 'r-', linewidth=2.5, label=r"$|g'| > 1$ near crossings")
-find_and_mark_crossings(ax4, g4)
-
-setup_ax(ax4, "Multiple fixed points\n$|g'| > 1$ allows extra crossings")
+setup_ax(ax3, "Not a contraction: $|g'| > 1$\ncobweb diverges from central fixed point")
 
 plt.tight_layout()
 plt.show()
 ```
 
-:::{prf:theorem} Fixed Point Existence and Uniqueness
+:::{figure} #
+:label: fig-fixed-point-geometry
+
+**Geometric intuition for fixed point iteration.** In the cobweb diagrams (center and right), the black star ($\star$) marks the starting point $x_0$ and the red square marks the final iterate. *Left:* If $g$ maps $[a,b]$ into itself, its graph stays inside the blue box and must cross the diagonal $y = x$ at least once, guaranteeing existence of a fixed point. *Center:* When $|g'| < 1$ everywhere on $[a,b]$, the graph is less steep than the diagonal, so there is exactly one crossing. The cobweb diagram shows the iteration spiraling inward from the start ($\star$) to the unique fixed point. *Right:* When $g([a,b]) \subseteq [a,b]$ but $|g'| > 1$ near the center, the graph is steep enough to cross the diagonal multiple times, creating three fixed points. The cobweb starting near the central (unstable) fixed point ($\star$) diverges away from it, eventually settling at one of the stable outer fixed points where $|g'| < 1$.
+:::
+
+:::{prf:theorem} Fixed Point Existence, Uniqueness, and Convergence
 :label: thm-fixed-point-existence
 
-Given $g: [a, b] \to \mathbb{R}$:
+Given $g: [a, b] \to \mathbb{R}$ continuous:
 
-**Existence:** If $g$ is continuous and maps $[a,b]$ into itself (i.e., $g([a,b]) \subseteq [a,b]$), then $g$ has at least one fixed point in $[a,b]$.
+**Existence:** If $g$ maps $[a,b]$ into itself (i.e., $g([a,b]) \subseteq [a,b]$), then $g$ has at least one fixed point in $[a,b]$.
 
 **Uniqueness:** If additionally $|g'(x)| \leq \rho < 1$ for all $x \in [a,b]$, then the fixed point is unique.
+
+**Convergence:** Under the same conditions, for any $x_0 \in [a,b]$, the sequence $x_{n+1} = g(x_n)$ converges to the unique fixed point $c$, and the convergence is geometric:
+$$
+|x_n - c| \leq \rho^n |x_0 - c|
+$$
 :::
 
 :::{prf:proof} Existence
@@ -199,7 +227,7 @@ Given $g: [a, b] \to \mathbb{R}$:
 
 Define $h(x) = x - g(x)$.
 
-If $g(a) = a$ or $g(b) = b$, we're done --we've found a fixed point.
+If $g(a) = a$ or $g(b) = b$, we're done. We've found a fixed point.
 
 Otherwise, since $g([a,b]) \subseteq [a,b]$:
 - $g(a) > a$, so $h(a) = a - g(a) < 0$
@@ -219,23 +247,10 @@ $$
 
 for some $\xi \in (c_1, c_2)$.
 
-This implies $(1-\rho)|c_1 - c_2| \leq 0$. But $\rho < 1$ and $c_1 \neq c_2$, so $(1-\rho)|c_1 - c_2| > 0$ --a contradiction.
+This implies $(1-\rho)|c_1 - c_2| \leq 0$. But $\rho < 1$ and $c_1 \neq c_2$, so $(1-\rho)|c_1 - c_2| > 0$. This is a contradiction.
 :::
 
-## Convergence
-
-:::{prf:theorem} Convergence of Fixed Point Iteration
-:label: thm-fixed-point-convergence
-
-If $g([a,b]) \subseteq [a,b]$ and $|g'(x)| \leq \rho < 1$ on $[a,b]$, then for any $x_0 \in [a,b]$, the sequence $x_{n+1} = g(x_n)$ converges to the unique fixed point $c$.
-
-Moreover, the convergence is geometric:
-$$
-|x_n - c| \leq \rho^n |x_0 - c|
-$$
-:::
-
-:::{prf:proof}
+:::{prf:proof} Convergence
 :class: dropdown
 
 Since $c$ is a fixed point, $g(c) = c$. Using the Mean Value Theorem:
@@ -255,6 +270,7 @@ Since $\rho < 1$, we have $\rho^n \to 0$, so $x_n \to c$.
 
 :::{prf:remark} Understanding Geometric Convergence
 :label: rmk-geometric-convergence
+:class: dropdown
 
 The bound $|x_n - c| \leq \rho^n |x_0 - c|$ is called **geometric** (or **linear**) convergence. At each step, the error is multiplied by at most $\rho$:
 
@@ -262,10 +278,10 @@ $$
 |e_{n+1}| \leq \rho\, |e_n|
 $$
 
-The value of $\rho$  -- the **contraction factor**  -- controls the speed:
-- $\rho$ close to $0$: fast convergence (each step eliminates most of the error)
-- $\rho$ close to $1$: painfully slow (each step barely improves the approximation)
-- $\rho = 1$: no guarantee of convergence at all
+The value of $\rho$, called the **contraction factor**, controls the speed:
+- $\rho$ close to $0$: fast convergence (each step eliminates most of the error).
+- $\rho$ close to $1$: painfully slow (each step barely improves the approximation).
+- $\rho = 1$: no convergence guarantee.
 
 Taking logarithms of the error bound gives $\log|e_n| \leq n \log \rho + \log|e_0|$, so **geometric convergence appears as a straight line on a log-scale plot**, with slope $\log \rho$. Smaller $\rho$ means a steeper downward slope.
 :::
@@ -304,10 +320,15 @@ plt.show()
 
 :::{prf:remark} Local Convergence
 :label: rmk-local-convergence
+:class: dropdown
 
-Even if $|g'(x)| < 1$ only *at* the fixed point (not on the whole interval), the iteration still converges --provided we start close enough. This is called **local convergence**.
+Even if $|g'(x)| < 1$ only *at* the fixed point (not on the whole interval), the
+iteration still converges, provided we start close enough. This is called
+**local convergence**.
 
-Specifically: if $g \in \mathcal{C}^1$, $g(c) = c$, and $|g'(c)| < 1$, then there exists $\delta > 0$ such that the iteration converges for any $x_0$ with $|x_0 - c| < \delta$.
+Specifically: if $g \in \mathcal{C}^1$, $g(c) = c$, and $|g'(c)| < 1$, then
+there exists $\delta > 0$ such that the iteration converges for any $x_0$ with
+$|x_0 - c| < \delta$.
 :::
 
 ## The Derivative at the Fixed Point
@@ -316,13 +337,18 @@ The key insight: **$|g'(c)|$ determines everything**.
 
 For our three reformulations of $x^2 - 3 = 0$:
 
-- $g_1(x) = 3/x$: We have $g_1'(x) = -3/x^2$, so $|g_1'(\sqrt{3})| = 1$. Right on the boundary --no convergence guaranteed (and indeed, it fails).
+- $g_1(x) = 3/x$: We have $g_1'(x) = -3/x^2$, so $|g_1'(\sqrt{3})| = 1$. Right on the boundary, so no convergence is guaranteed (and indeed, it fails).
 
 - $g_2(x) = x - (x^2-3)/2$: We have $g_2'(x) = 1 - x$, so $|g_2'(\sqrt{3})| = |1 - \sqrt{3}| \approx 0.73$. Linear convergence with rate $\rho \approx 0.73$.
 
-- $g_3(x) = (x^2+3)/(2x)$: We have $g_3'(x) = 1/2 - 3/(2x^2)$, so $g_3'(\sqrt{3}) = 0$. The derivative vanishes --this signals faster-than-linear convergence.
+- $g_3(x) = (x^2+3)/(2x)$: We have $g_3'(x) = 1/2 - 3/(2x^2)$, so $g_3'(\sqrt{3}) = 0$. The derivative vanishes, which signals faster-than-linear convergence.
 
 ## Order of Convergence
+
+We know that fixed point iteration converges when $|g'(c)| < 1$, but *how fast*?
+The contraction factor $\rho = |g'(c)|$ controls linear convergence, but what
+happens when $g'(c) = 0$, as with $g_3$? We need a finer notion of convergence
+speed.
 
 :::{prf:definition} Order of Convergence
 :label: def-convergence-order
@@ -335,8 +361,9 @@ $$
 
 for some constant $C > 0$.
 
-- $p = 1$: **Linear** convergence (error shrinks by constant factor)
+- $p = 1$: **Linear** convergence (error shrinks by a constant factor each step)
 - $p = 2$: **Quadratic** convergence (digits of accuracy double each step)
+- $p = 3$: **Cubic** convergence (digits of accuracy triple each step)
 :::
 
 :::{prf:theorem} Order of Fixed Point Iteration
@@ -363,18 +390,35 @@ $$
 Thus $|x_{n+1} - c| \approx C|x_n - c|^p$ with $C = |g^{(p)}(c)|/p!$.
 :::
 
-This explains why $g_3$ converges so fast: $g_3'(\sqrt{3}) = 0$ means at least quadratic convergence.
+This explains why $g_3$ converges so fast. We already know $g_3'(\sqrt{3}) = 0$.
+Computing the second derivative:
 
-:::{prf:remark} What Higher-Order Convergence Really Means
+$$
+g_3'(x) = \frac{1}{2} - \frac{3}{2x^2}, \qquad g_3''(x) = \frac{3}{x^3}
+$$
+
+so $g_3''(\sqrt{3}) = 3/(3\sqrt{3}) = 1/\sqrt{3} \neq 0$. Since $g_3'(c) = 0$
+and $g_3''(c) \neq 0$, the theorem gives $p = 2$: **quadratic convergence** with
+asymptotic error constant $C = |g_3''(\sqrt{3})|/2! = 1/(2\sqrt{3}) \approx 0.289$.
+
+:::{prf:remark} What Higher-Order Convergence Means
 :label: rmk-higher-order-convergence
+:class: dropdown
 
 The error relation $|e_{n+1}| \approx C|e_n|^p$ has dramatic consequences as $p$ increases.
 
-**Linear** ($p = 1$): Each step multiplies the error by $\rho$. To gain one digit of accuracy, you always need a fixed number of iterations. Progress is steady but slow.
+**Linear** ($p = 1$): Each step multiplies the error by $\rho$. To gain one
+digit of accuracy, you always need a fixed number of iterations. Progress is
+steady but slow.
 
-**Quadratic** ($p = 2$): Each step *squares* the error. If $e_n \approx 10^{-3}$, then $e_{n+1} \approx 10^{-6}$, then $e_{n+2} \approx 10^{-12}$. The number of correct digits **doubles** at every step. This is why Newton's method feels like it "suddenly" converges  -- the first few iterations seem slow, then accuracy explodes.
+**Quadratic** ($p = 2$): Each step *squares* the error. If $e_n \approx
+10^{-3}$, then $e_{n+1} \approx 10^{-6}$, then $e_{n+2} \approx 10^{-12}$. The
+number of correct digits **doubles** at every step. This is characteristic of
+Newton's method: the initial iterations show modest improvement, but once the
+error becomes small the doubling effect produces rapid convergence to machine
+precision in just a few steps.
 
-**Cubic** ($p = 3$): Each step *cubes* the error. The number of correct digits **triples** each step  -- even faster, but rarely worth the extra cost per iteration in practice.
+**Cubic** ($p = 3$): Each step *cubes* the error. The number of correct digits **triples** each step, even faster.
 :::
 
 ```{code-cell} python
@@ -437,6 +481,10 @@ plt.tight_layout()
 plt.show()
 ```
 
+**The design principle:** make $|g'(c)|$ as small as possible. The optimal
+choice is $g'(c) = 0$, which yields quadratic convergence. This is exactly what
+Newton's method achieves by setting $g(x) = x - f(x)/f'(x)$.
+
 ## The Banach Fixed Point Theorem
 
 The convergence results above are special cases of a fundamental principle that appears throughout mathematics.
@@ -470,20 +518,4 @@ The Banach FPT is not just about scalar equations. The same principle governs:
 Whenever you see an iterative method that "works," there's often a contraction hiding underneath.
 :::
 
-## Summary: How to Choose $g(x)$
-
-Everything in this section comes down to one question: **how do you pick $g$?**
-
-Given $f(x) = 0$, there are infinitely many ways to rewrite it as $x = g(x)$. The right choice is governed by $|g'(c)|$ at the fixed point:
-
-| Derivative at fixed point | Behavior | Convergence |
-|---------------------------|----------|-------------|
-| $\lvert g'(c) \rvert > 1$ | Iteration diverges | None |
-| $\lvert g'(c) \rvert = 1$ | Borderline, may or may not converge | Uncertain |
-| $0 < \lvert g'(c) \rvert < 1$ | Linear convergence with rate $\rho$ | Slow if $\rho \approx 1$, fast if $\rho \approx 0$ |
-| $g'(c) = 0$ | At least quadratic convergence | Fast, digits of accuracy double each step |
-
-**The design principle:** make $|g'(c)|$ as small as possible. The optimal
-choice is $g'(c) = 0$, which yields quadratic convergence. This is exactly what
-Newton's method achieves by setting $g(x) = x - f(x)/f'(x)$.
 

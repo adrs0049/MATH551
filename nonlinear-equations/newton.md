@@ -1,4 +1,7 @@
 ---
+kernelspec:
+  name: python3
+  display_name: Python 3
 exports:
   - format: pdf
     template: ./_templates/plain_narrow
@@ -12,7 +15,7 @@ downloads:
 # Newton's Method
 
 :::{tip} Big Idea
-Newton's method approximates a function by its tangent line at each iteration. This simple idea yields quadratic convergence—the number of correct digits roughly doubles each step. It's the workhorse of nonlinear equation solving.
+Newton's method approximates a function by its tangent line at each iteration. This simple idea yields quadratic convergence: the number of correct digits roughly doubles each step. It's the workhorse of nonlinear equation solving.
 :::
 
 ## Derivation
@@ -34,6 +37,77 @@ Repeating this process:
 $$
 x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}
 $$
+
+```{code-cell} python
+:tags: [hide-input]
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define f and f'
+f = lambda x: x**3 - 2*x - 5
+fp = lambda x: 3*x**2 - 2
+
+# True root (for reference)
+from scipy.optimize import brentq
+root = brentq(f, 1, 3)
+
+x = np.linspace(0.5, 3.5, 300)
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
+
+# Run Newton iterations
+x_n = 3.2
+iterates = [x_n]
+for _ in range(3):
+    x_n = x_n - f(x_n) / fp(x_n)
+    iterates.append(x_n)
+
+for k, ax in enumerate(axes):
+    xn = iterates[k]
+    xn1 = iterates[k + 1]
+
+    # Plot f(x)
+    ax.plot(x, f(x), 'b-', linewidth=2)
+    ax.axhline(y=0, color='k', linewidth=0.8)
+
+    # Plot tangent line at x_n
+    slope = fp(xn)
+    tangent = f(xn) + slope * (x - xn)
+    ax.plot(x, tangent, 'r--', linewidth=1.5)
+
+    # Mark x_n on the x-axis and the point (x_n, f(x_n))
+    ax.plot(xn, 0, 'k*', markersize=12, zorder=5)
+    ax.plot(xn, f(xn), 'ko', markersize=6, zorder=5)
+    ax.plot([xn, xn], [0, f(xn)], 'k:', linewidth=1, alpha=0.5)
+
+    # Mark x_{n+1} (root of tangent line)
+    ax.plot(xn1, 0, 'rs', markersize=8, zorder=5)
+
+    # Mark the true root
+    ax.plot(root, 0, 'go', markersize=8, zorder=5)
+
+    ax.set_xlim(0.5, 3.5)
+    # Ensure tangent point (x_n, f(x_n)) is visible
+    y_top = max(20, f(xn) * 1.2)
+    ax.set_ylim(-10, y_top)
+    if k > 1:
+        ax.set_ylim(-1, 1.0)
+        ax.set_xlim(2.0, 2.2)
+    ax.set_xlabel('$x$')
+    ax.set_ylabel('$f(x)$')
+    ax.set_title(f'Step {k+1}: $x_{k} = {xn:.4f}$, $x_{k+1} = {xn1:.4f}$')
+    ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+:::{figure} #
+:label: fig-newton-derivation
+
+**Newton's method in action.** At each step, the function $f(x) = x^3 - 2x - 5$ (blue) is approximated by its tangent line (red dashed) at the current iterate $x_n$ (black star). The next iterate $x_{n+1}$ (red square) is the root of the tangent line. The true root is marked in green. Notice how the iterates converge rapidly to the root, with the tangent line becoming an increasingly accurate local approximation.
+:::
 
 ## Newton's Method as Fixed Point Iteration
 
@@ -158,7 +232,7 @@ Starting from $x_0 = 2$:
 :::
 
 :::{seealso}
-[Fixed Point Iteration Demo](fixed-point-iteration.ipynb) — Compares different iteration functions for $\sqrt{3}$
+[Fixed Point Iteration Demo](fixed-point-iteration.ipynb): Compares different iteration functions for $\sqrt{3}$
 :::
 
 ## Newton's Method in Higher Dimensions
@@ -191,23 +265,11 @@ $$
 \begin{pmatrix} x_{n+1} \\ y_{n+1} \end{pmatrix} = \begin{pmatrix} x_n \\ y_n \end{pmatrix} - \begin{pmatrix} \frac{\partial f_1}{\partial x} & \frac{\partial f_1}{\partial y} \\ \frac{\partial f_2}{\partial x} & \frac{\partial f_2}{\partial y} \end{pmatrix}^{-1} \begin{pmatrix} f_1(x_n, y_n) \\ f_2(x_n, y_n) \end{pmatrix}
 $$
 
-Each Newton step requires solving a linear system—this motivates the linear algebra chapters!
+Each Newton step requires solving a linear system, which motivates the linear algebra chapters.
 
 ## Summary
 
 Newton's method is a fixed point iteration engineered so that $g'(c) = 0$,
 giving **quadratic convergence** near simple roots. The cost of this speed is
-**locality** — convergence is only guaranteed when $x_0$ is close enough to the
+**locality**: convergence is only guaranteed when $x_0$ is close enough to the
 root.
-
-| Requirement | Why |
-|-------------|-----|
-| $f'(c) \neq 0$ (simple root) | Otherwise $g'(c) \neq 0$ and quadratic convergence is lost |
-| $f \in \mathcal{C}^2$ | Taylor expansion in the convergence proof needs two derivatives |
-| $x_0$ near $c$ | $g$ is a contraction only locally; far away it may diverge |
-| $f'(x_n) \neq 0$ | Division by zero kills the iteration |
-
-When these conditions hold, Newton's method typically reaches machine precision
-in 4--6 iterations. When they don't, consider bisection (safe but slow) or the
-secant method (no derivative needed, order $\approx 1.618$).
-

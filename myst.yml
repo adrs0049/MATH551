@@ -250,6 +250,7 @@ project:
         - file: notebooks/euler-maruyama.ipynb
         - file: notebooks/bisection-demo.ipynb
         - file: notebooks/fixed-point-iteration.ipynb
+        - file: notebooks/newton-basins.ipynb
         - file: notebooks/CondNumberEst.ipynb
         - file: notebooks/gaussian-elimination-notebook.ipynb
         - file: notebooks/lu-decomposition-notebook.ipynb
