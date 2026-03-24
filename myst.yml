@@ -189,7 +189,7 @@ project:
         - file: qr-least-squares/condition-stability.md
         - file: qr-least-squares/least-squares.md
         - file: qr-least-squares/exercises.md
-        - file: qr-least-squares/iterative-methods.md
+        # - file: qr-least-squares/iterative-methods.md
     # NONLINEAR SYSTEMS - NOT IN SCHEDULE
     - file: nonlinear-systems/index.md
       title: "Nonlinear Systems (Optional)"
