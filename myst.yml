@@ -97,8 +97,6 @@ project:
           level: 2
         - file: qr-least-squares/least-squares.md
           level: 2
-        - file: qr-least-squares/qr-solving.md
-          level: 2
         - file: qr-least-squares/exercises.md
           level: 2
         # Approximation Theory (Interpolation)
