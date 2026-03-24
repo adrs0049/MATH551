@@ -38,6 +38,34 @@ $$
 
 ---
 
+### Q9.2b: Modified Gram-Schmidt
+
+In classical Gram-Schmidt, the projection coefficients are computed using the
+original vector $a_j$: $r_{ij} = \langle a_j, q_i \rangle$. In **modified
+Gram-Schmidt**, they are computed using the current (partially orthogonalized)
+vector $v_j$: $r_{ij} = \langle v_j, q_i \rangle$, and $v_j$ is updated after
+each projection.
+
+**(a)** Write out the modified Gram-Schmidt algorithm. The only change from
+classical GS is that line 4 uses $v_j$ instead of $a_j$ in the inner product.
+
+**(b)** Apply both classical and modified Gram-Schmidt to the vectors from Q9.2.
+Verify that they produce the same result in exact arithmetic.
+
+**(c)** Implement both algorithms in Python. Test them on the matrix:
+
+$$
+A(\epsilon) = \begin{pmatrix} 1 & 1 & 1 \\ \epsilon & 0 & 0 \\ 0 & \epsilon & 0 \\ 0 & 0 & \epsilon \end{pmatrix}
+$$
+
+for $\epsilon = 10^{-8}$. Compute $\|Q^TQ - I\|$ for each method. Which
+preserves orthogonality better?
+
+**(d)** Explain in one sentence why modified GS is more accurate: what is
+different about the vector used to compute the projection?
+
+---
+
 ### Q9.3: QR Factorization
 
 For the matrix $A = \begin{pmatrix} 1 & 1 \\ 1 & 0 \\ 0 & 1 \end{pmatrix}$:

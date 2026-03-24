@@ -11,13 +11,25 @@ downloads:
 
 # Linear Algebra Fundamentals
 
+:::{admonition} Prerequisite: Math 235
+:class: note
+This section reviews material from linear algebra (Math 235): vectors, matrices,
+norms, and the condition number. The emphasis here is on the computational
+perspective: how do we measure size, and how does that connect to the accuracy
+of numerical algorithms?
+:::
+
 :::{tip} Big Idea
-**Vectors** are the objects we compute with; **matrices** are linear functions that act on vectors. To analyze algorithms, we need to measure size: **norms** for vectors, **induced norms** for matrices. The **condition number** $\kappa(A) = \|A\|\|A^{-1}\|$ tells us how sensitive a linear system is to perturbations.
+**Vectors** are the objects we compute with; **matrices** are linear functions
+that act on vectors. To analyze algorithms, we need to measure size: **norms**
+for vectors, **induced norms** for matrices. The **condition number**
+$\kappa(A) = \|A\|\|A^{-1}\|$ tells us how sensitive a linear system is to
+perturbations.
 :::
 
 ## Vectors and Vector Spaces
 
-The fundamental objects in numerical linear algebra are **vectors**—elements of a vector space.
+The fundamental objects in numerical linear algebra are **vectors**, the elements of a vector space.
 
 :::{prf:definition} Vector Space
 :label: def-vector-space
@@ -29,7 +41,7 @@ A **vector space** $V$ over $\mathbb{R}$ is a set with two operations:
 satisfying the usual axioms (associativity, commutativity, distributivity, zero element, inverses).
 :::
 
-The canonical example is $\mathbb{R}^n$—column vectors with $n$ real components. But vector spaces are far more general:
+The canonical example is $\mathbb{R}^n$, the space of column vectors with $n$ real components. But vector spaces are far more general:
 
 :::::{ prf:example} Examples of Vector Spaces
 :label: ex-vector-spaces
@@ -43,7 +55,7 @@ The canonical example is $\mathbb{R}^n$—column vectors with $n$ real component
 | $L^2[a,b]$ | Square-integrable functions | $\infty$ |
 
 ::::{dropdown} Why This Matters
-The same linear algebra concepts—basis, dimension, linear maps, norms—apply to **all** these spaces. When you solve a PDE numerically, you're doing linear algebra in a function space. The finite-dimensional theory ($\mathbb{R}^n$) is the template for the infinite-dimensional theory (functional analysis).
+The same linear algebra concepts (basis, dimension, linear maps, norms) apply to **all** these spaces. When you solve a PDE numerically, you're doing linear algebra in a function space. The finite-dimensional theory ($\mathbb{R}^n$) is the template for the infinite-dimensional theory (functional analysis).
 
 This is why we emphasize the abstract structure: vectors are elements of a vector space, matrices are linear maps. The specifics of $\mathbb{R}^n$ are just one instance.
 ::::
@@ -63,7 +75,7 @@ A **norm** $\|\cdot\|: V \to \mathbb{R}$ on a vector space $V$ satisfies:
 3. $\|\mathbf{x} + \mathbf{y}\| \leq \|\mathbf{x}\| + \|\mathbf{y}\|$ (triangle inequality)
 :::
 
-A vector space equipped with a norm is called a **normed vector space**. If it's also complete (Cauchy sequences converge), it's a **Banach space**—the natural setting for analysis.
+A vector space equipped with a norm is called a **normed vector space**. If it's also complete (Cauchy sequences converge), it's a **Banach space**, the natural setting for analysis.
 
 ### The $p$-Norms on $\mathbb{R}^n$
 
@@ -89,7 +101,7 @@ c\|\mathbf{x}\|_a \leq \|\mathbf{x}\|_b \leq C\|\mathbf{x}\|_a \quad \text{for a
 $$
 :::
 
-This is a **finite-dimensional phenomenon**. In infinite dimensions (function spaces), different norms can give genuinely different notions of convergence—a key subtlety in PDE theory.
+This is a **finite-dimensional phenomenon**. In infinite dimensions (function spaces), different norms can give genuinely different notions of convergence, a key subtlety in PDE theory.
 
 ### Function Space Norms
 
@@ -101,7 +113,7 @@ The same idea extends to functions:
 | $L^2[a,b]$ | $L^2$ norm | $\|f\|_2 = \sqrt{\int_a^b \lvert f(x) \rvert^2 dx}$ |
 | $L^p[a,b]$ | $L^p$ norm | $\|f\|_p = \left(\int_a^b \lvert f(x) \rvert^p dx\right)^{1/p}$ |
 
-These are the continuous analogs of the discrete $p$-norms—sums become integrals.
+These are the continuous analogs of the discrete $p$-norms: sums become integrals.
 
 ## Matrices as Linear Maps
 
@@ -119,7 +131,7 @@ Every linear map $\mathbb{R}^n \to \mathbb{R}^m$ corresponds to a unique $m \tim
 
 :::{admonition} The Bigger Picture
 :class: note
-In infinite dimensions, linear maps between function spaces are called **operators**. Differential operators ($d/dx$), integral operators ($\int K(x,y) f(y) dy$), and solution operators for PDEs are all linear maps—the infinite-dimensional analogs of matrices.
+In infinite dimensions, linear maps between function spaces are called **operators**. Differential operators ($d/dx$), integral operators ($\int K(x,y) f(y) dy$), and solution operators for PDEs are all linear maps, the infinite-dimensional analogs of matrices.
 :::
 
 ### The Matrix-Vector Product
@@ -162,7 +174,7 @@ $$
 The maximum stretching factor over all unit vectors.
 :::
 
-This definition works for **any** linear map between normed spaces—it's how we measure operators in functional analysis too.
+This definition works for **any** linear map between normed spaces. It is how we measure operators in functional analysis too.
 
 | Name | Formula | Computation |
 |------|---------|-------------|
@@ -171,12 +183,36 @@ This definition works for **any** linear map between normed spaces—it's how we
 | 2-norm | $\|A\|_2 = \sigma_{\max}(A)$ | Largest singular value |
 
 **Key properties:**
-- $\|A\mathbf{x}\| \leq \|A\| \cdot \|\mathbf{x}\|$ — the defining inequality
-- $\|AB\| \leq \|A\| \cdot \|B\|$ — submultiplicativity
+- $\|A\mathbf{x}\| \leq \|A\| \cdot \|\mathbf{x}\|$ (the defining inequality)
+- $\|AB\| \leq \|A\| \cdot \|B\|$ (submultiplicativity)
 - $\|I\| = 1$
 
 :::{admonition} Note
 :class: note
-The 1-norm and $\infty$-norm are cheap (just sums). The 2-norm requires singular values—more expensive but geometrically natural.
+The 1-norm and $\infty$-norm are cheap (just sums). The 2-norm requires singular values, which is more expensive but geometrically natural.
 :::
+
+## Linear Systems
+
+We seek to solve $A\mathbf{x} = \mathbf{b}$ where
+$A \in \mathbb{R}^{n \times n}$ and
+$\mathbf{x}, \mathbf{b} \in \mathbb{R}^n$. The basic question is: when does a
+unique solution exist?
+
+:::{prf:theorem} Invertibility Conditions
+:label: thm-invertibility-conditions
+
+For a matrix $A \in \mathbb{R}^{n \times n}$, the following are equivalent:
+
+1. $A$ is **invertible** (i.e., $A^{-1}$ exists)
+2. $A\mathbf{x} = \mathbf{b}$ has a **unique solution** for each $\mathbf{b}$
+3. $A\mathbf{x} = \mathbf{0}$ has only the **trivial solution** $\mathbf{x} = \mathbf{0}$
+4. $\det(A) \neq 0$
+5. All **eigenvalues** of $A$ are non-zero
+:::
+
+Existence and uniqueness are settled by this theorem. The numerical questions
+are: *how do we solve the system efficiently?* and *how sensitive is the
+solution to perturbations?* The rest of this chapter develops the tools to
+answer both.
 

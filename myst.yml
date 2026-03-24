@@ -182,10 +182,11 @@ project:
       title: Linear Algebra and QR Factorization
       children:
         - file: qr-least-squares/linear-algebra-fundamentals.md
-        - file: qr-least-squares/condition-stability.md
+        - file: direct-methods/triangular.md
         - file: qr-least-squares/orthogonality.md
         - file: qr-least-squares/gram-schmidt.md
         - file: qr-least-squares/qr-factorization.md
+        - file: qr-least-squares/condition-stability.md
         - file: qr-least-squares/least-squares.md
         - file: qr-least-squares/qr-solving.md
         - file: qr-least-squares/exercises.md
@@ -252,15 +253,20 @@ project:
         - file: notebooks/fixed-point-iteration.ipynb
         - file: notebooks/CondNumberEst.ipynb
         - file: notebooks/gaussian-elimination-notebook.ipynb
-        # - file: notebooks/lu-decomposition-notebook.ipynb
-        # - file: notebooks/stability-ge.ipynb
+        - file: notebooks/stability-ge.ipynb
         - file: notebooks/deflated-continuation.ipynb
         # - file: notebooks/jacobi-gauss-seidel.ipynb
     # APPENDICES
+    - file: direct-methods/index.md
+      title: "Appendix"
+      children:
+        - file: direct-methods/gaussian-elimination.md
+        - file: direct-methods/lu-decomposition.md
+        - file: direct-methods/pivoting.md
+        - file: direct-methods/exercises.md
     # - file: appendix/index.md
     #   title: Appendices
     #   children:
-    #     - file: appendix/direct-methods.md
     #     - file: appendix/fourier.md
     #     - file: appendix/spectral-methods.md
 site:
