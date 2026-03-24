@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 
-def build_cache_key(kernel_name: str, cells: list[dict]) -> str:
+def build_cache_key(kernel_name: str, cells: list[dict], debug: bool = False) -> str:
     """Reproduce mystmd's buildCacheKey function."""
     hashable_items = []
     for cell in cells:
@@ -27,6 +27,13 @@ def build_cache_key(kernel_name: str, cells: list[dict]) -> str:
             "content": source,
             "raisesException": False,
         })
+
+    if debug:
+        print(f"    kernel: {kernel_name}")
+        print(f"    cells: {len(hashable_items)}")
+        serialized = json.dumps(hashable_items)
+        print(f"    json length: {len(serialized)}")
+        print(f"    json preview: {serialized[:120]}...")
 
     h = hashlib.md5()
     h.update(kernel_name.encode())

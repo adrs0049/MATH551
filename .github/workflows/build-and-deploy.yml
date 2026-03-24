@@ -210,7 +210,7 @@ jobs:
         path: .
 
     - name: Setup Pages
-      uses: actions/configure-pages@v3
+      uses: actions/configure-pages@v5
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -235,6 +235,12 @@ jobs:
           sleep 10
         done > /tmp/memlog.txt &
         echo $! > /tmp/memmon.pid
+
+    - name: Verify execution cache
+      run: |
+        echo "=== Execution cache contents ==="
+        ls -la _build/execute/ | head -20
+        echo "Total files: $(ls _build/execute/ | wc -l)"
 
     - name: Build the book
       timeout-minutes: 30
