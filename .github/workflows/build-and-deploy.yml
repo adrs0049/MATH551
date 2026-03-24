@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ── Job 1: Execute notebooks ────────────────────────────────────────
+  # ── Job 1a: Execute notebooks ───────────────────────────────────────
   execute-notebooks:
     runs-on: ubuntu-latest
     steps:
@@ -59,9 +59,48 @@ jobs:
         path: notebooks/
         retention-days: 1
 
-  # ── Job 2: Build PDFs (needs executed notebooks) ────────────────────
+  # ── Job 1b: Build myst-theme (runs in parallel with notebooks) ──────
+  build-theme:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Cache myst-theme build
+      uses: actions/cache@v4
+      id: theme-cache
+      with:
+        path: myst-theme/themes/book/public/
+        key: theme-${{ hashFiles('myst-theme/package-lock.json', 'myst-theme/themes/book/**') }}
+
+    - name: Set up Node.js
+      if: steps.theme-cache.outputs.cache-hit != 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: myst-theme/package-lock.json
+
+    - name: Build myst-theme
+      if: steps.theme-cache.outputs.cache-hit != 'true'
+      run: |
+        cd myst-theme
+        npm ci
+        npm run build
+        cd themes/book
+        npm run prod:build
+
+    - name: Upload built theme
+      uses: actions/upload-artifact@v4
+      with:
+        name: myst-theme-build
+        path: myst-theme/
+        retention-days: 1
+
+  # ── Job 2: Build PDFs (needs notebooks + theme) ─────────────────────
   build-pdfs:
-    needs: execute-notebooks
+    needs: [execute-notebooks, build-theme]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -74,6 +113,12 @@ jobs:
         name: executed-notebooks
         path: notebooks/
 
+    - name: Download built theme
+      uses: actions/download-artifact@v4
+      with:
+        name: myst-theme-build
+        path: myst-theme/
+
     - name: Cache PDF exports
       uses: actions/cache@v4
       id: pdf-cache
@@ -82,23 +127,6 @@ jobs:
           exports/
           */exports/
         key: pdfs-${{ hashFiles('**/*.md', 'myst.yml', '_templates/**', 'notebooks/**/*.ipynb') }}
-
-    - name: Set up Node.js
-      if: steps.pdf-cache.outputs.cache-hit != 'true'
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: myst-theme/package-lock.json
-
-    - name: Build myst-theme
-      if: steps.pdf-cache.outputs.cache-hit != 'true'
-      run: |
-        cd myst-theme
-        npm ci
-        npm run build
-        cd themes/book
-        npm run prod:build
 
     - name: Set up Python
       if: steps.pdf-cache.outputs.cache-hit != 'true'
@@ -134,9 +162,9 @@ jobs:
           */exports/
         retention-days: 1
 
-  # ── Job 3: Build HTML + Deploy (needs notebooks + PDFs) ─────────────
+  # ── Job 3: Build HTML + Deploy (needs notebooks + theme + PDFs) ─────
   build-html-deploy:
-    needs: [execute-notebooks, build-pdfs]
+    needs: [execute-notebooks, build-theme, build-pdfs]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -152,6 +180,12 @@ jobs:
         name: executed-notebooks
         path: notebooks/
 
+    - name: Download built theme
+      uses: actions/download-artifact@v4
+      with:
+        name: myst-theme-build
+        path: myst-theme/
+
     - name: Download PDF exports
       uses: actions/download-artifact@v4
       with:
@@ -160,21 +194,6 @@ jobs:
 
     - name: Setup Pages
       uses: actions/configure-pages@v3
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: myst-theme/package-lock.json
-
-    - name: Build myst-theme
-      run: |
-        cd myst-theme
-        npm ci
-        npm run build
-        cd themes/book
-        npm run prod:build
 
     - name: Set up Python
       uses: actions/setup-python@v5
