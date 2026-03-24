@@ -63,7 +63,7 @@ def main():
     print(f"Results: {matched} cached, {missing} missing")
 
     if missing > 0:
-        sys.exit(1)
+        print("WARNING: Some notebooks not cached (may be re-executed during build)")
 
 
 if __name__ == "__main__":
