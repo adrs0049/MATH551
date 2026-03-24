@@ -6,9 +6,6 @@ project:
   settings:
     output_matplotlib_strings: remove  # Clean up matplotlib output strings
   jupyter:
-    execute:
-      exclude_patterns:
-        - 'notebooks/*'
     binder:
       url: https://mybinder.org
       repo: adrs0049/MATH551

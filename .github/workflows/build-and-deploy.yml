@@ -192,6 +192,9 @@ jobs:
         name: pdf-exports
         path: .
 
+    - name: Populate MyST execution cache from pre-executed notebooks
+      run: python3 scripts/populate-execute-cache.py
+
     - name: Setup Pages
       uses: actions/configure-pages@v3
 
