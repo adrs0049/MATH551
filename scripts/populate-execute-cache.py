@@ -37,7 +37,7 @@ def build_cache_key(kernel_name: str, cells: list[dict], debug: bool = False) ->
 
     h = hashlib.md5()
     h.update(kernel_name.encode())
-    h.update(json.dumps(hashable_items, separators=(',', ':')).encode())
+    h.update(json.dumps(hashable_items, separators=(',', ':'), ensure_ascii=False).encode())
     return h.digest().hex()
 
 

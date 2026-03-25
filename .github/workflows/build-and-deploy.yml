@@ -10,7 +10,7 @@ on:
 
 env:
   BASE_URL: /${{ github.event.repository.name }}
-  NODE_OPTIONS: '--max-old-space-size=16384'
+  NODE_OPTIONS: '--max-old-space-size=12288'
 
 permissions:
   contents: read
@@ -256,7 +256,7 @@ jobs:
     - name: Verify cache in build job
       run: |
         echo "Cache files: $(ls _build/execute/ 2>/dev/null | wc -l)"
-        ls _build/execute/ 2>/dev/null | head -5
+        python3 scripts/verify-execute-cache.py
 
     - name: Build the book
       timeout-minutes: 30
