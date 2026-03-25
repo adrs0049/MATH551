@@ -57,4 +57,84 @@ if [ -n "$MYST_CJS" ]; then
     patch_file "$MYST_CJS" "mystmd"
 fi
 
+echo "Done with algorithm/property patch."
+
+# ── Patch 2: Reduce HTML static build concurrency to 1 ────────────────
+# The default p-limit(5) causes 5 pages to render simultaneously,
+# which can OOM on GitHub runners (16GB). We reduce to 1 and add
+# a for-loop instead of Promise.all to allow GC between pages.
+
+patch_html_concurrency() {
+    local CJS="$1"
+    local NAME="$2"
+
+    if [ ! -f "$CJS" ]; then
+        echo "  SKIP: $NAME not found at $CJS"
+        return 0
+    fi
+
+    if grep -q 'sequential HTML rendering' "$CJS" 2>/dev/null; then
+        echo "  OK: $NAME HTML concurrency already patched"
+        return 0
+    fi
+
+    # Replace Promise.all(routes.map(...)) with sequential for-loop
+    python3 -c "
+import re
+
+with open('$CJS', 'r') as f:
+    content = f.read()
+
+old = 'await Promise.all(routes.map(async (route) => limitConnections(async () => {'
+new = '''// Patched: sequential HTML rendering to reduce memory pressure
+  for (const route of routes) {'''
+
+content = content.replace(old, new, 1)
+
+# Close the limitConnections wrapper - replace the matching '})));' with '}'
+# Find the specific pattern after the route processing block
+content = content.replace(
+    '}\\n  })));\\n  appServer.stop();',
+    '}\\n  }\\n  appServer.stop();',
+    1
+)
+
+# If the above didn't match, try a more targeted approach
+if 'sequential HTML rendering' in content and '})));' in content:
+    # Replace the first }))) after the sequential comment
+    idx = content.index('sequential HTML rendering')
+    rest = content[idx:]
+    rest = rest.replace('})));', '}', 1)
+    content = content[:idx] + rest
+
+with open('$CJS', 'w') as f:
+    f.write(content)
+" 2>/dev/null
+
+    if grep -q 'sequential HTML rendering' "$CJS" 2>/dev/null; then
+        echo "  PATCHED: $NAME — sequential HTML rendering enabled"
+    else
+        echo "  WARNING: $NAME HTML concurrency patch may not have applied"
+    fi
+}
+
+echo ""
+echo "Patching HTML build concurrency..."
+
+if [ -n "$MYST_CJS" ]; then
+    patch_html_concurrency "$MYST_CJS" "mystmd"
+fi
+
+echo "Done with algorithm/property patch."
+
+# ── Patch 2: Sequential HTML rendering to reduce memory ───────────────
+# The default parallel fetch (p-limit 5) causes Remix to accumulate
+# memory for all pages, OOMing on 16GB GitHub runners.
+echo ""
+echo "Patching HTML build for sequential rendering..."
+
+if [ -n "$MYST_CJS" ]; then
+    python3 scripts/patch-html-sequential.py "$MYST_CJS"
+fi
+
 echo "Done."
