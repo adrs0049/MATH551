@@ -39,7 +39,7 @@ x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}
 $$
 
 ```{code-cell} python
-:tags: [hide-input]
+:tags: [hide-input, remove-output]
 :label: cell-newton-derivation
 
 import numpy as np

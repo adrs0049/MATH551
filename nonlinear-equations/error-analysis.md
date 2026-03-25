@@ -141,7 +141,7 @@ This is why nearly-tangent crossings are dangerous: the root sits on a nearly fl
 :::
 
 ```{code-cell} python
-:tags: [hide-input]
+:tags: [hide-input, remove-output]
 :label: cell-condition-geometry
 
 import numpy as np

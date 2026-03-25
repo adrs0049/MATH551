@@ -111,7 +111,7 @@ The cobweb diverges away from the fixed point even if you start nearby (right
 panel).
 
 ```{code-cell} python
-:tags: [hide-input]
+:tags: [hide-input, remove-output]
 :label: cell-fixed-point-geometry
 
 import numpy as np
