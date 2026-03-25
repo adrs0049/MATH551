@@ -10,7 +10,7 @@ on:
 
 env:
   BASE_URL: /${{ github.event.repository.name }}
-  NODE_OPTIONS: '--max-old-space-size=12288'
+  NODE_OPTIONS: '--max-old-space-size=16384'
 
 permissions:
   contents: read
@@ -246,7 +246,7 @@ jobs:
 
     - name: Build the book
       timeout-minutes: 30
-      run: jupyter-book build --execute --execute-parallel 1 --html
+      run: jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --ci --html
 
     - name: Stop memory monitor and print log
       if: always()
