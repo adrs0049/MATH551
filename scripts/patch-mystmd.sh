@@ -53,10 +53,16 @@ echo "Patch 1: Algorithm/property proof environments"
 
 echo ""
 echo "Patch 2: Sequential HTML rendering"
+patched=false
 if [ -n "$MYST_CJS" ]; then
-    python3 scripts/patch-html-sequential.py "$MYST_CJS"
-else
-    echo "  SKIP: mystmd not found"
+    python3 scripts/patch-html-sequential.py "$MYST_CJS" && patched=true
+fi
+if [ -n "$JB_CJS" ]; then
+    # jupyter-book bundles its own myst.cjs - patch that too
+    python3 scripts/patch-html-sequential.py "$JB_CJS" && patched=true
+fi
+if [ "$patched" = false ]; then
+    echo "  SKIP: no CJS files found to patch"
 fi
 
 echo ""
