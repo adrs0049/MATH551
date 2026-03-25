@@ -142,6 +142,7 @@ This is why nearly-tangent crossings are dangerous: the root sits on a nearly fl
 
 ```{code-cell} python
 :tags: [hide-input]
+:label: cell-condition-geometry
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -229,7 +230,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-:::{figure}
+:::{figure} #cell-condition-geometry
 :label: fig-condition-number-geometry
 
 **Conditioning of a root.** Both panels show the same vertical perturbation $\epsilon$ (gray) applied to $f$ (blue band between dashed curves). *Left:* When $f$ crosses zero steeply ($|f'(x^*)| = 2$), the perturbed roots (red squares) barely move from the true root (black dot). *Right:* When $f$ crosses zero at a shallow angle ($|f'(x^*)| = 0.3$), the same perturbation slides the root much further along the $x$-axis. The horizontal shift $\Delta x^*$ is amplified by the condition number $\hat{\kappa} = 1/|f'(x^*)|$.

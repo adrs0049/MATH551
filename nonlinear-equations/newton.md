@@ -40,6 +40,7 @@ $$
 
 ```{code-cell} python
 :tags: [hide-input]
+:label: cell-newton-derivation
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -103,7 +104,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-:::{figure}
+:::{figure} #cell-newton-derivation
 :label: fig-newton-derivation
 
 **Newton's method in action.** At each step, the function $f(x) = x^3 - 2x - 5$ (blue) is approximated by its tangent line (red dashed) at the current iterate $x_n$ (black star). The next iterate $x_{n+1}$ (red square) is the root of the tangent line. The true root is marked in green. Notice how the iterates converge rapidly to the root, with the tangent line becoming an increasingly accurate local approximation.

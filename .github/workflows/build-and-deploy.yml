@@ -77,7 +77,20 @@ jobs:
       with:
         submodules: true
 
+    - name: Cache built theme
+      uses: actions/cache@v4
+      id: theme-cache
+      with:
+        path: |
+          myst-theme/node_modules/
+          myst-theme/packages/*/dist/
+          myst-theme/themes/book/build/
+          myst-theme/themes/book/public/
+          myst-theme/themes/book/node_modules/
+        key: theme-${{ hashFiles('myst-theme/package-lock.json', 'myst-theme/themes/book/package.json') }}
+
     - name: Set up Node.js
+      if: steps.theme-cache.outputs.cache-hit != 'true'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
@@ -85,6 +98,7 @@ jobs:
         cache-dependency-path: myst-theme/package-lock.json
 
     - name: Build myst-theme
+      if: steps.theme-cache.outputs.cache-hit != 'true'
       run: |
         cd myst-theme
         npm ci
@@ -239,21 +253,33 @@ jobs:
     - name: Verify execution cache
       run: python3 scripts/verify-execute-cache.py
 
+    - name: Verify cache in build job
+      run: |
+        echo "Cache files: $(ls _build/execute/ 2>/dev/null | wc -l)"
+        ls _build/execute/ 2>/dev/null | head -5
+
     - name: Build the book
       timeout-minutes: 30
-      run: jupyter-book build --execute --execute-parallel 2 --html
+      run: jupyter-book build --execute --execute-parallel 1 --html
 
-    - name: Print memory log
+    - name: Stop memory monitor and print log
       if: always()
       run: |
+        kill $(cat /tmp/memmon.pid 2>/dev/null) 2>/dev/null || true
         echo "=== Memory usage over time ==="
-        cat /tmp/memlog.txt || true
+        cat /tmp/memlog.txt 2>/dev/null || echo "No memory log found"
         echo ""
         echo "=== Final memory state ==="
         free -h
-        echo ""
-        echo "=== dmesg OOM messages ==="
-        dmesg | grep -i -E "oom|killed|memory" || echo "No OOM messages found"
+
+    - name: Upload memory log
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: memory-log
+        path: /tmp/memlog.txt
+        retention-days: 3
+        if-no-files-found: ignore
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v4
