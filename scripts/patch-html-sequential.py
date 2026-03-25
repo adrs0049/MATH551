@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Patch mystmd's buildHtml to render pages sequentially instead of in parallel.
+Patch mystmd/jupyter-book buildHtml to render pages sequentially.
 
 The default Promise.all + p-limit(5) causes the Remix server to accumulate
-memory for all pages simultaneously, which OOMs on 16GB GitHub runners.
-
-This patch replaces the parallel fetch with a sequential for-loop.
+memory, which OOMs on 16GB GitHub runners. This replaces the parallel fetch
+with a sequential for-loop.
 """
 import sys
+
 
 def patch(cjs_path):
     with open(cjs_path, 'r') as f:
@@ -17,58 +17,43 @@ def patch(cjs_path):
         print(f"  OK: already patched")
         return True
 
-    old = (
-        '  await Promise.all(routes.map(async (route) => limitConnections(async () => {\n'
-        '    const resp = await fetchWithRetry(session, route.url);\n'
-        '    if (!resp.ok) {\n'
-        '      session.log.error(`Error fetching ${route.url}`);\n'
-        '      return;\n'
-        '    }\n'
-        '    if (route.binary && resp.body) {\n'
-        '      await new Promise((resolve10) => {\n'
-        '        const filename = import_node_path58.default.join(htmlDir, route.path);\n'
-        '        if (!import_fs_extra.default.existsSync(filename))\n'
-        '          import_fs_extra.default.mkdirSync(import_node_path58.default.dirname(filename), { recursive: true });\n'
-        '        const fileWriteStream = import_fs_extra.default.createWriteStream(filename);\n'
-        '        resp.body.pipe(fileWriteStream);\n'
-        '        fileWriteStream.on("finish", resolve10);\n'
-        '      });\n'
-        '    } else {\n'
-        '      const content3 = await resp.text();\n'
-        '      writeFileToFolder(import_node_path58.default.join(htmlDir, route.path), content3);\n'
-        '    }\n'
-        '  })));'
-    )
-
-    new = (
-        '  // PATCHED_SEQUENTIAL_HTML: render pages one at a time to reduce memory\n'
-        '  for (const route of routes) {\n'
-        '    const resp = await fetchWithRetry(session, route.url);\n'
-        '    if (!resp.ok) {\n'
-        '      session.log.error(`Error fetching ${route.url}`);\n'
-        '      continue;\n'
-        '    }\n'
-        '    if (route.binary && resp.body) {\n'
-        '      await new Promise((resolve10) => {\n'
-        '        const filename = import_node_path58.default.join(htmlDir, route.path);\n'
-        '        if (!import_fs_extra.default.existsSync(filename))\n'
-        '          import_fs_extra.default.mkdirSync(import_node_path58.default.dirname(filename), { recursive: true });\n'
-        '        const fileWriteStream = import_fs_extra.default.createWriteStream(filename);\n'
-        '        resp.body.pipe(fileWriteStream);\n'
-        '        fileWriteStream.on("finish", resolve10);\n'
-        '      });\n'
-        '    } else {\n'
-        '      const content3 = await resp.text();\n'
-        '      writeFileToFolder(import_node_path58.default.join(htmlDir, route.path), content3);\n'
-        '    }\n'
-        '  }'
-    )
-
-    if old not in content:
-        print(f"  WARNING: could not find target block in {cjs_path}")
+    # Find the start of the Promise.all block
+    marker = 'await Promise.all(routes.map(async (route) => limitConnections(async () => {'
+    start = content.find(marker)
+    if start == -1:
+        print(f"  WARNING: could not find Promise.all block in {cjs_path}")
         return False
 
-    content = content.replace(old, new, 1)
+    # Walk back to include the leading whitespace/await
+    line_start = content.rfind('\n', 0, start) + 1
+
+    # Find the closing })));
+    search_from = start + len(marker)
+    end_marker = '})));'
+    end = content.find(end_marker, search_from)
+    if end == -1:
+        print(f"  WARNING: could not find closing }}))) in {cjs_path}")
+        return False
+    end += len(end_marker)
+
+    # Extract the inner block (the route processing logic)
+    inner_start = start + len(marker) + 1  # skip the opening {
+    inner = content[inner_start:end - len(end_marker)]
+
+    # Detect the resolve variable name (resolve9, resolve10, etc.)
+    import re
+    resolve_match = re.search(r'new Promise\((resolve\d+)\)', inner)
+    resolve_var = resolve_match.group(1) if resolve_match else 'resolve'
+
+    # Build the replacement: sequential for-loop
+    replacement = (
+        '  // PATCHED_SEQUENTIAL_HTML: render pages one at a time to reduce memory\n'
+        '  for (const route of routes) {\n'
+        + inner.replace('return;', 'continue;')
+        + '  }'
+    )
+
+    content = content[:line_start] + replacement + content[end:]
 
     with open(cjs_path, 'w') as f:
         f.write(content)
@@ -79,7 +64,7 @@ def patch(cjs_path):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print("Usage: patch-html-sequential.py <path-to-myst.cjs>")
+        print("Usage: patch-html-sequential.py <path-to-cjs>")
         sys.exit(1)
     success = patch(sys.argv[1])
     sys.exit(0 if success else 1)
