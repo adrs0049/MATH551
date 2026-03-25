@@ -153,7 +153,7 @@ jobs:
       if: steps.pdf-cache.outputs.cache-hit != 'true'
       run: |
         sudo apt-get update
-        sudo apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-science texlive-xetex latexmk librsvg2-bin
+        sudo apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-science texlive-xetex latexmk librsvg2-bin
 
     - name: Build PDFs
       if: steps.pdf-cache.outputs.cache-hit != 'true'
