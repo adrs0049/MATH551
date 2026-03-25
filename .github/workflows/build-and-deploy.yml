@@ -77,20 +77,7 @@ jobs:
       with:
         submodules: true
 
-    - name: Cache built theme
-      uses: actions/cache@v4
-      id: theme-cache
-      with:
-        path: |
-          myst-theme/node_modules/
-          myst-theme/packages/*/dist/
-          myst-theme/themes/book/build/
-          myst-theme/themes/book/public/
-          myst-theme/themes/book/node_modules/
-        key: theme-${{ hashFiles('myst-theme/package-lock.json', 'myst-theme/themes/book/package.json') }}
-
     - name: Set up Node.js
-      if: steps.theme-cache.outputs.cache-hit != 'true'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
@@ -98,7 +85,6 @@ jobs:
         cache-dependency-path: myst-theme/package-lock.json
 
     - name: Build myst-theme
-      if: steps.theme-cache.outputs.cache-hit != 'true'
       run: |
         cd myst-theme
         npm ci
