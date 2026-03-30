@@ -168,8 +168,8 @@ jobs:
         JUPYTER_EXECUTION_TIMEOUT: '120'
       run: |
         # MyST's node process sometimes hangs after completing all exports.
-        # Run in background, wait for all PDFs to export, then kill stragglers.
-        jupyter-book build --execute --pdf 2>&1 | tee /tmp/pdf-build.log &
+        # Redirect to file (not pipe/tee) so we can kill cleanly.
+        jupyter-book build --execute --pdf > /tmp/pdf-build.log 2>&1 &
         BUILD_PID=$!
         LAST_COUNT=0
         STABLE_SINCE=0
@@ -185,12 +185,14 @@ jobs:
           if [ "$STABLE_SINCE" -ge 60 ]; then
             echo "All $COUNT PDFs exported, process still running after 60s. Force killing."
             kill -9 $BUILD_PID 2>/dev/null || true
+            sleep 1
             pkill -9 -f "myst" || true
             break
           fi
           sleep 1
         done
         wait $BUILD_PID 2>/dev/null || true
+        cat /tmp/pdf-build.log
         exit 0
 
     - name: Upload PDF exports
