@@ -166,7 +166,11 @@ jobs:
       timeout-minutes: 20
       env:
         JUPYTER_EXECUTION_TIMEOUT: '120'
-      run: jupyter-book build --execute --pdf
+      run: |
+        jupyter-book build --execute --pdf 2>&1 | tee /tmp/pdf-build.log
+        # MyST's node process sometimes hangs after completing all exports.
+        # Kill any remaining node/python children to ensure the step exits.
+        pkill -f "myst" || true
 
     - name: Upload PDF exports
       uses: actions/upload-artifact@v4
