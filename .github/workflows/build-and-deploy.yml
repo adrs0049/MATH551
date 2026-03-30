@@ -114,6 +114,12 @@ jobs:
         name: executed-notebooks
         path: notebooks/
 
+    - name: Download execution cache
+      uses: actions/download-artifact@v4
+      with:
+        name: execute-cache
+        path: _build/execute/
+
     - name: Download built theme
       uses: actions/download-artifact@v4
       with:
@@ -157,7 +163,7 @@ jobs:
 
     - name: Build PDFs
       if: steps.pdf-cache.outputs.cache-hit != 'true'
-      run: jupyter-book build --pdf
+      run: jupyter-book build --execute --pdf
 
     - name: Upload PDF exports
       uses: actions/upload-artifact@v4
