@@ -18,7 +18,9 @@ downloads:
 Real-world problems often have multiple roots, and we need to find all of them
 reliably. This requires combining **bracketing** (to isolate roots) with
 **fast solvers** (to compute them accurately). Production solvers like MATLAB's
-`fzero` use hybrid methods that get the best of both worlds.
+[`fzero`](https://www.mathworks.com/help/matlab/ref/fzero.html) and SciPy's
+[`brentq`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html)
+use hybrid methods that get the best of both worlds.
 :::
 
 ## The Challenge: Multiple Roots
@@ -42,7 +44,7 @@ $x = 1$. Starting from $x_0 = 2.5$ converges to $x = 3$ (not the nearest root
 $x = 2$). There is no single starting point that finds all three.
 :::
 
-## Step 1: Bracketing All Roots
+## Bracketing
 
 The first step is to **isolate** each root in its own interval. The simplest
 approach: evaluate $f$ on a grid and look for sign changes.
@@ -115,70 +117,10 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Step 2: Solve Each Bracket
+## Finding All Roots
 
 Once we have brackets, apply a fast solver to each one independently. This is
 the **bracket-then-solve** strategy.
-
-```{code-cell} python
-:tags: [hide-input]
-
-from scipy.optimize import brentq
-
-print("Brackets found and roots computed:")
-for a_i, b_i in brackets:
-    root = brentq(f, a_i, b_i)
-    print(f"  [{a_i:.3f}, {b_i:.3f}] -> root = {root:.12f}")
-```
-
-## Hybrid Methods: The Best of Both Worlds
-
-The most effective solvers combine bracketing (safety) with Newton-like methods
-(speed). The idea: maintain a bracket $[a, b]$ that always contains the root,
-but use faster steps when possible.
-
-### Brent's Method
-
-MATLAB's `fzero` and SciPy's `brentq` implement **Brent's method** (1973),
-which combines three strategies:
-
-1. **Bisection**: always safe, always shrinks the bracket by half.
-2. **Secant method**: uses the two most recent points to extrapolate (no
-   derivative needed, superlinear convergence).
-3. **Inverse quadratic interpolation**: fits a parabola through the three most
-   recent points for even faster convergence.
-
-At each step, Brent's method tries the fastest option first (inverse quadratic
-interpolation), falls back to secant if that fails, and uses bisection as the
-last resort. The bracket is always maintained, so convergence is guaranteed.
-
-:::{prf:remark} Why Not Newton Inside a Bracket?
-:label: rmk-why-not-newton-bracket
-
-One could also maintain a bracket and use Newton steps when they stay inside the
-bracket, falling back to bisection otherwise. This is called the
-**Newton-bisection hybrid** and works well in practice. Brent's method avoids
-Newton because it does not require the derivative $f'$, which makes it more
-broadly applicable.
-:::
-
-### What MATLAB's `fzero` Does
-
-MATLAB's `fzero(f, x0)` works in two phases:
-
-1. **Phase 1 (bracket finding):** starting from the initial guess `x0`, it
-   searches outward (expanding intervals) until it finds a sign change. This
-   gives a bracket $[a, b]$.
-2. **Phase 2 (bracket solving):** apply Brent's method to the bracket.
-
-If called as `fzero(f, [a, b])` with a bracket directly, it skips Phase 1.
-
-SciPy's `brentq(f, a, b)` requires the bracket up front and goes directly to
-Brent's method.
-
-## Finding All Roots Systematically
-
-Combining everything, a robust strategy for finding all roots of $f$ on $[a, b]$:
 
 :::{prf:algorithm} Find All Roots
 :label: alg-find-all-roots
@@ -195,6 +137,8 @@ Combining everything, a robust strategy for finding all roots of $f$ on $[a, b]$
 
 ```{code-cell} python
 :tags: [hide-input]
+
+from scipy.optimize import brentq
 
 def find_all_roots(f, a, b, N=1000, tol=1e-12):
     """Find all sign-change roots of f on [a, b]."""
@@ -233,10 +177,50 @@ for i, r in enumerate(roots_found):
     print(f"  x_{i} = {r:.10f},  f(x_{i}) = {g(r):.2e}")
 ```
 
-## Deflation: An Alternative Approach
+## Hybrid Methods
+
+No single method is perfect. Bisection is safe but slow. Newton is fast but
+can diverge. The most robust solvers combine both: maintain a bracket that
+always contains the root, but use faster steps when possible. Even these have
+limitations, as we will see.
+
+### Brent's Method
+
+**[Brent's method](https://en.wikipedia.org/wiki/Brent%27s_method)** (1973) combines three strategies:
+
+1. **Bisection**: always safe, always shrinks the bracket by half.
+2. **[Secant method](https://en.wikipedia.org/wiki/Secant_method)**: uses the two most recent points to extrapolate (no
+   derivative needed, superlinear convergence).
+3. **[Inverse quadratic interpolation](https://en.wikipedia.org/wiki/Inverse_quadratic_interpolation)**:
+   fits a parabola through the three most recent points for even faster
+   convergence.
+
+At each step, Brent's method tries the fastest option first (inverse quadratic
+interpolation), falls back to secant if that fails, and uses bisection as the
+last resort. The bracket is always maintained, so convergence is guaranteed.
+
+This is what MATLAB's
+[`fzero`](https://www.mathworks.com/help/matlab/ref/fzero.html) and SciPy's
+[`brentq`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html)
+implement. The difference is that `fzero(f, x0)` can search for a bracket
+starting from a single guess, while `brentq(f, a, b)` requires the bracket up
+front.
+
+### Newton-Bisection Hybrid
+
+An alternative is to maintain a bracket and use Newton steps when they stay
+inside the bracket, falling back to bisection otherwise. This is sometimes
+called **safe Newton**. It requires the derivative $f'$ but converges
+quadratically near the root while still guaranteeing convergence globally.
+
+Brent's method avoids requiring the derivative, which makes it more broadly
+applicable.
+
+
+## Deflation
 
 Instead of bracketing all roots up front, **deflation** finds roots one at a
-time: after finding a root $r_1$, divide it out and solve the deflated problem.
+time. After finding a root $r_1$, divide it out and solve the deflated problem.
 
 For a polynomial $f(x)$ with a known root $r_1$, define:
 
@@ -244,23 +228,49 @@ $$
 f_1(x) = \frac{f(x)}{x - r_1}
 $$
 
-The roots of $f_1$ are the remaining roots of $f$. Apply Newton's method (or
-any solver) to $f_1$ to find the next root, then deflate again.
+The roots of $f_1$ are the remaining roots of $f$. Apply any solver to $f_1$
+to find the next root, then deflate again.
 
-:::{prf:remark} Deflation Pitfalls
+:::{prf:remark} Practical Considerations for Deflation
 :label: rmk-deflation-pitfalls
+:class: dropdown
 
-Deflation works well for polynomials but has issues for general functions:
+Deflation is conceptually simple but requires some care.
 
-1. **Numerical instability**: dividing by $(x - r_1)$ amplifies errors near
-   $r_1$. If $r_1$ is only approximate, the deflated function has a pole near
-   (but not at) the true root.
-2. **Error accumulation**: each deflation step introduces errors that propagate
-   to later roots. Finding roots in order of increasing magnitude helps.
-3. **Non-polynomial functions**: for transcendental functions like $\sin(x)$,
-   deflation is not straightforward since there are infinitely many roots.
+1. **Approximate poles**: if $r_1$ is only approximate, $f_1(x) = f(x)/(x - r_1)$
+   has a near-pole that can cause large evaluation errors. A common mitigation is
+   to **polish** the roots afterwards by running a few Newton iterations on the
+   original (undeflated) function $f$.
+2. **Highly nonlinear near old roots**: the singularity introduced by dividing
+   out $r_1$ makes the deflated function very steep near the old root. Plain
+   Newton's method can struggle here, so damped or globalized solvers (such as
+   the [NLEQ-ERR method](../nonlinear-systems/globalization.md)) may be needed.
+3. **Error accumulation**: each deflation step introduces errors that propagate
+   to later roots. For high-degree polynomials this can be significant. Finding
+   roots in order of increasing magnitude helps, since smaller roots tend to be
+   computed more accurately relative to machine precision.
+3. **Beyond polynomials**: deflation also applies to other settings. For example,
+   [Farrell, Birkisson & Funke (2015)](https://arxiv.org/abs/1603.00809) develop
+   deflation techniques for nonlinear PDEs to systematically discover multiple
+   solutions. The details of dividing out known solutions depend on the problem
+   structure.
 
-For these reasons, the bracket-then-solve approach is usually preferred for
-general functions, while deflation is mainly used for polynomials.
+For scalar root-finding on a known interval, bracket-then-solve is often simpler.
+Deflation is most useful when roots are found sequentially and cannot be
+bracketed in advance.
 :::
+
+## Systems of Equations
+
+For systems $F(\mathbf{x}) = \mathbf{0}$, bracketing no longer applies since
+there is no notion of sign change in multiple dimensions. The locality problem
+becomes much harder: Newton's method still converges quadratically near a
+solution, but can diverge wildly from a poor initial guess.
+
+Several techniques exist to make Newton's method more robust for systems.
+**Globalization strategies** such as damped Newton and backtracking line searches
+restrict step sizes to prevent divergence. **Quasi-Newton methods** like
+Broyden's method avoid computing the full Jacobian at every step, reducing cost
+from $\mathcal{O}(n^3)$ to $\mathcal{O}(n^2)$ per iteration. These ideas are
+developed in the [Nonlinear Systems](../nonlinear-systems/index.md) chapter.
 

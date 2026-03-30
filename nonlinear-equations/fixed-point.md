@@ -111,8 +111,7 @@ The cobweb diverges away from the fixed point even if you start nearby (right
 panel).
 
 ```{code-cell} python
-:tags: [hide-input, remove-output]
-:label: cell-fixed-point-geometry
+:tags: [hide-input]
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -202,11 +201,8 @@ plt.tight_layout()
 plt.show()
 ```
 
-:::{figure} #cell-fixed-point-geometry
-:label: fig-fixed-point-geometry
-
+(fig-fixed-point-geometry)=
 **Geometric intuition for fixed point iteration.** In the cobweb diagrams (center and right), the black star ($\star$) marks the starting point $x_0$ and the red square marks the final iterate. *Left:* If $g$ maps $[a,b]$ into itself, its graph stays inside the blue box and must cross the diagonal $y = x$ at least once, guaranteeing existence of a fixed point. *Center:* When $|g'| < 1$ everywhere on $[a,b]$, the graph is less steep than the diagonal, so there is exactly one crossing. The cobweb diagram shows the iteration spiraling inward from the start ($\star$) to the unique fixed point. *Right:* When $g([a,b]) \subseteq [a,b]$ but $|g'| > 1$ near the center, the graph is steep enough to cross the diagonal multiple times, creating three fixed points. The cobweb starting near the central (unstable) fixed point ($\star$) diverges away from it, eventually settling at one of the stable outer fixed points where $|g'| < 1$.
-:::
 
 :::{prf:theorem} Fixed Point Existence, Uniqueness, and Convergence
 :label: thm-fixed-point-existence
@@ -319,19 +315,6 @@ plt.tight_layout()
 plt.show()
 ```
 
-:::{prf:remark} Local Convergence
-:label: rmk-local-convergence
-:class: dropdown
-
-Even if $|g'(x)| < 1$ only *at* the fixed point (not on the whole interval), the
-iteration still converges, provided we start close enough. This is called
-**local convergence**.
-
-Specifically: if $g \in \mathcal{C}^1$, $g(c) = c$, and $|g'(c)| < 1$, then
-there exists $\delta > 0$ such that the iteration converges for any $x_0$ with
-$|x_0 - c| < \delta$.
-:::
-
 ## The Derivative at the Fixed Point
 
 The key insight: **$|g'(c)|$ determines everything**.
@@ -342,149 +325,10 @@ For our three reformulations of $x^2 - 3 = 0$:
 
 - $g_2(x) = x - (x^2-3)/2$: We have $g_2'(x) = 1 - x$, so $|g_2'(\sqrt{3})| = |1 - \sqrt{3}| \approx 0.73$. Linear convergence with rate $\rho \approx 0.73$.
 
-- $g_3(x) = (x^2+3)/(2x)$: We have $g_3'(x) = 1/2 - 3/(2x^2)$, so $g_3'(\sqrt{3}) = 0$. The derivative vanishes, which signals faster-than-linear convergence.
-
-## Order of Convergence
-
-We know that fixed point iteration converges when $|g'(c)| < 1$, but *how fast*?
-The contraction factor $\rho = |g'(c)|$ controls linear convergence, but what
-happens when $g'(c) = 0$, as with $g_3$? We need a finer notion of convergence
-speed.
-
-:::{prf:definition} Order of Convergence
-:label: def-convergence-order
-
-A sequence $\{x_n\}$ converging to $\ell$ has **order** $p$ if:
-
-$$
-\lim_{n\to\infty} \frac{|x_{n+1} - \ell|}{|x_n - \ell|^p} = C
-$$
-
-for some constant $C > 0$.
-
-- $p = 1$: **Linear** convergence (error shrinks by a constant factor each step)
-- $p = 2$: **Quadratic** convergence (digits of accuracy double each step)
-- $p = 3$: **Cubic** convergence (digits of accuracy triple each step)
-:::
-
-:::{prf:theorem} Order of Fixed Point Iteration
-:label: thm-fixed-point-order
-
-If $g(c) = c$ and $g'(c) = g''(c) = \cdots = g^{(p-1)}(c) = 0$ but $g^{(p)}(c) \neq 0$, then the iteration converges with order $p$.
-:::
-
-:::{prf:proof}
-:class: dropdown
-
-Taylor expand $g(x_n)$ around $c$:
-
-$$
-x_{n+1} = g(x_n) = g(c) + g'(c)(x_n - c) + \cdots + \frac{g^{(p)}(\xi)}{p!}(x_n - c)^p
-$$
-
-Since $g(c) = c$ and the first $p-1$ derivatives vanish:
-
-$$
-x_{n+1} - c = \frac{g^{(p)}(\xi)}{p!}(x_n - c)^p
-$$
-
-Thus $|x_{n+1} - c| \approx C|x_n - c|^p$ with $C = |g^{(p)}(c)|/p!$.
-:::
-
-This explains why $g_3$ converges so fast. We already know $g_3'(\sqrt{3}) = 0$.
-Computing the second derivative:
-
-$$
-g_3'(x) = \frac{1}{2} - \frac{3}{2x^2}, \qquad g_3''(x) = \frac{3}{x^3}
-$$
-
-so $g_3''(\sqrt{3}) = 3/(3\sqrt{3}) = 1/\sqrt{3} \neq 0$. Since $g_3'(c) = 0$
-and $g_3''(c) \neq 0$, the theorem gives $p = 2$: **quadratic convergence** with
-asymptotic error constant $C = |g_3''(\sqrt{3})|/2! = 1/(2\sqrt{3}) \approx 0.289$.
-
-:::{prf:remark} What Higher-Order Convergence Means
-:label: rmk-higher-order-convergence
-:class: dropdown
-
-The error relation $|e_{n+1}| \approx C|e_n|^p$ has dramatic consequences as $p$ increases.
-
-**Linear** ($p = 1$): Each step multiplies the error by $\rho$. To gain one
-digit of accuracy, you always need a fixed number of iterations. Progress is
-steady but slow.
-
-**Quadratic** ($p = 2$): Each step *squares* the error. If $e_n \approx
-10^{-3}$, then $e_{n+1} \approx 10^{-6}$, then $e_{n+2} \approx 10^{-12}$. The
-number of correct digits **doubles** at every step. This is characteristic of
-Newton's method: the initial iterations show modest improvement, but once the
-error becomes small the doubling effect produces rapid convergence to machine
-precision in just a few steps.
-
-**Cubic** ($p = 3$): Each step *cubes* the error. The number of correct digits **triples** each step, even faster.
-:::
-
-```{code-cell} python
-:tags: [hide-input]
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-fig, ax = plt.subplots(figsize=(8, 5))
-
-# Simulate error sequences with |e_{n+1}| = C * |e_n|^p
-e0 = 0.5
-n_max = 12
-
-# Linear: e_{n+1} = rho * e_n, rho = 0.5
-rho = 0.5
-e_linear = [e0]
-for _ in range(n_max - 1):
-    e_linear.append(rho * e_linear[-1])
-
-# Quadratic: e_{n+1} = C * e_n^2, C = 1 (so e_{n+1} = e_n^2)
-e_quad = [e0]
-for _ in range(n_max - 1):
-    e_next = e_quad[-1]**2
-    if e_next < 1e-16:
-        e_quad.append(1e-16)
-    else:
-        e_quad.append(e_next)
-
-# Cubic: e_{n+1} = C * e_n^3, C = 1
-e_cubic = [e0]
-for _ in range(n_max - 1):
-    e_next = e_cubic[-1]**3
-    if e_next < 1e-16:
-        e_cubic.append(1e-16)
-    else:
-        e_cubic.append(e_next)
-
-n = np.arange(n_max)
-
-ax.semilogy(n, e_linear, 'o-', color='#d62728', linewidth=2, markersize=6,
-            label=r'Linear ($p=1$, $\rho=0.5$): $e_{n+1} = 0.5\, e_n$')
-ax.semilogy(n, e_quad, 's-', color='#1f77b4', linewidth=2, markersize=6,
-            label=r'Quadratic ($p=2$): $e_{n+1} = e_n^2$')
-ax.semilogy(n, e_cubic, 'D-', color='#2ca02c', linewidth=2, markersize=6,
-            label=r'Cubic ($p=3$): $e_{n+1} = e_n^3$')
-
-ax.axhline(y=1e-15, color='gray', linestyle=':', linewidth=1, label='Machine epsilon')
-
-# Annotate the quadratic "doubling digits" effect
-ax.set_xlabel('Iteration $n$', fontsize=12)
-ax.set_ylabel('Error $|e_n|$', fontsize=12)
-ax.set_title('Linear vs quadratic vs cubic convergence')
-ax.legend(fontsize=9, loc='lower left')
-ax.grid(True, alpha=0.3, which='both')
-ax.set_xlim(-0.3, n_max - 0.5)
-ax.set_ylim(1e-16, 2)
-
-plt.tight_layout()
-plt.show()
-```
+- $g_3(x) = (x^2+3)/(2x)$: We have $g_3'(x) = 1/2 - 3/(2x^2)$, so $g_3'(\sqrt{3}) = 0$. The derivative vanishes! When $g'(c) = 0$, the convergence is faster than linear — in fact, it is **quadratic**, meaning the number of correct digits doubles at every step. We'll explore this in detail in [Newton's Method](newton.md), since $g_3$ *is* Newton's method for this problem.
 
 **The design principle:** make $|g'(c)|$ as small as possible. The optimal
-choice is $g'(c) = 0$, which yields quadratic convergence. This is exactly what
-Newton's method achieves by setting $g(x) = x - f(x)/f'(x)$.
+choice is $g'(c) = 0$, which is exactly what Newton's method achieves by setting $g(x) = x - f(x)/f'(x)$.
 
 ## The Banach Fixed Point Theorem
 

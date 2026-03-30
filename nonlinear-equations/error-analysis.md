@@ -128,6 +128,19 @@ Note that $g$ cancels entirely: the condition number depends only on $f'(x^*)$,
 not on the shape of the perturbation.
 :::
 
+:::{prf:remark} Connection to the Lipschitz Constant
+:label: rmk-condition-lipschitz
+:class: dropdown
+
+The quantity $|f'(x^*)|$ is the local Lipschitz constant of $f$ near the root:
+it controls how much $f$ changes per unit change in $x$. The condition number
+$\hat{\kappa} = 1/|f'(x^*)|$ is its reciprocal, which is the Lipschitz constant
+of the *inverse* map from perturbations in $f$ to shifts in the root. A large
+Lipschitz constant for $f$ (steep crossing) means a small condition number. A
+small Lipschitz constant for $f$ (shallow crossing) means a large condition
+number.
+:::
+
 :::{prf:remark} Geometric Interpretation
 :label: rmk-condition-number-geometry
 :class: dropdown
@@ -141,8 +154,7 @@ This is why nearly-tangent crossings are dangerous: the root sits on a nearly fl
 :::
 
 ```{code-cell} python
-:tags: [hide-input, remove-output]
-:label: cell-condition-geometry
+:tags: [hide-input]
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -230,11 +242,8 @@ plt.tight_layout()
 plt.show()
 ```
 
-:::{figure} #cell-condition-geometry
-:label: fig-condition-number-geometry
-
+(fig-condition-number-geometry)=
 **Conditioning of a root.** Both panels show the same vertical perturbation $\epsilon$ (gray) applied to $f$ (blue band between dashed curves). *Left:* When $f$ crosses zero steeply ($|f'(x^*)| = 2$), the perturbed roots (red squares) barely move from the true root (black dot). *Right:* When $f$ crosses zero at a shallow angle ($|f'(x^*)| = 0.3$), the same perturbation slides the root much further along the $x$-axis. The horizontal shift $\Delta x^*$ is amplified by the condition number $\hat{\kappa} = 1/|f'(x^*)|$.
-:::
 
 ### Examples
 
@@ -270,155 +279,34 @@ $$
 A perturbation of size $10^{-16}$ (machine epsilon) could move the root by $5 \times 10^{-12}$. We can expect to lose about 5 digits of accuracy!
 ::::
 
-## Repeated Roots
-
-A root $x^*$ is called **repeated** (or a root of higher multiplicity) when $f$
-not only vanishes at $x^*$ but also touches zero "flatly," meaning its first
-several derivatives vanish there as well.
-
-:::{prf:definition} Root Multiplicity
-:label: def-root-multiplicity
-
-A root $x^*$ of $f$ has **multiplicity** $m$ if:
-
-$$
-f(x) = (x - x^*)^m h(x), \quad h(x^*) \neq 0
-$$
-
-Equivalently, $f(x^*) = f'(x^*) = \cdots = f^{(m-1)}(x^*) = 0$ but $f^{(m)}(x^*) \neq 0$.
-
-A root with $m = 1$ is called **simple**. A root with $m \geq 2$ is called
-**repeated**.
-:::
-
-The distinction matters for two reasons: conditioning and convergence speed.
-
-### Conditioning of repeated roots
-
-For a simple root, the condition number is $\hat{\kappa} = 1/|f'(x^*)|$, which
-is finite. For a repeated root, $f'(x^*) = 0$, so the formula gives
-$\hat{\kappa} = \infty$. But what does "infinite condition number" actually mean
-in practice? It does *not* mean the root is impossible to compute. It means
-that the relationship between perturbation size and root shift is no longer
-linear.
-
-:::{prf:theorem} Sensitivity of Repeated Roots
-:label: thm-ill-conditioning-repeated-roots
-
-If $x^*$ is a root of multiplicity $m$, then a perturbation $f \to f + \epsilon$
-shifts the root by $\mathcal{O}(\epsilon^{1/m})$.
-:::
-
-:::{prf:proof}
-:class: dropdown
-
-Near a root of multiplicity $m$, we have $f(x) \approx c(x - x^*)^m$ for some
-constant $c = f^{(m)}(x^*)/m! \neq 0$. The perturbed equation
-$f(\tilde{x}^*) + \epsilon = 0$ gives:
-
-$$
-c(\tilde{x}^* - x^*)^m \approx -\epsilon \implies \tilde{x}^* - x^* \approx \left(\frac{\epsilon}{|c|}\right)^{1/m}
-$$
-:::
-
-The exponent $1/m$ is the key. When $\epsilon$ is small (as in floating-point
-rounding), $\epsilon^{1/m} \gg \epsilon$:
-
-| Multiplicity | Root shift from $\epsilon = 10^{-16}$ | Digits lost |
-|:---:|:---:|:---:|
-| $m = 1$ (simple) | $\sim 10^{-16}$ | 0 |
-| $m = 2$ (double) | $\sim 10^{-8}$ | 8 |
-| $m = 3$ (triple) | $\sim 10^{-5.3}$ | 11 |
-
-So if $f$ itself carries uncertainty of size $\epsilon$ (e.g., from measured
-coefficients or upstream rounding), a double root can be located to at most
-about 8 digits in double precision, and a triple root to about 5. This is a
-limitation of the *problem*, not the algorithm.
-
-However, if $f$ is given exactly (e.g., a polynomial with known coefficients),
-the situation is better. Methods like modified Newton (see below) can converge
-to a repeated root to nearly full precision, because the function is not
-perturbed; only the floating-point arithmetic introduces errors at each step.
-
-### Convergence of Newton's method at repeated roots
-
-Beyond the conditioning issue, Newton's method also *converges more slowly* at
-repeated roots.
-
-:::{prf:proposition} Reduced Convergence at Repeated Roots
-:label: prop-repeated-roots-convergence
-
-When $x^*$ is a root of multiplicity $m \geq 2$, Newton's method converges only
-**linearly** with rate $\rho = 1 - 1/m$.
-:::
-
-:::{prf:proof}
-:class: dropdown
-
-Write $f(x) = (x - x^*)^m h(x)$ with $h(x^*) \neq 0$. Newton's iteration
-function is $g(x) = x - f(x)/f'(x)$. A calculation shows:
-
-$$
-g'(x^*) = 1 - \frac{1}{m}
-$$
-
-Since $g'(x^*) \neq 0$, convergence is linear with rate
-$\rho = |g'(x^*)| = 1 - 1/m$.
-
-For a double root ($m = 2$), $\rho = 1/2$. For a triple root ($m = 3$),
-$\rho = 2/3$. As the multiplicity increases, convergence slows.
-:::
-
-So repeated roots cause a double penalty: fewer accurate digits *and* slower
-convergence. Both problems can be mitigated if the multiplicity is known.
-
-:::{prf:remark} Modified Newton for Repeated Roots
-:label: rmk-modified-newton
-:class: dropdown
-
-If the multiplicity $m$ is known, the modified iteration:
-
-$$
-x_{n+1} = x_n - m\frac{f(x_n)}{f'(x_n)}
-$$
-
-restores quadratic convergence. This works because the modified iteration
-function $g(x) = x - mf(x)/f'(x)$ satisfies $g'(x^*) = 0$.
-
-In practice, $m$ is rarely known in advance. An alternative is to apply Newton's
-method to $u(x) = f(x)/f'(x)$, which has a simple root at $x^*$ regardless of
-the multiplicity of $f$. This avoids the need to know $m$ but requires
-computing both $f$ and $f'$ at each step.
-:::
-
 ## Forward and Backward Error
 
 The condition number tells us how sensitive the *problem* is, but in practice we
-face a different question: our algorithm returns an approximation $\hat{x}$ and
+face another problem: our algorithm returns an approximation $\hat{x}$ and
 we need to judge how good it is. The true root $x^*$ is unknown, so we cannot
 directly compute $|\hat{x} - x^*|$. What *can* we compute? We can evaluate
 $f(\hat{x})$, which tells us how well $\hat{x}$ satisfies the equation. But
 does a small $f(\hat{x})$ guarantee that $\hat{x}$ is close to $x^*$?
 
 The answer, as the condition number analysis suggests, is: *it depends on the
-conditioning*. This leads to two complementary ways of measuring error.
+conditioning*. This leads to two different ways of measuring error. One measures
+how far $\hat{x}$ is from the true answer. The other measures how well $\hat{x}$
+satisfies the equation it is supposed to solve.
 
 :::{prf:definition} Forward and Backward Error for Root Finding
 :label: def-forward-backward-error-root-finding
 
-Given an approximate root $\hat{x}$ of $f(x) = 0$:
+Let $x^*$ be the true root of $f(x) = 0$ and let $\hat{x}$ be an approximation.
 
 - The **forward error** is $|\hat{x} - x^*|$: how far $\hat{x}$ is from the
   true root.
-- The **backward error** is $|f(\hat{x})|$: how well $\hat{x}$ satisfies the
-  equation.
+- The **backward error** (also called the **residual**) is $|f(\hat{x})|$: how
+  well $\hat{x}$ satisfies the equation.
 :::
 
 The forward error is what we care about but cannot compute (we don't know
 $x^*$). The backward error is easy to compute, just evaluate $f(\hat{x})$.
-The condition number connects them.
-
-### Relating Forward and Backward Error
+As we will see, they are connected through the condition number.
 
 :::{prf:theorem} Relating Forward and Backward Error
 :label: thm-relating-forward-backward-error
@@ -460,21 +348,76 @@ As $I$ shrinks around $x^*$, both $m$ and $M$ converge to $|f'(x^*)|$, so the
 upper bound becomes $|\hat{x} - x^*| \leq |f(\hat{x})| / |f'(x^*)| = \hat{\kappa} \cdot |f(\hat{x})|$.
 :::
 
-This is the fundamental relationship of numerical root finding: the forward
-error is bounded by the condition number times the backward error. A small
-residual guarantees a small forward error *only when the problem is
-well-conditioned* ($\hat{\kappa}$ small). This relationship reappears throughout
-scientific computing: in [linear systems](../direct-methods/index.md), the
-analogous result is $\|\Delta\mathbf{x}\|/\|\mathbf{x}\| \leq \kappa(\mathbf{A}) \cdot \|\Delta\mathbf{b}\|/\|\mathbf{b}\|$,
-and in [globalization strategies](../nonlinear-systems/globalization.md), the
-choice of *what to monitor* (residual vs. correction) determines the robustness
-of the solver.
+This is a fundamental principle that appears throughout numerical analysis:
+
+$$
+\text{forward error} \leq \text{condition number} \times \text{backward error}
+$$
+
+A small residual guarantees a small forward error *only when the problem is
+well-conditioned*. We see it here for root finding with
+$\hat{\kappa} = 1/|f'(x^*)|$. We will see it again for
+[linear systems](../direct-methods/index.md) in the form
+$\|\Delta\mathbf{x}\|/\|\mathbf{x}\| \leq \kappa(\mathbf{A}) \cdot \|\Delta\mathbf{b}\|/\|\mathbf{b}\|$.
+The same structure governs eigenvalue problems, least squares, differential
+equations, and essentially every problem in scientific computing.
+
+```{code-cell} python
+:tags: [hide-input]
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+
+residual = 0.5
+x_star = 0.0
+xlim = (-1, 4)
+ylim = (-1, 2)
+
+for ax, slope, title in zip(axes,
+    [2.0, 0.2],
+    [r"$|f'(x^*)| = 2$, $\hat{\kappa} = 0.5$",
+     r"$|f'(x^*)| = 0.2$, $\hat{\kappa} = 5$"]):
+
+    x = np.linspace(xlim[0], xlim[1], 400)
+    ax.plot(x, slope * x, 'b-', linewidth=2.5)
+    ax.axhline(0, color='k', linewidth=0.8)
+
+    x_hat = residual / slope
+
+    # Backward error (green): vertical line from (x_hat, 0) to (x_hat, residual)
+    ax.plot([x_hat, x_hat], [0, residual], 'g-', linewidth=4, solid_capstyle='round', zorder=4)
+
+    # Forward error (red): horizontal line from x* to x_hat on the x-axis
+    ax.plot([x_star, x_hat], [0, 0], 'r-', linewidth=4, solid_capstyle='round', zorder=3)
+
+    # Mark points
+    ax.plot(x_star, 0, 'ko', markersize=9, zorder=5, label=r'true root $x^*$')
+    ax.plot(x_hat, 0, 'rs', markersize=8, zorder=5, label=r'approximation $\hat{x}$')
+    ax.legend(fontsize=9, loc='upper left')
+
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    ax.set_xlabel('$x$', fontsize=12)
+    ax.set_ylabel('$f(x)$', fontsize=12)
+    ax.set_title(title, fontsize=11)
+    ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+(fig-forward-backward-error)=
+**Forward vs backward error.** The green arrow is the backward error (residual $|f(\hat{x})|$), the red arrow is the forward error ($|\hat{x} - x^*|$). Both panels have the same residual of $0.5$. *Left:* The steep crossing has a small condition number ($\hat{\kappa} = 0.5$), so the forward error is $0.25$, smaller than the residual. *Right:* The shallower crossing has a larger condition number ($\hat{\kappa} = 5$), and the same residual now gives a forward error of $2.5$, ten times larger. A larger condition number means more amplification from backward to forward error.
 
 ### Stopping Criteria
 
-This relationship has immediate consequences for when to stop iterating. But
-first, we need to understand why the step size $|x_{n+1} - x_n|$ is a useful
-proxy for the forward error.
+This relationship has immediate consequences for when to stop iterating. So far,
+our algorithms for fixed point iteration and Newton's method included a stopping
+test $|x_{n+1} - x_n| < \varepsilon$, but we never justified *why* a small step
+size means we are close to the answer. The step size $|x_{n+1} - x_n|$ is not
+the forward error $|x_n - x^*|$. So why is it a useful proxy?
 
 :::{prf:lemma} Step Size Bounds the Forward Error
 :label: lem-step-size-error-bound
@@ -538,3 +481,207 @@ dramatically. A small residual $|f(\hat{x})| = 10^{-15}$ with $\hat{\kappa} =
 are still moving, the problem is ill-conditioned.
 :::
 
+## Repeated Roots
+
+We now turn to a class of problems where ill-conditioning is intrinsic.
+
+A root $x^*$ is called **repeated** (or a root of higher multiplicity) when $f$
+not only vanishes at $x^*$ but also touches zero "flatly," meaning its first
+several derivatives vanish there as well.
+
+:::{prf:definition} Root Multiplicity
+:label: def-root-multiplicity
+
+A root $x^*$ of $f$ has **multiplicity** $m$ if:
+
+$$
+f(x) = (x - x^*)^m h(x), \quad h(x^*) \neq 0
+$$
+
+Equivalently, $f(x^*) = f'(x^*) = \cdots = f^{(m-1)}(x^*) = 0$ but $f^{(m)}(x^*) \neq 0$.
+
+A root with $m = 1$ is called **simple**. A root with $m \geq 2$ is called
+**repeated**.
+:::
+
+```{code-cell} python
+:tags: [hide-input]
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(8, 4))
+x = np.linspace(-1.5, 1.5, 400)
+
+for m, color, label in [(1, '#1f77b4', r'$f(x) = x$ (simple, $m=1$)'),
+                         (2, '#ff7f0e', r'$f(x) = x^2$ (double, $m=2$)'),
+                         (4, '#2ca02c', r'$f(x) = x^4$ (quadruple, $m=4$)')]:
+    ax.plot(x, x**m, color=color, linewidth=2.5, label=label)
+
+ax.axhline(0, color='k', linewidth=0.8)
+ax.plot(0, 0, 'ko', markersize=8, zorder=5)
+
+ax.set_xlim(-1.5, 1.5)
+ax.set_ylim(-0.5, 1.5)
+ax.set_xlabel('$x$', fontsize=12)
+ax.set_ylabel('$f(x)$', fontsize=12)
+ax.set_title('Simple vs repeated roots: higher multiplicity means flatter near the root')
+ax.legend(fontsize=9, loc='upper center')
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+(fig-repeated-roots-intro)=
+**Simple vs repeated roots.** A simple root ($m=1$, blue) crosses zero at a nonzero angle. A double root ($m=2$, orange) merely touches zero and turns around. A quadruple root ($m=4$, green) is flatter still. The higher the multiplicity, the flatter $f$ is near the root, which is precisely what makes repeated roots ill-conditioned.
+
+The distinction matters for two reasons: conditioning and convergence speed.
+
+### Conditioning of repeated roots
+
+For a simple root, the condition number is $\hat{\kappa} = 1/|f'(x^*)|$, which
+is finite. For a repeated root, $f'(x^*) = 0$, so the formula gives
+$\hat{\kappa} = \infty$. But what does "infinite condition number" actually mean
+in practice? It does *not* mean the root is impossible to compute. It means
+that the relationship between perturbation size and root shift is no longer
+linear.
+
+:::{prf:theorem} Sensitivity of Repeated Roots
+:label: thm-ill-conditioning-repeated-roots
+
+If $x^*$ is a root of multiplicity $m$, then a perturbation $f \to f + \epsilon$
+shifts the root by $\mathcal{O}(\epsilon^{1/m})$.
+:::
+
+:::{prf:proof}
+:class: dropdown
+
+Near a root of multiplicity $m$, we have $f(x) \approx c(x - x^*)^m$ for some
+constant $c = f^{(m)}(x^*)/m! \neq 0$. The perturbed equation
+$f(\tilde{x}^*) + \epsilon = 0$ gives:
+
+$$
+c(\tilde{x}^* - x^*)^m \approx -\epsilon \implies \tilde{x}^* - x^* \approx \left(\frac{\epsilon}{|c|}\right)^{1/m}
+$$
+:::
+
+The exponent $1/m$ is the key. When $\epsilon$ is small (as in floating-point
+rounding), $\epsilon^{1/m} \gg \epsilon$. For example, with $\epsilon = 10^{-16}$
+(machine epsilon), a simple root shifts by $10^{-16}$, a double root shifts by
+$10^{-8}$, and a triple root shifts by $10^{-16/3} \approx 10^{-5.3}$.
+The following figure shows *why* this happens geometrically.
+
+```{code-cell} python
+:tags: [hide-input]
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
+
+x_star = 1.0
+eps = 0.2
+x = np.linspace(0.2, 1.8, 500)
+
+titles = [r'Simple root ($m=1$): shift $= \epsilon$',
+          r'Double root ($m=2$): shift $= \sqrt{\epsilon}$',
+          r'Triple root ($m=3$): shift $= \epsilon^{1/3}$']
+
+for ax, m, title in zip(axes, [1, 2, 3], titles):
+    f_vals = (x - x_star) ** m
+    ax.plot(x, f_vals, 'b-', linewidth=2.5, label=r'$f(x)$')
+    # For m=1, shift up; for m>=2 (non-negative near root), shift down
+    sign = 1 if m == 1 else -1
+    ax.plot(x, f_vals + sign * eps, 'b--', linewidth=2, alpha=0.6,
+            label=rf'$f(x) {"+" if sign > 0 else "-"} \epsilon$')
+    ax.axhline(0, color='k', linewidth=0.8)
+
+    # Perturbed root
+    shift = eps ** (1.0 / m)
+    x_tilde = x_star - shift if m == 1 else x_star + shift
+
+    # Forward error (red): horizontal line showing the root shift
+    ax.plot([x_tilde, x_star], [0, 0], 'r-', linewidth=3.5,
+            solid_capstyle='round', zorder=3)
+
+    # Mark points
+    ax.plot(x_star, 0, 'ko', markersize=9, zorder=5)
+    ax.plot(x_tilde, 0, 'rs', markersize=8, zorder=5)
+
+    ax.set_xlim(0.2, 1.8)
+    ax.set_ylim(-0.15, 0.25)
+    ax.set_xlabel('$x$', fontsize=11)
+    ax.set_title(title, fontsize=10)
+    ax.legend(fontsize=8, loc='upper left')
+    ax.grid(True, alpha=0.3)
+
+axes[0].set_ylabel('$f(x)$', fontsize=11)
+plt.tight_layout()
+plt.show()
+```
+
+(fig-repeated-root-scaling)=
+**Root shift under perturbation for $f(x) = (x - x^*)^m$.** The solid blue curve
+is the original function, the dashed blue curve is the perturbed function. The
+black dot is the root of $f$, the red square is the root of the perturbed
+function, and the red line is the root shift (forward error). *Left:* A simple
+root crosses zero steeply, so the perturbation barely moves the root. *Center:*
+A double root is flat near $x^*$, so the perturbed curve's zero crossing slides
+much further: the shift is $\sqrt{\epsilon}$. *Right:* A triple root is flatter
+still, and the shift grows to $\epsilon^{1/3}$. Note that for even-multiplicity
+roots ($m = 2$), we must shift *down* to create a new root. A perturbation in
+the other direction would lift the curve away from zero entirely, destroying the
+root. This is another way even-multiplicity roots are fragile: they can simply
+disappear under perturbation.
+
+### Convergence of Newton's method at repeated roots
+
+Beyond the conditioning issue, Newton's method also *converges more slowly* at
+repeated roots.
+
+:::{prf:proposition} Reduced Convergence at Repeated Roots
+:label: prop-repeated-roots-convergence
+
+When $x^*$ is a root of multiplicity $m \geq 2$, Newton's method converges only
+**linearly** with rate $\rho = 1 - 1/m$.
+:::
+
+:::{prf:proof}
+:class: dropdown
+
+Write $f(x) = (x - x^*)^m h(x)$ with $h(x^*) \neq 0$. Newton's iteration
+function is $g(x) = x - f(x)/f'(x)$. A calculation shows:
+
+$$
+g'(x^*) = 1 - \frac{1}{m}
+$$
+
+Since $g'(x^*) \neq 0$, convergence is linear with rate
+$\rho = |g'(x^*)| = 1 - 1/m$.
+
+For a double root ($m = 2$), $\rho = 1/2$. For a triple root ($m = 3$),
+$\rho = 2/3$. As the multiplicity increases, convergence slows.
+:::
+
+So repeated roots cause a double penalty: fewer accurate digits *and* slower
+convergence. Both problems can be mitigated if the multiplicity is known.
+
+:::{prf:remark} Modified Newton for Repeated Roots
+:label: rmk-modified-newton
+:class: dropdown
+
+If the multiplicity $m$ is known, the modified iteration:
+
+$$
+x_{n+1} = x_n - m\frac{f(x_n)}{f'(x_n)}
+$$
+
+restores quadratic convergence. This works because the modified iteration
+function $g(x) = x - mf(x)/f'(x)$ satisfies $g'(x^*) = 0$.
+
+In practice, $m$ is rarely known in advance. An alternative is to apply Newton's
+method to $u(x) = f(x)/f'(x)$, which has a simple root at $x^*$ regardless of
+the multiplicity of $f$. This avoids the need to know $m$ but requires
+computing both $f$ and $f'$ at each step.
+:::

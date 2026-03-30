@@ -117,6 +117,7 @@ You need an expansion that handles the singularity at $\pi/2$.
 
 ---
 
+(exercise-newton-basins)=
 ### Q3.7: Newton's Method Basins of Attraction
 
 Apply Newton's method to $f(x) = 4x^4 - 6x^2 - \frac{11}{4}$.
