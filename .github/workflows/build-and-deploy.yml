@@ -183,14 +183,15 @@ jobs:
           fi
           # If no new PDF exported for 60s, all exports are done and process is hanging
           if [ "$STABLE_SINCE" -ge 60 ]; then
-            echo "All $COUNT PDFs exported, process still running after 60s. Killing."
-            kill $BUILD_PID 2>/dev/null || true
-            pkill -f "myst" || true
+            echo "All $COUNT PDFs exported, process still running after 60s. Force killing."
+            kill -9 $BUILD_PID 2>/dev/null || true
+            pkill -9 -f "myst" || true
             break
           fi
           sleep 1
         done
         wait $BUILD_PID 2>/dev/null || true
+        exit 0
 
     - name: Upload PDF exports
       uses: actions/upload-artifact@v4
