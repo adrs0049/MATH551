@@ -168,20 +168,24 @@ jobs:
         JUPYTER_EXECUTION_TIMEOUT: '120'
       run: |
         # MyST's node process sometimes hangs after completing all exports.
-        # Run in background and monitor for completion, then kill stragglers.
+        # Run in background, wait for all PDFs to export, then kill stragglers.
         jupyter-book build --execute --pdf 2>&1 | tee /tmp/pdf-build.log &
         BUILD_PID=$!
-        # Wait up to 15 minutes for the build to finish
-        for i in $(seq 1 900); do
-          if ! kill -0 $BUILD_PID 2>/dev/null; then break; fi
-          # Check if all PDFs are done (build outputs "Exported" for each)
-          if grep -q "Built .* pages for export" /tmp/pdf-build.log 2>/dev/null; then
-            sleep 10  # give it a moment to exit cleanly
-            if kill -0 $BUILD_PID 2>/dev/null; then
-              echo "Build completed but process still running. Killing."
-              kill $BUILD_PID 2>/dev/null || true
-              pkill -f "myst" || true
-            fi
+        LAST_COUNT=0
+        STABLE_SINCE=0
+        while kill -0 $BUILD_PID 2>/dev/null; do
+          COUNT=$(grep -c "Exported PDF" /tmp/pdf-build.log 2>/dev/null || echo 0)
+          if [ "$COUNT" -gt 0 ] && [ "$COUNT" -eq "$LAST_COUNT" ]; then
+            STABLE_SINCE=$((STABLE_SINCE + 1))
+          else
+            STABLE_SINCE=0
+            LAST_COUNT=$COUNT
+          fi
+          # If no new PDF exported for 60s, all exports are done and process is hanging
+          if [ "$STABLE_SINCE" -ge 60 ]; then
+            echo "All $COUNT PDFs exported, process still running after 60s. Killing."
+            kill $BUILD_PID 2>/dev/null || true
+            pkill -f "myst" || true
             break
           fi
           sleep 1
@@ -275,25 +279,7 @@ jobs:
 
     - name: Build the book
       timeout-minutes: 45
-      run: |
-        # MyST's node process sometimes hangs after completing the build.
-        # Run in background and kill stragglers once build output is done.
-        jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html 2>&1 | tee /tmp/html-build.log &
-        BUILD_PID=$!
-        for i in $(seq 1 2700); do
-          if ! kill -0 $BUILD_PID 2>/dev/null; then break; fi
-          if grep -q "Built .* pages" /tmp/html-build.log 2>/dev/null; then
-            sleep 10
-            if kill -0 $BUILD_PID 2>/dev/null; then
-              echo "Build completed but process still running. Killing."
-              kill $BUILD_PID 2>/dev/null || true
-              pkill -f "myst" || true
-            fi
-            break
-          fi
-          sleep 1
-        done
-        wait $BUILD_PID 2>/dev/null || true
+      run: jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html
 
     - name: Stop memory monitor and print log
       if: always()
