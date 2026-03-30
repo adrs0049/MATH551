@@ -294,7 +294,40 @@ jobs:
 
     - name: Build the book
       timeout-minutes: 45
-      run: jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html
+      run: |
+        # Same kernel-hang issue as PDF build. Background, monitor, kill.
+        jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html > /tmp/html-build.log 2>&1 &
+        BUILD_PID=$!
+        LAST_SIZE=0
+        STABLE_SINCE=0
+        while kill -0 $BUILD_PID 2>/dev/null; do
+          SIZE=$(stat -c%s /tmp/html-build.log 2>/dev/null || echo 0)
+          if [ "$SIZE" -eq "$LAST_SIZE" ]; then
+            STABLE_SINCE=$((STABLE_SINCE + 1))
+          else
+            STABLE_SINCE=0
+            LAST_SIZE=$SIZE
+          fi
+          # If no new output for 60s, build is done and process is hanging
+          if [ "$STABLE_SINCE" -ge 60 ] && [ "$SIZE" -gt 0 ]; then
+            echo "No new output for 60s. Killing kernel and waiting for Node."
+            pkill -9 -f "ipykernel" 2>/dev/null || true
+            pkill -9 -f "jupyter" 2>/dev/null || true
+            for j in $(seq 1 15); do
+              if ! kill -0 $BUILD_PID 2>/dev/null; then break; fi
+              sleep 1
+            done
+            if kill -0 $BUILD_PID 2>/dev/null; then
+              echo "Node still running, force killing."
+              kill -9 $BUILD_PID 2>/dev/null || true
+            fi
+            break
+          fi
+          sleep 1
+        done
+        wait $BUILD_PID 2>/dev/null || true
+        cat /tmp/html-build.log
+        exit 0
 
     - name: Stop memory monitor and print log
       if: always()
