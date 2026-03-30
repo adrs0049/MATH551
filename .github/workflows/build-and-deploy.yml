@@ -163,6 +163,9 @@ jobs:
 
     - name: Build PDFs
       if: steps.pdf-cache.outputs.cache-hit != 'true'
+      timeout-minutes: 20
+      env:
+        JUPYTER_EXECUTION_TIMEOUT: '120'
       run: jupyter-book build --execute --pdf
 
     - name: Upload PDF exports
