@@ -167,10 +167,26 @@ jobs:
       env:
         JUPYTER_EXECUTION_TIMEOUT: '120'
       run: |
-        jupyter-book build --execute --pdf 2>&1 | tee /tmp/pdf-build.log
         # MyST's node process sometimes hangs after completing all exports.
-        # Kill any remaining node/python children to ensure the step exits.
-        pkill -f "myst" || true
+        # Run in background and monitor for completion, then kill stragglers.
+        jupyter-book build --execute --pdf 2>&1 | tee /tmp/pdf-build.log &
+        BUILD_PID=$!
+        # Wait up to 15 minutes for the build to finish
+        for i in $(seq 1 900); do
+          if ! kill -0 $BUILD_PID 2>/dev/null; then break; fi
+          # Check if all PDFs are done (build outputs "Exported" for each)
+          if grep -q "Built .* pages for export" /tmp/pdf-build.log 2>/dev/null; then
+            sleep 10  # give it a moment to exit cleanly
+            if kill -0 $BUILD_PID 2>/dev/null; then
+              echo "Build completed but process still running. Killing."
+              kill $BUILD_PID 2>/dev/null || true
+              pkill -f "myst" || true
+            fi
+            break
+          fi
+          sleep 1
+        done
+        wait $BUILD_PID 2>/dev/null || true
 
     - name: Upload PDF exports
       uses: actions/upload-artifact@v4
@@ -258,11 +274,26 @@ jobs:
         python3 scripts/verify-execute-cache.py
 
     - name: Build the book
-      timeout-minutes: 30
+      timeout-minutes: 45
       run: |
-        jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html
         # MyST's node process sometimes hangs after completing the build.
-        pkill -f "myst" || true
+        # Run in background and kill stragglers once build output is done.
+        jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html 2>&1 | tee /tmp/html-build.log &
+        BUILD_PID=$!
+        for i in $(seq 1 2700); do
+          if ! kill -0 $BUILD_PID 2>/dev/null; then break; fi
+          if grep -q "Built .* pages" /tmp/html-build.log 2>/dev/null; then
+            sleep 10
+            if kill -0 $BUILD_PID 2>/dev/null; then
+              echo "Build completed but process still running. Killing."
+              kill $BUILD_PID 2>/dev/null || true
+              pkill -f "myst" || true
+            fi
+            break
+          fi
+          sleep 1
+        done
+        wait $BUILD_PID 2>/dev/null || true
 
     - name: Stop memory monitor and print log
       if: always()
