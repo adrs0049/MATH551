@@ -259,7 +259,10 @@ jobs:
 
     - name: Build the book
       timeout-minutes: 30
-      run: jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html
+      run: |
+        jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html
+        # MyST's node process sometimes hangs after completing the build.
+        pkill -f "myst" || true
 
     - name: Stop memory monitor and print log
       if: always()
