@@ -9,21 +9,23 @@ downloads:
     title: Download PDF
 ---
 
-# Linear Algebra Fundamentals
+# Norms and the Condition Number
 
-:::{admonition} Prerequisite: Math 235
+:::{admonition} Background
 :class: note
 This section reviews material from linear algebra (Math 235): vectors, matrices,
-norms, and the condition number. The emphasis here is on the computational
-perspective: how do we measure size, and how does that connect to the accuracy
-of numerical algorithms?
+and norms. It then introduces the **condition number**, which quantifies how
+sensitive a linear system is to perturbations. The emphasis is on the
+computational perspective: how do we measure size, and how does that connect
+to the accuracy of numerical algorithms?
 :::
 
 :::{tip} Big Idea
 **Vectors** are the objects we compute with; **matrices** are linear functions
 that act on vectors. To analyze algorithms, we need to measure size: **norms**
 for vectors, **induced norms** for matrices. The **condition number**
-$\kappa(A) = \|A\|\|A^{-1}\|$ tells us how sensitive a linear system is to
+$\kappa(A) = \|A\|\|A^{-1}\|$ measures the ratio of maximum to minimum
+stretch of unit vectors, and tells us how sensitive a linear system is to
 perturbations.
 :::
 
@@ -191,6 +193,119 @@ This definition works for **any** linear map between normed spaces. It is how we
 :class: note
 The 1-norm and $\infty$-norm are cheap (just sums). The 2-norm requires singular values, which is more expensive but geometrically natural.
 :::
+
+## The Condition Number
+
+The norm $\|A\|$ measures the maximum stretching factor over all unit vectors.
+What about the minimum?
+
+:::::{prf:theorem} Stretch Interpretation of $\|A\|$ and $\|A^{-1}\|$
+:label: thm-stretch
+
+Let $A$ be a nonsingular matrix. Then
+
+$$
+\|A\| = \max_{\|\mathbf{x}\| = 1} \|A\mathbf{x}\|
+\qquad \text{and} \qquad
+\|A^{-1}\| = \frac{1}{\displaystyle \min_{\|\mathbf{x}\| = 1} \|A\mathbf{x}\|}
+$$
+
+$\|A\|$ is the *maximum stretch of a unit vector* by the linear transformation $A$, and $\|A^{-1}\|$ is the *reciprocal* of the *minimum stretch of a unit vector*.
+
+::::{prf:proof}
+:class: dropdown
+
+The first identity follows from $\|A\mathbf{x}\| / \|\mathbf{x}\| = \|A(\mathbf{x}/\|\mathbf{x}\|)\|$. For the second, rearrange the definition of $\|A^{-1}\|$:
+
+$$
+\begin{align}
+\|A^{-1}\| &= \max_{\mathbf{x} \neq \mathbf{0}} \frac{\|A^{-1}\mathbf{x}\|}{\|\mathbf{x}\|}
+= \max_{\mathbf{x} \neq \mathbf{0}} \frac{\|A^{-1}A\mathbf{x}\|}{\|A\mathbf{x}\|}
+= \max_{\mathbf{x} \neq \mathbf{0}} \frac{\|\mathbf{x}\|}{\|A\mathbf{x}\|} \\
+&= \max_{\|\mathbf{x}\| = 1} \frac{1}{\|A\mathbf{x}\|}
+= \frac{1}{\displaystyle \min_{\|\mathbf{x}\| = 1} \|A\mathbf{x}\|}
+\end{align}
+$$
+::::
+:::::
+
+:::{prf:definition} Condition Number
+:label: def-condition-number
+
+The **condition number** of a nonsingular square matrix $A$ is
+
+$$
+\kappa(A) = \|A\| \, \|A^{-1}\|
+$$
+
+By convention, $\kappa(A) = \infty$ if $A$ is singular.
+:::
+
+By [](#thm-stretch), the condition number has a clean geometric meaning:
+
+$$
+\kappa(A) = \frac{\text{maximum stretch of a unit vector}}{\text{minimum stretch of a unit vector}}
+$$
+
+A matrix with $\kappa(A) \approx 1$ stretches all directions roughly equally (like a rotation or uniform scaling). A matrix with $\kappa(A) \gg 1$ stretches some directions far more than others, making the linear system sensitive to perturbations.
+
+### Geometric examples
+
+:::{prf:example} Reading $\kappa(A)$ from a figure
+:label: ex-condition-stretch1
+
+The image below shows the unit circle (left) and its image under a $2 \times 2$ matrix $A$ (right).
+
+![Unit circle mapped to an ellipse under A](/img/condition_stretch1.png)
+
+The maximum stretch is $\|A\| = 3/\sqrt{2}$. The minimum stretch is $1/\sqrt{2}$, so $\|A^{-1}\| = \sqrt{2}$. The condition number is
+
+$$
+\kappa(A) = \frac{3/\sqrt{2}}{1/\sqrt{2}} = 3
+$$
+
+This matrix is well-conditioned: the ellipse is only moderately elongated.
+:::
+
+:::{prf:example} A more ill-conditioned matrix
+:label: ex-condition-stretch2
+
+Now a different $2 \times 2$ matrix:
+
+![Unit circle mapped to a more elongated ellipse](/img/condition_stretch2.png)
+
+The image is a much more elongated ellipse. From the figure, the maximum stretch is $\|A\| = 5\sqrt{2}$ and the minimum stretch is $2\sqrt{2}$, giving
+
+$$
+\kappa(A) = \frac{5\sqrt{2}}{2\sqrt{2}} = \frac{5}{2}
+$$
+:::
+
+### Why the condition number matters
+
+:::::{prf:theorem} Error Sensitivity
+:label: thm-error-sensitivity
+
+Let $A$ be nonsingular and $A\mathbf{x} = \mathbf{b}$. If a small change $\Delta\mathbf{b}$ produces a change $\Delta\mathbf{x}$ (i.e., $A(\mathbf{x} + \Delta\mathbf{x}) = \mathbf{b} + \Delta\mathbf{b}$), then
+
+$$
+\frac{\|\Delta\mathbf{x}\|}{\|\mathbf{x}\|} \leq \kappa(A) \frac{\|\Delta\mathbf{b}\|}{\|\mathbf{b}\|}
+$$
+
+::::{prf:proof}
+:class: dropdown
+
+Since $A\mathbf{x} = \mathbf{b}$, we have $\Delta\mathbf{x} = A^{-1}\Delta\mathbf{b}$. Then
+
+$$
+\|\Delta\mathbf{x}\| \cdot \|\mathbf{b}\| = \|A^{-1}\Delta\mathbf{b}\| \cdot \|A\mathbf{x}\| \leq \|A^{-1}\| \cdot \|\Delta\mathbf{b}\| \cdot \|A\| \cdot \|\mathbf{x}\|
+$$
+
+Dividing both sides by $\|\mathbf{x}\| \cdot \|\mathbf{b}\|$ gives the result.
+::::
+:::::
+
+If $\kappa(A)$ is large, a small relative change in $\mathbf{b}$ can produce a large relative change in $\mathbf{x}$. The condition number is the worst-case amplification factor.
 
 ## Linear Systems
 

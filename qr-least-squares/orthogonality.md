@@ -14,6 +14,13 @@ downloads:
 
 # Orthogonality and Projections
 
+:::{admonition} Background
+:class: note
+This section develops the theory of inner products, orthogonality, and
+projections that underlies QR factorization and least squares. Students
+comfortable with these concepts from Math 235 may skim this section.
+:::
+
 :::{tip} Big Idea
 Orthogonality is the key to understanding least squares. The best approximation to a vector within a subspace is characterized by the residual being **orthogonal** to that subspace. This principle, formulated through **inner products**, extends far beyond $\mathbb{R}^n$ to function spaces (Hilbert spaces), where it underlies Fourier series, wavelets, and PDE theory.
 :::
