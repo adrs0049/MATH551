@@ -276,7 +276,15 @@ $$
 \kappa = \frac{1}{2 \times 10^{-5}} = 5 \times 10^{4}
 $$
 
-A perturbation of size $10^{-16}$ (machine epsilon) could move the root by $5 \times 10^{-12}$. We can expect to lose about 5 digits of accuracy!
+A perturbation of size $\epsilon = 10^{-16}$ (machine epsilon) shifts the root by at most:
+
+$$
+|\Delta x^*| \leq \hat{\kappa} \cdot \epsilon = 5 \times 10^4 \times 10^{-16} = 5 \times 10^{-12}
+$$
+
+We can expect to lose about 5 digits of accuracy. This is the key inequality:
+the root shift (forward error) is bounded by the condition number times the
+perturbation size (backward error).
 ::::
 
 ## Forward and Backward Error
@@ -413,53 +421,17 @@ plt.show()
 
 ### Stopping Criteria
 
-This relationship has immediate consequences for when to stop iterating. So far,
-our algorithms for fixed point iteration and Newton's method included a stopping
-test $|x_{n+1} - x_n| < \varepsilon$, but we never justified *why* a small step
-size means we are close to the answer. The step size $|x_{n+1} - x_n|$ is not
-the forward error $|x_n - x^*|$. So why is it a useful proxy?
-
-:::{prf:lemma} Step Size Bounds the Forward Error
-:label: lem-step-size-error-bound
-
-Suppose an iterative method produces a sequence $\{x_n\}$ that is contractive:
+This relationship has immediate consequences for when to stop iterating. Recall
+from the [step size lemma](fixed-point.md#lem-step-size-error-bound) that for a
+contractive iteration with contraction factor $\rho < 1$:
 
 $$
-|x_{n+1} - x_n| \leq \theta |x_n - x_{n-1}| \quad \text{for some } \theta < 1
+|x_n - x^*| \leq \frac{|x_{n+1} - x_n|}{1 - \rho}
 $$
 
-Then the sequence converges to some limit $x^*$, and the forward error satisfies:
-
-$$
-|x_n - x^*| \leq \frac{|x_{n+1} - x_n|}{1 - \theta}
-$$
-:::
-
-:::{prf:proof}
-:class: dropdown
-
-Since the sequence converges, we can write the error as a telescoping sum:
-
-$$
-x_n - x^* = x_n - \lim_{k \to \infty} x_k = \sum_{k=0}^{\infty} (x_{n+k} - x_{n+k+1})
-$$
-
-Taking absolute values and using the contraction property
-$|x_{n+k} - x_{n+k+1}| \leq \theta^k |x_n - x_{n+1}|$:
-
-$$
-|x_n - x^*| \leq \sum_{k=0}^{\infty} \theta^k |x_n - x_{n+1}| = \frac{|x_{n+1} - x_n|}{1 - \theta}
-$$
-:::
-
-This is a consequence of the
-[Banach fixed point theorem](fixed-point.md#thm-banach) and applies to any
-contractive iteration (fixed point, Jacobi, Gauss-Seidel, Newton near the
-root). The step test $|x_{n+1} - x_n| < \varepsilon$ therefore guarantees
-$|x_n - x^*| < \varepsilon / (1 - \theta)$. When $\theta$ is small (fast
-convergence), this is close to $\varepsilon$. When $\theta$ is close to 1 (slow
-convergence), the factor $1/(1-\theta)$ can be large and the step test becomes
-unreliable.
+So the step size $|x_{n+1} - x_n|$ is a proxy for the forward error, and the
+condition number connects the residual (backward error) to the forward error.
+This gives us two independent ways to judge convergence.
 
 :::{prf:remark} Two Stopping Criteria
 :label: rmk-stopping-criteria

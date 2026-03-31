@@ -315,6 +315,56 @@ plt.tight_layout()
 plt.show()
 ```
 
+### Bounding the Forward Error from the Step Size
+
+The convergence proof shows that $|x_{n+1} - x_n| \leq \rho |x_n - x_{n-1}|$.
+This means the steps are shrinking geometrically. We can use this to bound how
+far $x_n$ is from the true fixed point $c$, even though we don't know $c$.
+
+:::{prf:lemma} Step Size Bounds the Forward Error
+:label: lem-step-size-error-bound
+
+Suppose an iterative method produces a sequence $\{x_n\}$ that is contractive:
+
+$$
+|x_{n+1} - x_n| \leq \rho |x_n - x_{n-1}| \quad \text{for some } \rho < 1
+$$
+
+Then the sequence converges to some limit $c$, and the forward error satisfies:
+
+$$
+|x_n - c| \leq \frac{|x_{n+1} - x_n|}{1 - \rho}
+$$
+:::
+
+:::{prf:proof}
+:class: dropdown
+
+Since the sequence converges, we can write the error as a telescoping sum:
+
+$$
+x_n - c = x_n - \lim_{k \to \infty} x_k = \sum_{k=0}^{\infty} (x_{n+k} - x_{n+k+1})
+$$
+
+Taking absolute values and using the contraction property
+$|x_{n+k} - x_{n+k+1}| \leq \rho^k |x_n - x_{n+1}|$:
+
+$$
+|x_n - c| \leq \sum_{k=0}^{\infty} \rho^k |x_n - x_{n+1}| = \frac{|x_{n+1} - x_n|}{1 - \rho}
+$$
+:::
+
+This justifies the stopping test $|x_{n+1} - x_n| < \varepsilon$ used in our
+algorithms. If the step test is satisfied, the lemma guarantees:
+
+$$
+|x_n - c| \leq \frac{\varepsilon}{1 - \rho}
+$$
+
+When $\rho$ is small (fast convergence), $1/(1-\rho) \approx 1$ and the forward
+error is close to $\varepsilon$. When $\rho$ is close to 1 (slow convergence),
+the factor $1/(1-\rho)$ can be large and the step test becomes unreliable.
+
 ## The Derivative at the Fixed Point
 
 The key insight: **$|g'(c)|$ determines everything**.
@@ -332,7 +382,15 @@ choice is $g'(c) = 0$, which is exactly what Newton's method achieves by setting
 
 ## The Banach Fixed Point Theorem
 
-The convergence results above are special cases of a fundamental principle that appears throughout mathematics.
+::::{note}
+**Optional: a look ahead.** The convergence results above are special cases of a
+far more general principle. This section is not required for what follows, but it
+gives a glimpse of why the same contraction idea appears in so many areas of
+mathematics.
+::::
+
+The convergence results above are special cases of a fundamental principle that
+appears throughout mathematics.
 
 :::{prf:theorem} Banach Fixed Point Theorem
 :label: thm-banach
@@ -353,13 +411,24 @@ for some $q < 1$. Then:
 :label: rmk-banach-fpt-applications
 :class: dropdown
 
-The Banach FPT is not just about scalar equations. The same principle governs:
+The power of this theorem is in the generality of the space $(X, d)$. A complete
+metric space is any space with a notion of distance where Cauchy sequences
+converge. This includes:
+
+- $\mathbb{R}^n$ with the Euclidean distance (our setting here)
+- **Function spaces** like $C([a,b])$ with the sup-norm $d(f,g) = \max|f(x) - g(x)|$
+- **Probability spaces** like the space of distributions with the Wasserstein distance
+- **Sequence spaces** like $\ell^2$ with the $\ell^2$-norm
+
+In each of these spaces, the Banach FPT gives existence, uniqueness, and
+convergence in one shot. The same principle governs:
 
 - **Newton's method for systems**: The iteration is a contraction near the solution
-- **Picard iteration for ODEs**: Proves existence and uniqueness for $y' = f(t,y)$
-- **Iterative linear solvers**: Jacobi and Gauss-Seidel converge when the iteration matrix is a contraction
+- **Picard iteration for ODEs**: Proves existence and uniqueness for $y' = f(t,y)$ by showing the integral operator is a contraction on $C([0,T])$
+- **Iterative linear solvers**: Jacobi and Gauss-Seidel converge when the iteration matrix is a contraction on $\mathbb{R}^n$
 
-Whenever you see an iterative method that "works," there's often a contraction hiding underneath.
+Whenever you see an iterative method that "works," there is often a contraction
+hiding underneath.
 :::
 
 

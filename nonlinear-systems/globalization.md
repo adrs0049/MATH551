@@ -57,7 +57,7 @@ for _ in range(3):
     x_n.append(xk - f(xk) / fp(xk))
 
 fig, ax = plt.subplots(figsize=(9, 4.5))
-x = np.linspace(-12, 12, 500)
+x = np.linspace(-18, 18, 500)
 ax.plot(x, f(x), 'b-', linewidth=2)
 ax.axhline(0, color='k', linewidth=0.8)
 
@@ -81,24 +81,34 @@ for k in range(min(3, len(x_n) - 1)):
 
 # Mark the root
 ax.plot(0, 0, 'ko', markersize=8, zorder=5)
-ax.annotate('$x^* = 0$', (0.3, -0.25), fontsize=10)
+# ax.annotate('$x^* = 0$', (0.3, -0.25), fontsize=10)
 
 ax.set_xlabel('$x$')
 ax.set_ylabel('$f(x)$')
 ax.set_title(r"Newton diverges for $f(x) = \arctan(x)$: tangent lines overshoot")
-ax.set_xlim(-12, 12)
+ax.set_xlim(-18, 18)
 ax.set_ylim(-2.5, 2.5)
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.show()
 
 print("Newton iterates:")
+print(f"  {'k':>2s}  {'x_k':>10s}  {'|f(x_k)|':>10s}  {'|f/f\'|(x_k)':>12s}")
 for k, xk in enumerate(x_n):
-    print(f"  x_{k} = {xk:.4f}")
+    res = abs(f(xk))
+    corr = abs(f(xk) / fp(xk)) if abs(fp(xk)) > 1e-15 else float('inf')
+    print(f"  {k:2d}  {xk:10.4f}  {res:10.2e}  {corr:12.2e}")
+print()
+print("The iterates diverge: |x_k| grows at each step.")
+print("The residual |f(x_k)| also grows (though bounded by pi/2 for arctan).")
+print("The Newton correction |f/f'| grows even faster, reflecting the true error.")
 ```
 
-The fix: **damped Newton**. Instead of taking the full Newton step
-$\Delta\mathbf{x}$, take a fraction:
+The fix is visible in the plot above: the tangent line is a good local
+approximation, but the full step overshoots because $\arctan$ flattens out far
+from the root. If we had taken only a *fraction* of the Newton step, the iterate
+would have moved toward zero instead of away from it. This motivates **damped
+Newton**: instead of taking the full step $\Delta\mathbf{x}$, take a fraction:
 
 $$
 \mathbf{x}_{k+1} = \mathbf{x}_k + \lambda_k \Delta\mathbf{x}_k
@@ -209,11 +219,28 @@ minimum of the residual that is not a root). True convergence to a root requires
 the additional condition that $D\mathbf{F}$ is nonsingular at the limit point.
 :::
 
+### From Armijo to NLEQ-RES
+
+The simple Armijo backtracking above halves $\lambda$ blindly until sufficient
+decrease is achieved. Deuflhard's **NLEQ-RES** refines this with the same
+adaptive prediction machinery used by NLEQ-ERR (described below), but applied
+to the residual. The prediction uses a quadratic model along the Newton
+direction:
+
+$$
+\mu_k = \frac{\frac{1}{2}\|\mathbf{F}(\mathbf{x}_k)\|\lambda_k^2}{\|\mathbf{F}(\mathbf{x}^{\text{trial}}) - (1 - \lambda_k)\mathbf{F}(\mathbf{x}_k)\|}
+$$
+
+The reduced damping factor is $\lambda_k \gets \min(\mu_k, \lambda_k / 2)$, and
+the monotonicity test can be either standard ($\theta < 1$) or restricted
+($\theta < 1 - \lambda/4$). This gives NLEQ-RES faster convergence than naive
+backtracking while still monitoring the residual.
+
 ### Limitations
 
-Backtracking on $\|\mathbf{F}\|$ has a subtle flaw: it is **not affine
-invariant**. To understand why this matters, we first need to define what affine
-invariance means.
+Despite these improvements, damping based on $\|\mathbf{F}\|$ has a subtle
+flaw: it is **not affine invariant**. To understand why this matters, we first
+need to define what affine invariance means.
 
 ## Affine Invariance
 
@@ -281,8 +308,13 @@ $$
 
 So the Newton correction is literally the linearized estimate of the error
 $\mathbf{x} - \mathbf{x}^*$, and this estimate improves as
-$\mathbf{x} \to \mathbf{x}^*$. Monitoring $\|\Delta\mathbf{x}\|$ is the right
-choice because:
+$\mathbf{x} \to \mathbf{x}^*$. This is the same principle as the
+[step size lemma](../nonlinear-equations/fixed-point.md#lem-step-size-error-bound)
+from the scalar case: if the iteration is contractive with factor $\theta < 1$,
+then $\|\mathbf{x}_k - \mathbf{x}^*\| \leq \|\Delta\mathbf{x}_k\|/(1-\theta)$.
+The contraction factor $\theta_k$ below plays exactly this role.
+
+Monitoring $\|\Delta\mathbf{x}\|$ is the right choice because:
 
 1. It estimates what we actually care about (distance to the root).
 2. It is affine invariant ($A$ cancels in $D\mathbf{F}^{-1}\mathbf{F}$).
@@ -318,18 +350,33 @@ which is stronger than $\theta_k < 1$ and ensures well-controlled convergence.
 
 ### Adaptive Step Size Prediction
 
-A key feature of NLEQ_ERR: **predict the optimal $\lambda$ for the next step**
+A key feature of NLEQ_ERR: **predict the optimal $\lambda$**
 rather than just halving when the test fails.
 
-From the deviation between the actual and predicted corrections:
+Two predictions are used. Within the **damping loop** (when a trial step is rejected), the prediction is based on the deviation between the actual and predicted corrections:
 
 $$
-\mu_k = \frac{\frac{1}{2}\|\Delta\mathbf{x}_k\|\lambda_k^2}{\|\overline{\Delta\mathbf{x}}_{k+1} - (1 - \lambda_k)\Delta\mathbf{x}_k\|}
+\mu_k^{\text{damp}} = \frac{\frac{1}{2}\|\Delta\mathbf{x}_k\|\lambda_k^2}{\|\overline{\Delta\mathbf{x}}_{k+1} - (1 - \lambda_k)\Delta\mathbf{x}_k\|}
 $$
 
-The next damping factor is $\lambda_{k+1} = \min(1, \mu_k)$. This adapts
-aggressively: when the linearization is accurate ($\mu_k$ is large), $\lambda$
-ramps up quickly toward 1. When it is poor, $\lambda$ stays small.
+The reduced damping factor is $\lambda_k \gets \min(\mu_k^{\text{damp}}, \lambda_k / 2)$.
+
+Between iterations (once a step is accepted), the prediction for the **next iteration** uses the ratio of successive corrections:
+
+$$
+\mu_k^{\text{next}} = \frac{\|\Delta\mathbf{x}_{k-1}\| \cdot \|\overline{\Delta\mathbf{x}}_k\|}{\|\overline{\Delta\mathbf{x}}_k - \Delta\mathbf{x}_k\| \cdot \|\Delta\mathbf{x}_k\|} \cdot \lambda_k
+$$
+
+The next damping factor is $\lambda_{k+1} = \min(1, \mu_k^{\text{next}})$. Both
+predictions adapt aggressively: when the linearization is accurate ($\mu$ is
+large), $\lambda$ ramps up quickly toward 1. When it is poor, $\lambda$ stays
+small.
+
+An additional safeguard: if the predicted $\lambda$ would increase by a factor of
+4 or more and no reduction occurred in the damping loop, the algorithm retries
+with the larger $\lambda$ before accepting the current step. This avoids
+accepting an overly conservative step when the prediction says a much larger
+step would succeed.
 
 ### The Algorithm
 
@@ -390,6 +437,281 @@ monitoring significantly smooths the basin boundaries.
 interactive comparison of standard Newton, residual-based damping (NLEQ-RES),
 and error-oriented damping (NLEQ-ERR) applied to $z^3 - 1 = 0$.
 :::
+
+### Iteration Trajectories
+
+The following example shows the iteration paths for all three methods applied
+to $f(z) = z^3 - 1$ from $z_0 = 0.35 + 0.22i$, a starting point near a basin
+boundary where pure Newton bounces erratically before recovering. The left panel
+shows the
+trajectories in the complex plane overlaid on the Newton correction landscape
+$|f(z)/f'(z)|$. The right panel compares the convergence histories.
+
+```{code-cell} python
+:tags: [hide-input]
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+f  = lambda z: z**3 - 1
+df = lambda z: 3 * z**2
+roots = np.array([np.exp(2j * np.pi * k / 3) for k in range(3)])
+
+def newton_trajectory(f, df, z0, max_iter=50, tol=1e-12):
+    """Pure Newton: full step every time."""
+    path = [z0]
+    z = z0
+    for _ in range(max_iter):
+        dfz = df(z)
+        if abs(dfz) < 1e-15:
+            break
+        dz = f(z) / dfz
+        z = z - dz
+        path.append(z)
+        if abs(dz) < tol:
+            break
+    return np.array(path)
+
+def backtracking_trajectory(f, df, z0, max_iter=100, tol=1e-12):
+    """Armijo backtracking: halve lambda until |f| decreases."""
+    path = [z0]
+    z = z0
+    for _ in range(max_iter):
+        fz = f(z)
+        dfz = df(z)
+        if abs(dfz) < 1e-15:
+            break
+        dz = fz / dfz
+        lam = 1.0
+        for _ in range(30):
+            z_trial = z - lam * dz
+            if abs(f(z_trial)) < abs(fz):
+                break
+            lam *= 0.5
+        z = z_trial
+        path.append(z)
+        if abs(lam * dz) < tol:
+            break
+    return np.array(path)
+
+def nleq_res_trajectory(f, df, z0, max_iter=100, tol=1e-12,
+                        lambda_min=1e-4, restricted=True):
+    """NLEQ-RES: Deuflhard's residual-based damped Newton."""
+    path = [z0]
+    z = z0
+    normfk = abs(f(z))
+    lam = 1.0
+    mu = 1.0
+    for k in range(max_iter):
+        if normfk <= tol:
+            break
+        dfz = df(z)
+        if abs(dfz) < 1e-15:
+            break
+        fz = f(z)
+        dz = fz / dfz
+        normdx = abs(dz)
+        if k > 0:
+            mu = (normfkm1 / normfk) * mu
+            lam = min(1.0, mu)
+        # Damping loop
+        for _ in range(30):
+            if lam < lambda_min:
+                break
+            z_trial = z + lam * dz  # dz = f/f', so step is x + lam*(f/f')
+            # Wait — Newton step is x - f/f', so:
+            z_trial = z - lam * dz
+            fz_trial = f(z_trial)
+            normfkp1 = abs(fz_trial)
+            theta = normfkp1 / normfk
+            # Prediction: mu = 0.5 * ||f_k|| * lam^2 / ||f_{k+1} - (1-lam)*f_k||
+            w = fz_trial - (1 - lam) * fz
+            mu = 0.5 * normfk * lam**2 / abs(w) if abs(w) > 1e-30 else 2.0 * lam
+            # Monotonicity test
+            if restricted:
+                accept = theta < 1.0 - lam / 4.0
+            else:
+                accept = theta < 1.0
+            if accept:
+                break
+            lam_new = min(mu, 0.5 * lam)
+            lam = max(lam_new, lambda_min)
+        z = z_trial
+        path.append(z)
+        normfkm1 = normfk
+        normfk = normfkp1
+        lam = min(1.0, mu)
+        if normdx < tol:
+            break
+    return np.array(path)
+
+def nleq_err_trajectory(f, df, z0, max_iter=100, tol=1e-12, lambda_min=1e-8):
+    """NLEQ-ERR: error-oriented damped Newton (Deuflhard)."""
+    path = [z0]
+    z = z0
+    # Adaptive initial lambda
+    dz0 = f(z) / df(z)
+    lam = min(1.0, 1.0 / abs(dz0)) if abs(dz0) > 1 else 1.0
+    normdx_prev = abs(dz0)
+
+    for _ in range(max_iter):
+        dfz = df(z)
+        if abs(dfz) < 1e-15:
+            break
+        dz = f(z) / dfz
+        norm_dx = abs(dz)
+        if norm_dx < tol:
+            path.append(z - dz)
+            break
+
+        # Damping loop
+        lam_trial = lam
+        accepted = False
+        for _ in range(30):
+            z_trial = z - lam_trial * dz
+            # Simplified Newton correction (reuse f'(z_k))
+            dzbar = f(z_trial) / dfz
+            normdxbar = abs(dzbar)
+            theta = normdxbar / norm_dx if norm_dx > 1e-30 else 1.0
+
+            if theta < 1.0 - lam_trial / 4.0:
+                # Accept. Predict next lambda.
+                w = abs(dzbar - (1 - lam_trial) * dz)
+                if w > 1e-30:
+                    mu = 0.5 * norm_dx * lam_trial**2 / w
+                else:
+                    mu = 2.0 * lam_trial
+                lam = min(1.0, mu)
+                accepted = True
+                break
+            else:
+                # Reject. Reduce lambda.
+                w = abs(dzbar - (1 - lam_trial) * dz)
+                if w > 1e-30:
+                    mu = 0.5 * norm_dx * lam_trial**2 / w
+                else:
+                    mu = 0.5 * lam_trial
+                lam_trial = max(min(mu, 0.5 * lam_trial), lambda_min)
+                if lam_trial <= lambda_min * 1.1:
+                    accepted = True  # force accept with minimum lambda
+                    break
+
+        z = z - lam_trial * dz
+        path.append(z)
+
+        # Update lambda prediction from successive corrections
+        if norm_dx > 1e-30 and normdx_prev > 1e-30:
+            lam = min(1.0, normdx_prev * lam / norm_dx)
+        lam = max(lam, lambda_min)
+        normdx_prev = norm_dx
+
+    return np.array(path)
+
+z0 = 0.354 + 0.219j
+
+path_newton = newton_trajectory(f, df, z0, max_iter=30)
+path_bt     = backtracking_trajectory(f, df, z0)
+path_res    = nleq_res_trajectory(f, df, z0)
+path_err    = nleq_err_trajectory(f, df, z0)
+
+fig = plt.figure(figsize=(10, 12), layout='constrained')
+gs = fig.add_gridspec(2, 4, height_ratios=[2.5, 1])
+
+# --- Top: trajectories in the complex plane (spans all 4 columns) ---
+ax_top = fig.add_subplot(gs[0, :])
+
+N = 400
+x = np.linspace(-2, 2, N)
+y = np.linspace(-2, 2, N)
+xx, yy = np.meshgrid(x, y)
+zz = xx + 1j * yy
+dfzz = df(zz)
+safe = np.abs(dfzz) > 1e-15
+
+# Newton correction landscape: |f/f'|
+correction = np.full_like(xx, np.nan)
+correction[safe] = np.log10(np.abs(f(zz[safe]) / dfzz[safe]) + 1e-16)
+
+im = ax_top.pcolormesh(xx, yy, correction, shading='auto', vmin=-2, vmax=1,
+                       cmap='viridis')
+plt.colorbar(im, ax=ax_top, label=r"$\log_{10}|f/f'|$",
+             orientation='horizontal', fraction=0.05, pad=0.08)
+
+for path, color, label, marker in [
+    (path_newton, '#d62728', 'Newton', 'o'),
+    (path_bt,     '#ff7f0e', 'Backtracking', '^'),
+    (path_res,    'black', 'NLEQ-RES', 's'),
+    (path_err,    '#1f77b4', 'NLEQ-ERR', 'D')]:
+    ax_top.plot(path.real, path.imag, '-', color=color, linewidth=3, alpha=0.9)
+    ax_top.plot(path.real, path.imag, marker, color=color, markersize=5,
+                zorder=4, markeredgecolor='white', markeredgewidth=0.5)
+    ax_top.plot(path[0].real, path[0].imag, '*', color='#2ca02c',
+                markersize=16, zorder=5, markeredgecolor='black',
+                markeredgewidth=1)
+    ax_top.plot(path[-1].real, path[-1].imag, marker, color=color,
+                markersize=7, zorder=5, label=label)
+
+ax_top.scatter(roots.real, roots.imag, c='white', s=120, zorder=6,
+               edgecolors='black', linewidths=2, marker='*')
+ax_top.set_xlabel('Re($z$)', fontsize=12)
+ax_top.set_ylabel('Im($z$)', fontsize=12)
+ax_top.set_title(r"Iteration trajectories on the $|f/f'|$ landscape")
+ax_top.set_aspect('equal')
+ax_top.legend(fontsize=9, loc='lower left')
+ax_top.set_xlim(-2, 2)
+ax_top.set_ylim(-2, 2)
+
+# --- Bottom left: residual |f(z_k)| (narrower than top) ---
+ax_res = fig.add_subplot(gs[1, 0:2])
+
+for path, color, label in [
+    (path_newton, '#d62728', 'Newton'),
+    (path_bt,     '#ff7f0e', 'Backtracking'),
+    (path_res,    'black', 'NLEQ-RES'),
+    (path_err,    '#1f77b4', 'NLEQ-ERR')]:
+    residuals = np.abs(f(path))
+    n = np.arange(len(path))
+    ax_res.semilogy(n, residuals, '-o', color=color, markersize=4,
+                    linewidth=2, label=label)
+
+ax_res.set_xlabel('Iteration $k$', fontsize=11)
+ax_res.set_ylabel(r'$|f(z_k)|$', fontsize=11)
+ax_res.set_title('Residual (backward error)')
+ax_res.legend(fontsize=8)
+ax_res.grid(True, alpha=0.3, which='both')
+ax_res.set_xlim(left=0)
+ax_res.set_ylim(bottom=1e-16)
+
+# --- Bottom right: Newton correction |f/f'| (forward error estimate) ---
+ax_err = fig.add_subplot(gs[1, 2:4])
+
+
+for path, color, label in [
+    (path_newton, '#d62728', 'Newton'),
+    (path_bt,     '#ff7f0e', 'Backtracking'),
+    (path_res,    'black', 'NLEQ-RES'),
+    (path_err,    '#1f77b4', 'NLEQ-ERR')]:
+    dfpath = df(path)
+    safe_p = np.abs(dfpath) > 1e-15
+    corrections = np.full(len(path), np.nan)
+    corrections[safe_p] = np.abs(f(path[safe_p]) / dfpath[safe_p])
+    n = np.arange(len(path))
+    ax_err.semilogy(n, corrections, '-o', color=color, markersize=4,
+                    linewidth=2, label=label)
+
+ax_err.set_xlabel('Iteration $k$', fontsize=11)
+ax_err.set_ylabel(r"$|f(z_k)/f'(z_k)|$", fontsize=11)
+ax_err.set_title('Newton correction (forward error estimate)')
+ax_err.legend(fontsize=8)
+ax_err.grid(True, alpha=0.3, which='both')
+ax_err.set_xlim(left=0)
+ax_err.set_ylim(bottom=1e-16)
+
+plt.show()
+```
+
+(fig-iteration-trajectories)=
+**Iteration trajectories for $f(z) = z^3 - 1$ from $z_0 = 0.35 + 0.22i$.** *Top:* Paths in the complex plane overlaid on the Newton correction landscape $|f/f'|$ (darker = closer to a root). Pure Newton (red) bounces between all three basins before settling. Simple Armijo backtracking (orange) damps by halving $\lambda$ until $|f|$ decreases. NLEQ-RES (black) uses Deuflhard's residual-based damping with predicted step sizes. NLEQ-ERR (blue) damps based on the correction norm. *Bottom left:* The residual $|f(z_k)|$ (backward error). *Bottom right:* The Newton correction $|f(z_k)/f'(z_k)|$ (forward error estimate, matching the landscape above). The damped methods converge monotonically while undamped Newton oscillates.
 
 **Reference:** P. Deuflhard, *Newton Methods for Nonlinear Problems: Affine
 Invariance and Adaptive Algorithms*, Springer, 2011.
