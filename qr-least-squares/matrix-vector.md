@@ -1,3 +1,14 @@
+---
+exports:
+  - format: pdf
+    template: ./_templates/plain_narrow
+    output: exports/matrix-vector.pdf
+    id: qr-least-squares-matrix-vector-pdf
+downloads:
+  - id: qr-least-squares-matrix-vector-pdf
+    title: Download PDF
+---
+
 # Matrix-Vector Products
 
 :::{tip} Big Idea

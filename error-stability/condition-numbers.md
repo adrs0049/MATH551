@@ -62,6 +62,7 @@ Substituting into the condition number definition:
 $$
 \kappa = \sup_x \left| \frac{x f'(x)}{f(x)} \right|
 $$
+
 :::
 
 ## Condition Number of a Differentiable Function
@@ -74,11 +75,9 @@ theorem.
 
 The **absolute condition number** measures the ratio of absolute error in the
 output to absolute error in the input:
-
 $$
 \hat{\kappa} = |f'(x)|.
 $$
-
 If $|f'(x)|$ is large, a small absolute change in $x$ produces a large absolute change in $f(x)$.
 
 ### Derivation from Relative Errors
