@@ -141,15 +141,112 @@ Each Newton iteration requires:
 
 **Total per iteration:** $\mathcal{O}(n^3)$, dominated by the linear system solve.
 
-## What Can Go Wrong
+## Convergence Analysis
 
-Newton's method for systems can fail in several ways:
+Newton's method for systems inherits the quadratic convergence of scalar Newton, but only **locally**. Understanding the convergence conditions reveals why globalization is essential.
 
-1. **Singular Jacobian:** If $\det(D\mathbf{F}(\mathbf{x}_k)) = 0$, the linear system has no unique solution
+### The Local Convergence Theorem
 
-2. **Nearly singular Jacobian:** Large condition number leads to numerical instability
+::::::{prf:theorem} Newton Convergence for Systems
+:label: thm-newton-convergence-systems
 
-3. **Bad initial guess:** May diverge, cycle, or converge to wrong root
+Let $\mathbf{F}: \mathbb{R}^n \to \mathbb{R}^n$ be continuously differentiable with $\mathbf{F}(\mathbf{x}^*) = \mathbf{0}$. If:
+1. $D\mathbf{F}(\mathbf{x}^*)$ is nonsingular
+2. $D\mathbf{F}$ is Lipschitz continuous near $\mathbf{x}^*$
 
-4. **Multiple solutions:** Newton finds *a* root, not necessarily the one you want
+Then there exists $\delta > 0$ such that for $\|\mathbf{x}_0 - \mathbf{x}^*\| < \delta$, Newton's method converges **quadratically**:
+
+$$
+\|\mathbf{x}_{k+1} - \mathbf{x}^*\| \leq C\|\mathbf{x}_k - \mathbf{x}^*\|^2
+$$
+
+::::{dropdown} Proof Sketch
+The proof mirrors the scalar case. Define the error $\mathbf{e}_k = \mathbf{x}_k - \mathbf{x}^*$.
+
+**Step 1:** From the Newton iteration,
+$$
+\mathbf{e}_{k+1} = \mathbf{e}_k - [D\mathbf{F}(\mathbf{x}_k)]^{-1}\mathbf{F}(\mathbf{x}_k)
+$$
+
+**Step 2:** Using $\mathbf{F}(\mathbf{x}^*) = \mathbf{0}$ and Taylor expansion:
+$$
+\mathbf{F}(\mathbf{x}_k) = D\mathbf{F}(\mathbf{x}^*)\mathbf{e}_k + \mathcal{O}(\|\mathbf{e}_k\|^2)
+$$
+
+**Step 3:** The Lipschitz condition on $D\mathbf{F}$ bounds the error in the Jacobian:
+$$
+\|D\mathbf{F}(\mathbf{x}_k) - D\mathbf{F}(\mathbf{x}^*)\| \leq L\|\mathbf{e}_k\|
+$$
+
+**Step 4:** Combining these bounds shows $\|\mathbf{e}_{k+1}\| \leq C\|\mathbf{e}_k\|^2$.
+::::
+::::::
+
+### Convergence Rates
+
+Different methods achieve different convergence rates:
+
+| Method | Rate | Definition | Typical Behavior |
+|--------|------|------------|------------------|
+| Linear | $\|\mathbf{e}_{k+1}\| \leq c\|\mathbf{e}_k\|$ | Constant ratio $c < 1$ | Errors decrease geometrically |
+| Superlinear | $\lim \frac{\|\mathbf{e}_{k+1}\|}{\|\mathbf{e}_k\|} = 0$ | Ratio → 0 | Faster and faster |
+| Quadratic | $\|\mathbf{e}_{k+1}\| \leq C\|\mathbf{e}_k\|^2$ | Errors squared | Digits double each iteration |
+
+::::::{prf:example} Quadratic vs Linear
+:label: ex-quadratic-vs-linear-convergence
+
+Starting with $\|\mathbf{e}_0\| = 0.1$:
+
+| Iteration | Linear ($c = 0.5$) | Quadratic ($C = 1$) |
+|-----------|-------------------|---------------------|
+| 0 | $10^{-1}$ | $10^{-1}$ |
+| 1 | $5 \times 10^{-2}$ | $10^{-2}$ |
+| 2 | $2.5 \times 10^{-2}$ | $10^{-4}$ |
+| 3 | $1.25 \times 10^{-2}$ | $10^{-8}$ |
+| 4 | $6.25 \times 10^{-3}$ | $10^{-16}$ (machine precision!) |
+
+Quadratic convergence reaches machine precision in 4 iterations; linear needs about 50.
+::::::
+
+### The Locality Problem
+
+The theorem guarantees convergence only if $\|\mathbf{x}_0 - \mathbf{x}^*\| < \delta$. But:
+
+1. **We don't know $\mathbf{x}^*$** -- that's what we're trying to find!
+2. **We don't know $\delta$** -- it depends on the problem
+3. **$\delta$ can be very small** -- especially for ill-conditioned problems
+
+::::::{prf:example} Small Basin of Attraction
+:label: ex-small-basin-of-attraction
+
+Consider the system:
+$$
+\mathbf{F}(x, y) = \begin{pmatrix} x^2 + y^2 - 1 \\ (x - 2)^2 + y^2 - 1 \end{pmatrix}
+$$
+
+These are two circles that intersect at $(1/2, \pm\sqrt{3}/2)$.
+
+The Jacobian:
+$$
+D\mathbf{F} = \begin{pmatrix} 2x & 2y \\ 2(x-2) & 2y \end{pmatrix}
+$$
+
+is singular when $y = 0$ (the circles' line of centers). Newton iterations starting near $y = 0$ can fail dramatically. The basin of attraction is limited by this singular line.
+::::::
+
+### What Can Go Wrong
+
+**1. Singular Jacobian.**
+If $\det(D\mathbf{F}(\mathbf{x}_k)) = 0$, the Newton step is undefined.
+At the root, if $D\mathbf{F}(\mathbf{x}^*)$ is singular, the root is called **degenerate**. Convergence (if it happens) is typically only linear.
+Away from the root, this may indicate the iteration is heading in a bad direction.
+
+**2. Nearly singular Jacobian.**
+Large condition number $\kappa(D\mathbf{F})$ causes loss of precision in solving $D\mathbf{F} \Delta\mathbf{x} = -\mathbf{F}$ and potential divergence due to roundoff.
+
+**3. Divergence.**
+The iteration may oscillate ($\mathbf{x}_k \to \mathbf{x}_{k+2} \to \mathbf{x}_k \to \cdots$), escape to infinity ($\|\mathbf{x}_k\| \to \infty$), or converge to the wrong root.
+
+**4. Multiple solutions.**
+Newton finds *a* root, not necessarily the one you want.
 

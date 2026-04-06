@@ -92,7 +92,6 @@ project:
       children:
         - file: nonlinear-systems/newton-systems.md
         - file: nonlinear-systems/globalization.md
-        # - file: nonlinear-systems/convergence.md
         - file: nonlinear-systems/quasi-newton.md
         # - file: nonlinear-systems/constrained-optimization.md
         # - file: nonlinear-systems/exercises.md

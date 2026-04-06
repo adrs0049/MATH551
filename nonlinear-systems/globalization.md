@@ -104,6 +104,36 @@ print("The residual |f(x_k)| also grows (though bounded by pi/2 for arctan).")
 print("The Newton correction |f/f'| grows even faster, reflecting the true error.")
 ```
 
+## Quantitative Convergence: The Newton-Kantorovich Theorem
+
+The [local convergence theorem](newton-systems.md#thm-newton-convergence-systems) guarantees convergence if $\mathbf{x}_0$ is "close enough" to $\mathbf{x}^*$. But how close is close enough? The Newton-Kantorovich theorem answers this using only information available at the initial point.
+
+::::::{prf:theorem} Newton-Kantorovich Theorem
+:label: thm-newton-kantorovich
+
+Let $\mathbf{F}$ be continuously differentiable with:
+- $D\mathbf{F}(\mathbf{x}_0)$ nonsingular with $\|[D\mathbf{F}(\mathbf{x}_0)]^{-1}\| \leq \beta$
+- $\|[D\mathbf{F}(\mathbf{x}_0)]^{-1}\mathbf{F}(\mathbf{x}_0)\| \leq \eta$ (size of first Newton step)
+- $\|D\mathbf{F}(\mathbf{x}) - D\mathbf{F}(\mathbf{y})\| \leq L\|\mathbf{x} - \mathbf{y}\|$ (Lipschitz constant)
+
+If $h = \beta\eta L \leq \frac{1}{2}$, then Newton's method converges to a root $\mathbf{x}^*$ with:
+
+$$
+\|\mathbf{x}^* - \mathbf{x}_0\| \leq \frac{1 - \sqrt{1 - 2h}}{h}\eta
+$$
+
+::::{dropdown} Interpretation
+The condition $h \leq 1/2$ combines three quantities:
+- How small the initial step is ($\eta$)
+- How sensitive the Jacobian is to changes ($L$)
+- How large the Jacobian inverse is ($\beta$)
+
+Small $h$ means we're in the "safe zone" for convergence. All three quantities can be computed (or bounded) at the starting point, without knowing the root.
+::::
+::::::
+
+The Kantorovich theorem tells us *when* convergence is guaranteed. When the conditions are not satisfied, we need strategies to make the method converge from farther away.
+
 The fix is visible in the plot above: the tangent line is a good local
 approximation, but the full step overshoots because $\arctan$ flattens out far
 from the root. If we had taken only a *fraction* of the Newton step, the iterate

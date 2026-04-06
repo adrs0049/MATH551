@@ -119,13 +119,16 @@ The same idea recurs throughout this course: in ODE integrators, optimization al
 
 After completing this chapter, you should be able to:
 
-- **L4.1:** Explain how iterative methods generate sequences of approximations converging to a solution, and state a stopping criterion.
-- **L4.2:** Define order of convergence (linear, superlinear, quadratic) and determine how many iterations are needed to achieve a desired accuracy.
+- **L4.1:** Explain how iterative methods generate sequences of approximations converging to a solution.
+- **L4.2:** Define order of convergence (linear, quadratic, cubic) and estimate the number of iterations required to achieve a desired accuracy as a function of initial error and convergence order.
 - **L4.3:** State the Intermediate Value Theorem and derive the bisection algorithm from it.
 - **L4.4:** Calculate the number of bisection iterations required for a given tolerance.
 - **L4.5:** Define fixed points, restate root finding as a fixed-point problem, and explain why the choice of $g$ matters.
-- **L4.6:** State the Banach Fixed Point Theorem and verify its hypotheses for a given iteration.
-- **L4.7:** Derive Newton's method from Taylor series and identify it as a fixed-point iteration.
-- **L4.8:** Explain why Newton's method converges quadratically for simple roots and identify when it fails (e.g., $f'(x^*) = 0$, bad initial guess).
-- **L4.9:** Compute the condition number $\kappa = 1/|f'(x^*)|$ of a root and explain why multiple roots are ill-conditioned.
-- **L4.10:** Define forward error ($|\hat{x} - x^*|$) and backward error ($|f(\hat{x})|$) for root finding, and relate them via the condition number: forward $\approx \kappa \times$ backward.
+- **L4.6:** State the [Banach Fixed Point Theorem](#thm-banach) (1D contraction mapping) and verify its hypotheses for a given iteration.
+- **L4.7:** Use cobweb diagrams to visualize fixed-point iterations and distinguish convergent from divergent cases.
+- **L4.8:** Derive Newton's method from linear approximation and identify it as a fixed-point iteration.
+- **L4.9:** Explain why Newton's method is a local method: the linear approximation is only accurate near the root, so convergence requires a sufficiently close initial guess.
+- **L4.10:** Identify when Newton's method fails or degrades (e.g., $f'(x^*) = 0$, bad initial guess) and explain how the modified Newton iteration for multiple roots is another fixed-point method.
+- **L4.11:** Compute the condition number $\kappa = 1/|f'(x^*)|$ of a root and explain why multiple roots are ill-conditioned.
+- **L4.12:** Define forward error ($|\hat{x} - x^*|$) and backward error ($|f(\hat{x})|$) for root finding, and relate them via the condition number: forward $\approx \kappa \times$ backward.
+- **L4.13:** Identify the two natural stopping criteria ($|x_{n+1} - x_n| < \varepsilon$ and $|f(x_n)| < \varepsilon$) and explain when each can be misleading.
