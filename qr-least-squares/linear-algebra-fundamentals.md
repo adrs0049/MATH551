@@ -281,32 +281,6 @@ $$
 $$
 :::
 
-### Why the condition number matters
-
-:::::{prf:theorem} Error Sensitivity
-:label: thm-error-sensitivity
-
-Let $A$ be nonsingular and $A\mathbf{x} = \mathbf{b}$. If a small change $\Delta\mathbf{b}$ produces a change $\Delta\mathbf{x}$ (i.e., $A(\mathbf{x} + \Delta\mathbf{x}) = \mathbf{b} + \Delta\mathbf{b}$), then
-
-$$
-\frac{\|\Delta\mathbf{x}\|}{\|\mathbf{x}\|} \leq \kappa(A) \frac{\|\Delta\mathbf{b}\|}{\|\mathbf{b}\|}
-$$
-
-::::{prf:proof}
-:class: dropdown
-
-Since $A\mathbf{x} = \mathbf{b}$, we have $\Delta\mathbf{x} = A^{-1}\Delta\mathbf{b}$. Then
-
-$$
-\|\Delta\mathbf{x}\| \cdot \|\mathbf{b}\| = \|A^{-1}\Delta\mathbf{b}\| \cdot \|A\mathbf{x}\| \leq \|A^{-1}\| \cdot \|\Delta\mathbf{b}\| \cdot \|A\| \cdot \|\mathbf{x}\|
-$$
-
-Dividing both sides by $\|\mathbf{x}\| \cdot \|\mathbf{b}\|$ gives the result.
-::::
-:::::
-
-If $\kappa(A)$ is large, a small relative change in $\mathbf{b}$ can produce a large relative change in $\mathbf{x}$. The condition number is the worst-case amplification factor.
-
 ## Linear Systems
 
 We seek to solve $A\mathbf{x} = \mathbf{b}$ where

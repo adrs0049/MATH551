@@ -233,9 +233,12 @@ matrix-vector product $v^T A_{k:m,k:n}$ avoids forming $H$ explicitly.
 
 ## Numerical Stability
 
-Recall from the [error and stability chapter](../error-stability/stability.md)
-that an algorithm is **backward stable** if the computed result is the exact
-result for a slightly perturbed input. Householder QR achieves this.
+We developed the framework of [forward and backward stability](condition-stability.md)
+in the previous chapter. Recall that [forward stability](condition-stability.md#def-forward-stable)
+is unattainable ([](#prop-forward-stability-impossible)), and the right standard
+is [backward stability](condition-stability.md#def-backward-stable-linalg): the
+computed result is the exact result for a slightly perturbed input. Householder
+QR achieves this.
 
 :::{prf:theorem} Backward Stability of Householder QR
 :label: thm-householder-stability
@@ -250,33 +253,62 @@ Moreover, $\hat{Q}$ is orthogonal to machine precision:
 $\|\hat{Q}^T\hat{Q} - I\| = O(\varepsilon_{\text{mach}})$.
 :::
 
-:::{prf:proof}
-:class: dropdown
+:::{dropdown} Proof sketch (following Higham, *Accuracy and Stability of Numerical Algorithms*, Ch. 19)
 
-The argument rests on two properties of orthogonal transformations:
+The full proof tracks rounding errors through each Householder step. We outline
+the three key ingredients and how they combine.
 
-**1. No error amplification.** Each Householder reflector satisfies
-$\|H\|_2 = 1$, so when we compute $Hx$ in floating point:
+**Step 1: One Householder reflection is backward stable.**
 
-$$
-\text{fl}(Hx) = Hx + \delta, \quad \|\delta\| = O(\varepsilon_{\text{mach}}) \|x\|
-$$
-
-The error is proportional to $\|x\|$, not amplified.
-
-**2. No cancellation.** Gram-Schmidt subtracts nearly equal vectors
-($v_j = a_j - \sum \langle a_j, q_i \rangle q_i$), risking cancellation.
-Householder introduces zeros by reflection ($Ha = \|a\|e_1$), which preserves
-the norm and avoids subtracting nearly equal quantities.
-
-**3. Errors compose linearly.** After $n$ reflections:
+At step $k$, we apply a Householder reflector $H_k = I - 2v_kv_k^T$ to the
+current matrix. The key operation is $H_k B$ for a submatrix $B$. In floating
+point, the computed result satisfies
 
 $$
-H_n \cdots H_1 A = R + E, \quad \|E\| = O(n \varepsilon_{\text{mach}}) \|A\|
+\text{fl}(H_k B) = (H_k + \delta H_k) B, \quad \|\delta H_k\| = O(\varepsilon_{\text{mach}})
 $$
 
-The factor is $n$ (not $2^n$) because each orthogonal transformation adds only
-$O(\varepsilon_{\text{mach}})$ relative error.
+The perturbation $\delta H_k$ is small because $H_k$ is orthogonal:
+$\|H_k\|_2 = 1$, so no intermediate quantity is amplified. This is the
+critical difference from Gaussian elimination, where the elementary matrices
+$L_k$ can have large entries (the multipliers).
+
+**Step 2: The perturbations compose linearly, not exponentially.**
+
+After $n$ steps, the computed upper triangular factor $\hat{R}$ satisfies
+
+$$
+\hat{R} = (H_n + \delta H_n) \cdots (H_1 + \delta H_1) A
+$$
+
+Each perturbed reflector $H_k + \delta H_k$ is close to orthogonal. The
+product of $n$ nearly-orthogonal matrices is still nearly orthogonal:
+
+$$
+(H_n + \delta H_n) \cdots (H_1 + \delta H_1) = Q^T + E, \quad \|E\| = O(n\varepsilon_{\text{mach}})
+$$
+
+The errors accumulate *additively* (factor $n$), not multiplicatively
+(factor $2^n$). This is because each orthogonal factor has unit norm, so
+the error at step $k$ is not amplified by subsequent steps.
+
+**Step 3: Rewriting as a backward error on $A$.**
+
+From Step 2: $\hat{R} = (Q^T + E)A$, so $Q\hat{R} = A + QEA$. Setting
+$\delta A = QEA$:
+
+$$
+\frac{\|\delta A\|}{\|A\|} = \frac{\|QEA\|}{\|A\|} \leq \|Q\| \cdot \|E\| = O(n\varepsilon_{\text{mach}})
+$$
+
+since $\|Q\|_2 = 1$. This gives $\hat{Q}\hat{R} = A + \delta A$ with
+$\|\delta A\|/\|A\| = O(n\varepsilon_{\text{mach}})$.
+
+**Takeaway.** The proof works because orthogonal matrices have three
+properties that prevent error growth: unit norm ($\|Q\|_2 = 1$, no
+amplification), norm preservation ($\|Qx\|_2 = \|x\|_2$, no cancellation),
+and unit condition number ($\kappa_2(Q) = 1$, perturbations stay small under
+composition).
 :::
 
 The orthogonality of the computed $\hat{Q}$ is the key difference from

@@ -387,7 +387,7 @@ $$
 $$
 
 The three ingredients have names that we will formalize when we study
-[linear systems](../qr-least-squares/forward-backward-error.md):
+[linear systems](../qr-least-squares/condition-stability.md#forward-backward-error):
 
 - **Backward error** = the one-step error $\mathcal{L}_n = O(h^2)$.
   The numerical solution does not satisfy the original ODE, but it

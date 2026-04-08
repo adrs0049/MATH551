@@ -103,4 +103,4 @@ Not every source of error is an ill-conditioning issue. The three operations bel
 
 ## Looking Ahead
 
-We will formalize these ideas using **forward and backward error** when we study [linear systems](../qr-least-squares/forward-backward-error.md). There, we will see that backward stability — the precise version of "solves a nearby problem exactly" — is the gold standard for numerical algorithms. For now, the key takeaway is: **distinguish between the problem (conditioning) and the algorithm (stability)**.
+We will formalize these ideas using **forward and backward error** when we study [linear systems](../qr-least-squares/condition-stability.md#forward-backward-error). There, we will see that backward stability, the precise version of "solves a nearby problem exactly", is the gold standard for numerical algorithms. For now, the key takeaway is: **distinguish between the problem (conditioning) and the algorithm (stability)**.
