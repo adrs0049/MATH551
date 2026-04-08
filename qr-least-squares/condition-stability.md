@@ -1,4 +1,7 @@
 ---
+kernelspec:
+  name: python3
+  display_name: Python 3
 exports:
   - format: pdf
     template: ./_templates/plain_narrow
@@ -137,7 +140,7 @@ $$
 ::::
 :::::
 
-## Consequences of the Condition Number
+## Numerically Singular Matrices
 
 Recall that the [condition number](linear-algebra-fundamentals.md#def-condition-number)
 $\kappa(A) = \|A\|\|A^{-1}\|$ measures the ratio of maximum to minimum stretch
@@ -152,42 +155,114 @@ of a unit vector. The sensitivity theorem tells us what this means in practice.
 
 See the [Condition Numbers and Lost Digits notebook](../notebooks/condition-number-digits.ipynb) for concrete demonstrations with diagonal, Hilbert, and Vandermonde matrices.
 
-But what does it *mean* for a matrix to be ill-conditioned? The next section provides the key insight.
+But what does it *mean* geometrically for a matrix to be ill-conditioned? How
+close is it to being singular? The answer involves the geometry of the set of
+singular matrices in the operator norm.
 
-## The Deep Insight: Numerically Singular Matrices
+### The singular set is closed (optional)
 
-:::::{admonition} Extension: When Ill-Conditioned Means Singular (Demmel)
-:class: note
+::::{prf:lemma} $\Sigma$ is closed
+:label: lem-singular-set-closed
 
-A matrix with $\kappa(A) \gtrsim 1/\varepsilon_{\text{mach}}$ is **numerically indistinguishable from a singular matrix**.
+The set of singular matrices
+$\Sigma = \{M \in \mathbb{R}^{n\times n} : \det(M) = 0\}$ is closed in the
+operator norm.
 
-::::{dropdown} Why? (Demmel's Perspective)
-Consider the "distance to singularity": how much do we need to perturb $A$ to make it singular?
+:::{prf:proof}
+:class: dropdown
 
-For the 2-norm, this distance is exactly $\sigma_{\min}(A)$, the smallest singular value. In relative terms:
+The determinant $\det : \mathbb{R}^{n \times n} \to \mathbb{R}$ is a
+polynomial in the $n^2$ entries, so it is continuous. The singleton $\{0\}$ is
+closed in $\mathbb{R}$, so $\Sigma = \det^{-1}(\{0\})$ is closed as the
+preimage of a closed set under a continuous map.
+:::
+::::
+
+Because $\Sigma$ is closed, every invertible matrix $A$ sits at some strictly
+positive distance from $\Sigma$.
+
+How far is an invertible matrix from $\Sigma$? The following theorem gives the
+exact answer.
+
+:::::::{prf:theorem} Distance to Singularity
+:label: thm-distance-singularity
+
+For any invertible $A \in \mathbb{R}^{n \times n}$ with the 2-norm,
 
 $$
-\frac{\text{distance to nearest singular matrix}}{\|A\|} = \frac{\sigma_{\min}}{\sigma_{\max}} = \frac{1}{\kappa(A)}
+\operatorname{dist}_2(A, \Sigma)
+\;=\; \min_{\substack{E \in \mathbb{R}^{n\times n} \\ A + E \text{ singular}}} \|E\|_2
+\;=\; \sigma_{\min}(A)
+\;=\; \frac{\|A\|_2}{\kappa_2(A)}.
 $$
 
-Now consider floating-point arithmetic. Every matrix $A$ is stored with relative error $\sim \varepsilon_{\text{mach}}$. The computer does not see $A$. It sees $A + E$ where $\|E\|/\|A\| \sim \varepsilon_{\text{mach}}$.
+::::::{prf:proof}
+:class: dropdown
+
+Recall that $\sigma_{\min}(A) = \min_{\|\mathbf{x}\|=1} \|A\mathbf{x}\|$.
+
+**Lower bound.** Let $E$ be any perturbation such that $A + E$ is singular.
+Then there exists a unit vector $\mathbf{z}$ with $(A + E)\mathbf{z} = \mathbf{0}$,
+so $E\mathbf{z} = -A\mathbf{z}$. Therefore
+
+$$
+\|E\|_2 \geq \|E\mathbf{z}\|_2 = \|A\mathbf{z}\|_2 \geq \sigma_{\min}(A).
+$$
+
+**Upper bound.** Let $\mathbf{v}$ be a unit vector achieving
+$\sigma_{\min}(A) = \|A\mathbf{v}\|_2$. Set $E^* = -A\mathbf{v}\,\mathbf{v}^T$.
+Then $\|E^*\|_2 = \|A\mathbf{v}\|_2 = \sigma_{\min}(A)$, and
+
+$$
+(A + E^*)\mathbf{v} = A\mathbf{v} - A\mathbf{v}(\mathbf{v}^T\mathbf{v}) = \mathbf{0},
+$$
+
+so $A + E^*$ is singular.
+
+Combining: $\operatorname{dist}(A, \Sigma) = \sigma_{\min}(A)$.
+The identity $\sigma_{\min} = \|A\|_2 / \kappa_2(A)$ follows from
+$\kappa_2(A) = \sigma_{\max}/\sigma_{\min}$.
+::::::
+:::::::
+
+### Demmel's insight
+
+:::::{prf:example} Numerically singular matrices
+:label: ex-demmel-numerically-singular
+
+A matrix with $\kappa(A) \gtrsim 1/\varepsilon_{\text{mach}}$ is
+**numerically indistinguishable from a singular matrix**.
+
+By [](#thm-distance-singularity), the relative distance from $A$ to
+the nearest singular matrix is
+
+$$
+\frac{\operatorname{dist}(A, \Sigma)}{\|A\|}
+= \frac{\sigma_{\min}}{\sigma_{\max}}
+= \frac{1}{\kappa(A)}.
+$$
+
+Now consider floating-point storage. The computer does not see $A$. It sees
+$\tilde{A} = A + E$ where $\|E\|/\|A\| \sim \varepsilon_{\text{mach}}$. The
+computer's view of $A$ is a matrix somewhere inside a ball of radius
+$\varepsilon_{\text{mach}}\|A\|$ centered at $A$.
 
 **If $\kappa(A) \gtrsim 1/\varepsilon_{\text{mach}}$:**
-- The distance to singularity is $\lesssim \varepsilon_{\text{mach}}$
-- The storage error is $\sim \varepsilon_{\text{mach}}$
-- The computer cannot distinguish $A$ from a singular matrix!
 
-This is why ill-conditioned systems are fundamentally hard. It is not because of
-bad algorithms. The *problem itself* is on the edge of being unsolvable.
-::::
+- The distance to the nearest singular matrix is
+  $\sigma_{\min} = \|A\|/\kappa(A) \lesssim \varepsilon_{\text{mach}}\|A\|$.
+- The floating-point storage error is $\sim \varepsilon_{\text{mach}}\|A\|$.
+- The uncertainty ball overlaps $\Sigma$. The computer cannot tell whether $A$
+  is singular or not.
+
+This is why ill-conditioned systems are fundamentally hard. It is not a failure
+of the algorithm. The problem itself is on the boundary of being unsolvable.
 :::::
 
-The picture below illustrates this geometry. The set of singular matrices is
-closed in the operator norm topology. Every matrix $A$ sits at distance
-$\sigma_{\min}(A) = \|A\|/\kappa(A)$ from this set. When the condition number
-is large, $A$ sits close to the boundary. When $\kappa(A) \gtrsim
-1/\varepsilon_{\text{mach}}$, the floating-point "uncertainty ball" around $A$
-overlaps the singular set.
+The figure below illustrates this geometry. Each matrix $A_i$ sits at distance
+$\sigma_{\min}(A_i)$ from $\Sigma$. The dashed circles show the floating-point
+uncertainty ball of radius $\varepsilon_{\text{mach}}\|A\|$. For $A_3$, the
+ball overlaps $\Sigma$.
 
 ```{code-cell} python
 :tags: [hide-input]
@@ -195,79 +270,120 @@ overlaps the singular set.
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from matplotlib.patches import FancyArrowPatch
 
-fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+fig, ax = plt.subplots(1, 1, figsize=(9, 5.5))
 
-# Draw the singular set as a filled region on the left
-singular_x = np.linspace(-0.5, 2.0, 300)
-singular_upper = 4.5 + 0.3 * np.sin(3 * singular_x)
-singular_lower = -0.5 - 0.3 * np.sin(3 * singular_x + 1)
-ax.fill_between(singular_x, singular_lower, singular_upper,
-                color='#d62728', alpha=0.15, label='Singular matrices')
-ax.plot(singular_x, singular_upper, color='#d62728', lw=2)
-ax.plot(singular_x, singular_lower, color='#d62728', lw=2)
-# Boundary label
-ax.text(0.75, 4.9, 'Singular matrices', fontsize=11, color='#d62728',
-        ha='center', style='italic')
+# --- Singular set as a smooth curve (codimension-1 surface in the schematic) ---
+t = np.linspace(-1.0, 6.0, 500)
+# A gently curving "wall" representing Σ = {det(A) = 0}
+curve_x = 1.8 + 0.25 * np.sin(0.9 * t)
+curve_y = t
+ax.fill_betweenx(curve_y, -0.5, curve_x,
+                 color='#d62728', alpha=0.08)
+ax.plot(curve_x, curve_y, color='#d62728', lw=2.5, zorder=3)
+ax.text(0.55, 5.2, r'$\Sigma = \{\det(A) = 0\}$',
+        fontsize=12, color='#d62728', ha='center', fontweight='bold')
 
-# Well-conditioned matrix: far from the boundary
-A_well = np.array([5.5, 2.0])
-dist_well = 3.2
-eps_ball_well = 0.4
-ax.plot(*A_well, 'o', color='#1f77b4', ms=8, zorder=5)
-ax.text(A_well[0] + 0.15, A_well[1] + 0.3, r'$A_1$: $\kappa \approx 1$',
-        fontsize=11, color='#1f77b4')
-circle_well = plt.Circle(A_well, eps_ball_well, fill=False,
-                          color='#1f77b4', ls='--', lw=1.5, alpha=0.7)
-ax.add_patch(circle_well)
-# Distance arrow
-ax.annotate('', xy=(2.0, 2.0), xytext=A_well,
-            arrowprops=dict(arrowstyle='<->', color='#1f77b4', lw=1.5))
-ax.text(3.75, 2.5, r'$\sigma_{\min} \gg \varepsilon_{\mathrm{mach}}\|A\|$',
-        fontsize=9, color='#1f77b4', ha='center')
+# Floating-point ball radius (same for all, since ||A|| ~ same scale)
+eps_r = 0.38
 
-# Ill-conditioned matrix: close to the boundary
-A_ill = np.array([2.7, 3.2])
-eps_ball_ill = 0.4
-ax.plot(*A_ill, 'o', color='#ff7f0e', ms=8, zorder=5)
-ax.text(A_ill[0] + 0.15, A_ill[1] + 0.3, r'$A_2$: $\kappa \gg 1$',
-        fontsize=11, color='#ff7f0e')
-circle_ill = plt.Circle(A_ill, eps_ball_ill, fill=False,
-                          color='#ff7f0e', ls='--', lw=1.5, alpha=0.7)
-ax.add_patch(circle_ill)
-# Distance arrow
-ax.annotate('', xy=(2.0, 3.2), xytext=A_ill,
-            arrowprops=dict(arrowstyle='<->', color='#ff7f0e', lw=1.5))
-ax.text(2.35, 3.55, r'$\sigma_{\min}$', fontsize=9, color='#ff7f0e', ha='center')
+# --- A1: well-conditioned, far from Σ ---
+A1 = np.array([6.0, 4.0])
+# Distance to curve at this y-value
+x_curve_at_A1 = 1.8 + 0.25 * np.sin(0.9 * A1[1])
+dist1 = A1[0] - x_curve_at_A1
 
-# Numerically singular matrix: ball overlaps singular set
-A_num = np.array([2.25, 1.0])
-eps_ball_num = 0.5
-ax.plot(*A_num, 'o', color='#2ca02c', ms=8, zorder=5)
-ax.text(A_num[0] + 0.2, A_num[1] - 0.45,
-        r'$A_3$: $\kappa \gtrsim 1/\varepsilon_{\mathrm{mach}}$',
-        fontsize=11, color='#2ca02c')
-circle_num = plt.Circle(A_num, eps_ball_num, fill=False,
-                          color='#2ca02c', ls='--', lw=1.5, alpha=0.7)
-ax.add_patch(circle_num)
+ax.plot(*A1, 'o', color='#1f77b4', ms=9, zorder=5)
+ax.text(A1[0] + 0.15, A1[1] + 0.35, r'$A_1$',
+        fontsize=13, color='#1f77b4', fontweight='bold')
+# Uncertainty ball
+c1 = plt.Circle(A1, eps_r, fill=True, facecolor='#1f77b4', alpha=0.12,
+                edgecolor='#1f77b4', ls='--', lw=1.5, zorder=4)
+ax.add_patch(c1)
+# Distance bracket
+ax.annotate('', xy=(x_curve_at_A1 + 0.05, A1[1]), xytext=(A1[0] - 0.05, A1[1]),
+            arrowprops=dict(arrowstyle='<->', color='#1f77b4', lw=1.5,
+                            shrinkA=0, shrinkB=0))
+ax.text((A1[0] + x_curve_at_A1) / 2, A1[1] - 0.35,
+        r'$\sigma_{\min}(A_1)$', fontsize=10, color='#1f77b4', ha='center')
 
-# Dashed balls label
-ax.text(6.2, 4.3, r'Dashed circles: $\varepsilon_{\mathrm{mach}}\|A\|$',
-        fontsize=9, color='gray', ha='center',
-        bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='gray', alpha=0.8))
-ax.text(6.2, 3.8, '(floating-point uncertainty)',
-        fontsize=9, color='gray', ha='center')
+# --- A2: ill-conditioned, close to Σ ---
+A2 = np.array([2.85, 2.0])
+x_curve_at_A2 = 1.8 + 0.25 * np.sin(0.9 * A2[1])
+dist2 = A2[0] - x_curve_at_A2
 
-ax.set_xlim(-0.7, 8)
-ax.set_ylim(-0.8, 5.5)
+ax.plot(*A2, 'o', color='#ff7f0e', ms=9, zorder=5)
+ax.text(A2[0] + 0.05, A2[1] + 0.4, r'$A_2$',
+        fontsize=13, color='#ff7f0e', fontweight='bold')
+# Uncertainty ball
+c2 = plt.Circle(A2, eps_r, fill=True, facecolor='#ff7f0e', alpha=0.12,
+                edgecolor='#ff7f0e', ls='--', lw=1.5, zorder=4)
+ax.add_patch(c2)
+# Distance bracket
+ax.annotate('', xy=(x_curve_at_A2 + 0.05, A2[1]), xytext=(A2[0] - 0.05, A2[1]),
+            arrowprops=dict(arrowstyle='<->', color='#ff7f0e', lw=1.5,
+                            shrinkA=0, shrinkB=0))
+ax.text((A2[0] + x_curve_at_A2) / 2, A2[1] - 0.35,
+        r'$\sigma_{\min}(A_2)$', fontsize=10, color='#ff7f0e', ha='center')
+
+# --- A3: numerically singular, ball overlaps Σ ---
+y3 = 0.5
+x_curve_at_A3 = 1.8 + 0.25 * np.sin(0.9 * y3)
+# sigma_min is small but visible; the eps-ball (radius 0.55) clearly overlaps Σ
+dist3 = 0.35
+eps_r3 = 0.55  # larger uncertainty ball for this matrix
+A3 = np.array([x_curve_at_A3 + dist3, y3])
+
+ax.plot(*A3, 'o', color='#2ca02c', ms=9, zorder=5)
+ax.text(A3[0] + 0.55, A3[1] - 0.05, r'$A_3$',
+        fontsize=13, color='#2ca02c', fontweight='bold')
+# Uncertainty ball -- this one overlaps Σ
+c3 = plt.Circle(A3, eps_r3, fill=True, facecolor='#2ca02c', alpha=0.15,
+                edgecolor='#2ca02c', ls='--', lw=1.5, zorder=4)
+ax.add_patch(c3)
+# Distance arrow (horizontal, at the point's y-level)
+ax.annotate('', xy=(x_curve_at_A3 + 0.03, A3[1]),
+            xytext=(A3[0] - 0.03, A3[1]),
+            arrowprops=dict(arrowstyle='<->', color='#2ca02c', lw=1.5,
+                            shrinkA=0, shrinkB=0))
+# Label above the arrow, shifted right to avoid overlapping the boundary
+ax.text(A3[0] + 0.1, A3[1] + 0.25,
+        r'$\sigma_{\min}$', fontsize=10, color='#2ca02c', ha='left')
+
+# --- Annotations ---
+# Legend-style text box
+legend_text = (
+    r'$A_1$: well-conditioned ($\kappa \approx 1$)' + '\n'
+    r'$A_2$: ill-conditioned ($\kappa \gg 1$)' + '\n'
+    r'$A_3$: numerically singular ($\kappa \gtrsim 1/\varepsilon_{\mathrm{mach}}$)'
+)
+ax.text(7.8, 1.3, legend_text, fontsize=9.5, va='center', ha='right',
+        bbox=dict(boxstyle='round,pad=0.5', facecolor='#f7f7f7',
+                  edgecolor='#cccccc', alpha=0.95),
+        linespacing=1.8)
+
+# Ball label
+ax.text(7.8, -0.2,
+        r'Dashed circles = $\varepsilon_{\mathrm{mach}}\|A\|$'
+        '\n(floating-point uncertainty)',
+        fontsize=9, color='#666666', ha='right', va='top',
+        linespacing=1.6)
+
+# Axis label
+ax.text(4.5, -0.8, r'Space of matrices $\mathbb{R}^{n \times n}$  (schematic)',
+        fontsize=11, ha='center', color='#444444')
+
+ax.set_xlim(-0.5, 8.2)
+ax.set_ylim(-1.0, 5.8)
 ax.set_aspect('equal')
-ax.set_xlabel(r'$\mathbb{R}^{n \times n}$ (schematic)', fontsize=11)
-ax.set_title('Distance to singularity in the operator norm', fontsize=12)
 ax.axis('off')
+ax.set_title('Distance to singularity in the operator norm', fontsize=13, pad=12)
 
 plt.tight_layout()
 plt.show()
 ```
+
 
 ## Residuals and Backward Error
 
