@@ -308,9 +308,10 @@ jobs:
             STABLE_SINCE=0
             LAST_SIZE=$SIZE
           fi
-          # If no new output for 60s, build is done and process is hanging
-          if [ "$STABLE_SINCE" -ge 60 ] && [ "$SIZE" -gt 0 ]; then
-            echo "No new output for 60s. Killing kernel and waiting for Node."
+          # If no new output for 300s, build is done and process is hanging
+          # Note: MyST goes silent for 60-120s while writing _build/html, so 60s is too aggressive
+          if [ "$STABLE_SINCE" -ge 300 ] && [ "$SIZE" -gt 0 ]; then
+            echo "No new output for 300s. Killing kernel and waiting for Node."
             pkill -9 -f "ipykernel" 2>/dev/null || true
             pkill -9 -f "jupyter" 2>/dev/null || true
             for j in $(seq 1 15); do
