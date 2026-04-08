@@ -295,23 +295,18 @@ jobs:
     - name: Build the book
       timeout-minutes: 45
       run: |
-        # Same kernel-hang issue as PDF build. Background, monitor, kill.
+        # MyST hangs after build completes (kernel stays alive).
+        # Strategy: wait for _build/html to appear (= build succeeded),
+        # then kill the hanging process.
         jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html > /tmp/html-build.log 2>&1 &
         BUILD_PID=$!
         LAST_SIZE=0
         STABLE_SINCE=0
         while kill -0 $BUILD_PID 2>/dev/null; do
-          SIZE=$(stat -c%s /tmp/html-build.log 2>/dev/null || echo 0)
-          if [ "$SIZE" -eq "$LAST_SIZE" ]; then
-            STABLE_SINCE=$((STABLE_SINCE + 1))
-          else
-            STABLE_SINCE=0
-            LAST_SIZE=$SIZE
-          fi
-          # If no new output for 300s, build is done and process is hanging
-          # Note: MyST goes silent for 60-120s while writing _build/html, so 60s is too aggressive
-          if [ "$STABLE_SINCE" -ge 300 ] && [ "$SIZE" -gt 0 ]; then
-            echo "No new output for 300s. Killing kernel and waiting for Node."
+          # Check if HTML output exists (build completed successfully)
+          HTML_COUNT=$(find _build/html -name "*.html" 2>/dev/null | head -1 | wc -l)
+          if [ "$HTML_COUNT" -gt 0 ]; then
+            echo "HTML output detected in _build/html. Build succeeded, killing hung process."
             pkill -9 -f "ipykernel" 2>/dev/null || true
             pkill -9 -f "jupyter" 2>/dev/null || true
             for j in $(seq 1 15); do
@@ -319,7 +314,27 @@ jobs:
               sleep 1
             done
             if kill -0 $BUILD_PID 2>/dev/null; then
-              echo "Node still running, force killing."
+              kill -9 $BUILD_PID 2>/dev/null || true
+            fi
+            break
+          fi
+          # Fallback: if no output for 600s, something is truly stuck
+          SIZE=$(stat -c%s /tmp/html-build.log 2>/dev/null || echo 0)
+          if [ "$SIZE" -eq "$LAST_SIZE" ]; then
+            STABLE_SINCE=$((STABLE_SINCE + 1))
+          else
+            STABLE_SINCE=0
+            LAST_SIZE=$SIZE
+          fi
+          if [ "$STABLE_SINCE" -ge 600 ] && [ "$SIZE" -gt 0 ]; then
+            echo "No new output for 600s and no HTML output. Build may be stuck."
+            pkill -9 -f "ipykernel" 2>/dev/null || true
+            pkill -9 -f "jupyter" 2>/dev/null || true
+            for j in $(seq 1 15); do
+              if ! kill -0 $BUILD_PID 2>/dev/null; then break; fi
+              sleep 1
+            done
+            if kill -0 $BUILD_PID 2>/dev/null; then
               kill -9 $BUILD_PID 2>/dev/null || true
             fi
             break
