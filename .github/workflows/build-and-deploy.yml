@@ -303,22 +303,6 @@ jobs:
         LAST_SIZE=0
         STABLE_SINCE=0
         while kill -0 $BUILD_PID 2>/dev/null; do
-          # Check if HTML output exists (build completed successfully)
-          HTML_COUNT=$(find _build/html -name "*.html" 2>/dev/null | head -1 | wc -l)
-          if [ "$HTML_COUNT" -gt 0 ]; then
-            echo "HTML output detected in _build/html. Build succeeded, killing hung process."
-            pkill -9 -f "ipykernel" 2>/dev/null || true
-            pkill -9 -f "jupyter" 2>/dev/null || true
-            for j in $(seq 1 15); do
-              if ! kill -0 $BUILD_PID 2>/dev/null; then break; fi
-              sleep 1
-            done
-            if kill -0 $BUILD_PID 2>/dev/null; then
-              kill -9 $BUILD_PID 2>/dev/null || true
-            fi
-            break
-          fi
-          # Fallback: if no output for 600s, something is truly stuck
           SIZE=$(stat -c%s /tmp/html-build.log 2>/dev/null || echo 0)
           if [ "$SIZE" -eq "$LAST_SIZE" ]; then
             STABLE_SINCE=$((STABLE_SINCE + 1))
@@ -326,8 +310,16 @@ jobs:
             STABLE_SINCE=0
             LAST_SIZE=$SIZE
           fi
-          if [ "$STABLE_SINCE" -ge 600 ] && [ "$SIZE" -gt 0 ]; then
-            echo "No new output for 600s and no HTML output. Build may be stuck."
+          # If no new output for 300s, the server is likely hung after completing
+          # all page renders. Check that HTML files actually exist before killing.
+          if [ "$STABLE_SINCE" -ge 300 ] && [ "$SIZE" -gt 0 ]; then
+            HTML_COUNT=$(find _build/html -name "*.html" 2>/dev/null | wc -l)
+            echo "No new output for 300s. Found $HTML_COUNT HTML files."
+            if [ "$HTML_COUNT" -ge 50 ]; then
+              echo "Sufficient HTML output. Killing hung process."
+            else
+              echo "WARNING: Only $HTML_COUNT HTML files found. Build may have failed."
+            fi
             pkill -9 -f "ipykernel" 2>/dev/null || true
             pkill -9 -f "jupyter" 2>/dev/null || true
             for j in $(seq 1 15); do
