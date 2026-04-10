@@ -256,7 +256,11 @@ A matrix with $\kappa(A) \approx 1$ stretches all directions roughly equally (li
 
 The image below shows the unit circle (left) and its image under a $2 \times 2$ matrix $A$ (right).
 
-![Unit circle mapped to an ellipse under A](/img/condition_stretch1.png)
+:::{figure} /img/condition_stretch1.png
+:label: fig-condition-stretch1
+
+The unit circle (left) mapped to an ellipse under $A$ (right). The semi-axes of the ellipse are the singular values of $A$: the maximum stretch is $\|A\| = 3/\sqrt{2}$ and the minimum stretch is $1/\sqrt{2}$.
+:::
 
 The maximum stretch is $\|A\| = 3/\sqrt{2}$. The minimum stretch is $1/\sqrt{2}$, so $\|A^{-1}\| = \sqrt{2}$. The condition number is
 
@@ -272,7 +276,11 @@ This matrix is well-conditioned: the ellipse is only moderately elongated.
 
 Now a different $2 \times 2$ matrix:
 
-![Unit circle mapped to a more elongated ellipse](/img/condition_stretch2.png)
+:::{figure} /img/condition_stretch2.png
+:label: fig-condition-stretch2
+
+The unit circle (left) mapped to a more elongated ellipse under $A$ (right). The greater elongation reflects a larger ratio of maximum to minimum stretch, giving a higher condition number.
+:::
 
 The image is a much more elongated ellipse. From the figure, the maximum stretch is $\|A\| = 5\sqrt{2}$ and the minimum stretch is $2\sqrt{2}$, giving
 
