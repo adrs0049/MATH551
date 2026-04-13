@@ -295,11 +295,14 @@ jobs:
     - name: Build the book
       timeout-minutes: 45
       run: |
-        # MyST hangs after build completes (kernel stays alive).
-        # Strategy: watch _build/html for new files; when no new HTML appears
-        # for a while AND we have a reasonable number of pages, kill the hang.
-        # stdbuf forces line-buffering so progress is visible in real time
-        # rather than dumped at process exit.
+        # MyST hangs at process.exit(0) at the end of buildHtml (kernel stays
+        # alive). Strategy: wait for the post-fetch cleanup to finish, signaled
+        # by _build/html/build/_assets/ existing AND the asset-folder rewrite
+        # having replaced /myst_assets_folder/ with /BASE_URL/build/. Once
+        # those are true, the only remaining MyST step is process.exit(0), so
+        # killing is safe. As a backstop, also kill if HTML files have been
+        # stable for a long time but cleanup still hasn't appeared (means MyST
+        # hung earlier than expected).
         stdbuf -oL -eL jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html > /tmp/html-build.log 2>&1 &
         BUILD_PID=$!
         LAST_COUNT=0
@@ -312,11 +315,33 @@ jobs:
             STABLE_SINCE=0
             LAST_COUNT=$COUNT
           fi
-          # If no new HTML files for 300s and we have a sensible number, the
-          # server is hung post-build. Require at least 50 HTML files so we
-          # don't kill a build that just hasn't started writing yet.
-          if [ "$STABLE_SINCE" -ge 300 ] && [ "$COUNT" -ge 50 ]; then
-            echo "No new HTML for 300s. Found $COUNT HTML files. Killing hung process."
+          # Primary signal: post-fetch cleanup finished. Assets dir exists AND
+          # the rewrite has happened (no literal placeholder left in index.html).
+          ASSETS_READY=0
+          if [ -d _build/html/build/_assets ] && \
+             [ -f _build/html/index.html ] && \
+             ! grep -q "/myst_assets_folder/" _build/html/index.html 2>/dev/null; then
+            ASSETS_READY=1
+          fi
+          if [ "$ASSETS_READY" -eq 1 ] && [ "$STABLE_SINCE" -ge 5 ]; then
+            echo "Cleanup complete (assets copied, paths rewritten). Killing hung exit."
+            pkill -9 -f "ipykernel" 2>/dev/null || true
+            pkill -9 -f "jupyter" 2>/dev/null || true
+            for j in $(seq 1 15); do
+              if ! kill -0 $BUILD_PID 2>/dev/null; then break; fi
+              sleep 1
+            done
+            if kill -0 $BUILD_PID 2>/dev/null; then
+              kill -9 $BUILD_PID 2>/dev/null || true
+            fi
+            break
+          fi
+          # Backstop: if HTML count has been stable for a long time but cleanup
+          # never appeared, MyST hung before the asset-copy step. Bail anyway
+          # so we surface the failure rather than waiting for the 45-min job
+          # timeout.
+          if [ "$STABLE_SINCE" -ge 600 ] && [ "$COUNT" -ge 50 ]; then
+            echo "No new HTML for 600s and cleanup never ran. Killing."
             pkill -9 -f "ipykernel" 2>/dev/null || true
             pkill -9 -f "jupyter" 2>/dev/null || true
             for j in $(seq 1 15); do
