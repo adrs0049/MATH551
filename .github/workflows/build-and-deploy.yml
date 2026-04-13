@@ -296,30 +296,27 @@ jobs:
       timeout-minutes: 45
       run: |
         # MyST hangs after build completes (kernel stays alive).
-        # Strategy: wait for _build/html to appear (= build succeeded),
-        # then kill the hanging process.
-        jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html > /tmp/html-build.log 2>&1 &
+        # Strategy: watch _build/html for new files; when no new HTML appears
+        # for a while AND we have a reasonable number of pages, kill the hang.
+        # stdbuf forces line-buffering so progress is visible in real time
+        # rather than dumped at process exit.
+        stdbuf -oL -eL jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html > /tmp/html-build.log 2>&1 &
         BUILD_PID=$!
-        LAST_SIZE=0
+        LAST_COUNT=0
         STABLE_SINCE=0
         while kill -0 $BUILD_PID 2>/dev/null; do
-          SIZE=$(stat -c%s /tmp/html-build.log 2>/dev/null || echo 0)
-          if [ "$SIZE" -eq "$LAST_SIZE" ]; then
+          COUNT=$(find _build/html -name "*.html" 2>/dev/null | wc -l)
+          if [ "$COUNT" -eq "$LAST_COUNT" ]; then
             STABLE_SINCE=$((STABLE_SINCE + 1))
           else
             STABLE_SINCE=0
-            LAST_SIZE=$SIZE
+            LAST_COUNT=$COUNT
           fi
-          # If no new output for 300s, the server is likely hung after completing
-          # all page renders. Check that HTML files actually exist before killing.
-          if [ "$STABLE_SINCE" -ge 300 ] && [ "$SIZE" -gt 0 ]; then
-            HTML_COUNT=$(find _build/html -name "*.html" 2>/dev/null | wc -l)
-            echo "No new output for 300s. Found $HTML_COUNT HTML files."
-            if [ "$HTML_COUNT" -ge 50 ]; then
-              echo "Sufficient HTML output. Killing hung process."
-            else
-              echo "WARNING: Only $HTML_COUNT HTML files found. Build may have failed."
-            fi
+          # If no new HTML files for 300s and we have a sensible number, the
+          # server is hung post-build. Require at least 50 HTML files so we
+          # don't kill a build that just hasn't started writing yet.
+          if [ "$STABLE_SINCE" -ge 300 ] && [ "$COUNT" -ge 50 ]; then
+            echo "No new HTML for 300s. Found $COUNT HTML files. Killing hung process."
             pkill -9 -f "ipykernel" 2>/dev/null || true
             pkill -9 -f "jupyter" 2>/dev/null || true
             for j in $(seq 1 15); do
