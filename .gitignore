@@ -28,3 +28,6 @@ myst.yml
 
 # Ignore pdfs by defualt
 *.pdf
+
+# Ignore notebook checkpoints
+*/.ipynb_checkpoints/*

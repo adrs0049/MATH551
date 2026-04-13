@@ -1,4 +1,7 @@
 ---
+kernelspec:
+  name: python3
+  display_name: Python 3
 exports:
   - format: pdf
     template: ./_templates/plain_narrow
@@ -9,332 +12,396 @@ downloads:
     title: Download PDF
 ---
 
-# Adaptive QR: Automatic Accuracy for Spectral Methods
+# Adaptive QR: Choosing $N$ on the Fly
 
 :::{tip} Big Idea
-When solving differential equations with spectral methods, how do we know how many basis functions (Chebyshev polynomials) to use? Too few gives a bad answer; too many wastes computation. The **adaptive QR algorithm** elegantly solves both problems at once—it finds the right number of terms *while* computing the solution, and tells us exactly when it's accurate enough.
+Don't guess how many Chebyshev coefficients $N$ you need to resolve a
+solution. Build the QR factorisation of the discretised system one column
+at a time, and stop as soon as the *residual* of the truncated solution
+drops below tolerance. The residual at every step is read off for free
+from the transformed right-hand side, and the almost-banded structure of
+the ultraspherical operator from [§6](spectral-bvp.md) makes each Givens
+update $O(1)$ work. The result is a single-pass solver that returns both
+the solution and the smallest $N$ that resolves it.
 :::
 
-## The Problem: How Many Terms?
+## The Stopping Idea
 
-Recall that spectral methods approximate the solution to a boundary value problem as:
-$$
-u(x) \approx \sum_{k=0}^{n-1} c_k T_k(x)
-$$
+Why does watching the coefficient tail work? Because the
+[regularity-decay theorem](#thm-algebraic-decay) says that for a smooth
+$u$ the Chebyshev coefficients $\lvert c_k \rvert$ decay geometrically or
+algebraically to round-off. Once the tail has flattened at the noise
+floor, every higher coefficient contributes nothing more to
+$\|u - p_n\|_\infty$. The smallest $N$ at which this happens is the
+$N_{\mathrm{opt}}$ we want.
 
-where $T_k$ are Chebyshev polynomials and $c_k$ are unknown coefficients we need to find.
+```{code-cell} python
+:tags: [hide-input]
 
-**The challenge:** We don't know $n$ in advance!
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.fft as fft
 
-- Choose $n$ too small $\rightarrow$ the solution is inaccurate
-- Choose $n$ too large $\rightarrow$ we waste computation solving a bigger system
+def chebpts(n): return np.cos(np.pi * np.arange(n+1)/n)
+def vals2coeffs(v):
+    n = len(v) - 1
+    c = fft.dct(v[::-1], type=1, norm='forward')
+    c[1:n] *= 2
+    return c
 
-### The Naive Approach: Double and Retry
+n = 1024; x = chebpts(n)
+c_smooth = np.abs(vals2coeffs(np.exp(np.sin(5*x))))
 
-The obvious strategy:
-1. Try $n = 16$, solve the system, check if accurate enough
-2. If not, try $n = 32$, solve again from scratch
-3. If not, try $n = 64$, solve again from scratch
-4. ...
+tol = 1e-14
+N_opt = next(k for k in range(len(c_smooth)) if c_smooth[k] < tol)
 
-**Problem:** Each time we double $n$, we throw away all the work we did before!
-
-:::{prf:remark} Why This Matters
-For smooth solutions, spectral methods converge *exponentially* fast—often $n = 20$ to $50$ is enough for 14 digits of accuracy. But finding the right $n$ by trial-and-error means solving multiple systems, which is wasteful.
-:::
-
-## The Key Insight: Build the Solution Incrementally
-
-Instead of solving separate problems for $n = 16$, then $n = 32$, etc., the adaptive QR algorithm:
-
-1. Starts solving with $n = 1$ term
-2. Adds one term at a time, updating the solution
-3. Checks at each step: "Is this accurate enough?"
-4. Stops as soon as the answer is "yes"
-
-**The magic:** Step 2 can be done efficiently using **Givens rotations**, and step 3 gives us the residual *for free* as a byproduct of the computation!
-
-## From ODE to Linear System
-
-When we discretize a boundary value problem using spectral collocation, we get a linear system:
-$$
-A \mathbf{c} = \mathbf{b}
-$$
-
-where:
-- $\mathbf{c} = [c_0, c_1, \ldots, c_{n-1}]^T$ are the Chebyshev coefficients we want
-- $A$ encodes the differential operator (e.g., second derivative) in coefficient space
-- $\mathbf{b}$ encodes the right-hand side and boundary conditions
-
-### A Special Structure: "Almost Banded"
-
-Here's the key observation that makes everything work. The matrix $A$ has a very special structure:
-
-```
-┌─────────────────────────────────────────┐
-│   K rows from boundary conditions       │  ← Dense rows (usually 2)
-├─────────────────────────────────────────┤
-│                                         │
-│        Banded part from the ODE         │  ← Only a few diagonals
-│                                         │
-└─────────────────────────────────────────┘
+fig, ax = plt.subplots(figsize=(7, 4.2))
+ax.semilogy(c_smooth + 1e-20, '.', ms=3, label=r'$|c_k|$ for $e^{\sin 5x}$')
+ax.axhline(tol, color='k', ls=':', label='tolerance')
+ax.axvline(N_opt, color='C3', ls='--',
+           label=f'$N_{{\\mathrm{{opt}}}} = {N_opt}$')
+ax.set_xlim(0, 80); ax.set_ylim(1e-18, 5)
+ax.set_xlabel('$k$'); ax.set_ylabel(r'$|c_k|$')
+ax.set_title('Stop where the tail crosses the tolerance')
+ax.legend(); plt.tight_layout(); plt.show()
 ```
 
-- The **top few rows** (one per boundary condition) are dense
-- The **rest of the matrix** is banded—only a few diagonals are nonzero
+The rest of this section is the *systems analogue*. Instead of computing
+the coefficient tail of a known function, we are solving the
+ultraspherical system from [§6](spectral-bvp.md) for an *unknown*
+$\mathbf{c}$. The residual plays the role of the tail, and the QR
+factorisation gives it to us for free.
 
-:::{prf:definition} Almost Banded Matrix
-:label: def-almost-banded
+## The Discretised Problem
 
-A matrix is **almost banded** if it has the form:
-$$
-A = \begin{pmatrix} B \\ C \end{pmatrix}
-$$
-where $B$ has $K$ dense rows (from boundary conditions) and $C$ is banded (from the differential operator).
-:::
-
-**Why is this useful?** Banded matrices can be factored in $O(n)$ operations instead of $O(n^3)$. The "almost banded" structure preserves most of this efficiency!
-
-## QR Factorization: A Quick Review
-
-Recall that any matrix $A$ can be factored as:
-$$
-A = QR
-$$
-where $Q$ is orthogonal ($Q^T Q = I$) and $R$ is upper triangular.
-
-To solve $A\mathbf{c} = \mathbf{b}$:
-1. Compute $QR = A$
-2. Compute $Q^T \mathbf{b}$ (easy, just matrix-vector multiply)
-3. Solve $R\mathbf{c} = Q^T \mathbf{b}$ by back-substitution
-
-**The key property of $Q$:** Since $Q$ is orthogonal, it preserves lengths:
-$$
-\|Q\mathbf{x}\|_2 = \|\mathbf{x}\|_2 \quad \text{for any vector } \mathbf{x}
-$$
-
-This will be crucial for understanding the residual!
-
-## Givens Rotations: Building QR One Column at a Time
-
-A **Givens rotation** is a simple $2 \times 2$ orthogonal matrix that zeros out one element:
+We use the same first-order BVP as in [§6](spectral-bvp.md):
 
 $$
-G = \begin{pmatrix} c & s \\ -s & c \end{pmatrix}
+u'(x) = f(x), \qquad u(-1) = \alpha, \qquad x \in [-1, 1].
 $$
 
-where $c^2 + s^2 = 1$ (so $c = \cos\theta$ and $s = \sin\theta$ for some angle $\theta$).
-
-When we apply $G$ to a 2-vector:
+After ultraspherical discretisation at size $N$, the problem is the
+almost-banded linear system
 
 $$
-\begin{pmatrix} c & s \\ -s & c \end{pmatrix} \begin{pmatrix} a \\ b \end{pmatrix} = \begin{pmatrix} \sqrt{a^2 + b^2} \\ 0 \end{pmatrix}
+\mathcal{L}\, \mathbf{c} \;=\; \mathbf{r},
+\qquad
+\mathcal{L} =
+\begin{pmatrix} \mathbf{b}^\top \\ \mathcal{D}_0 \end{pmatrix},
+\qquad
+\mathbf{r} = \begin{pmatrix} \alpha \\ \mathcal{S}_0 \mathbf{f}_T \end{pmatrix},
 $$
 
-By choosing $c = a/\sqrt{a^2 + b^2}$ and $s = b/\sqrt{a^2 + b^2}$, we can zero out $b$ while preserving the length $\sqrt{a^2 + b^2}$.
+with $\mathbf{c} = (c_0, \ldots, c_N)^\top$ the Chebyshev coefficients of
+$u$. The first row is dense (the boundary condition); every other row is
+banded with bandwidth one (the differentiation operator). The $N$ we want
+is whatever makes the truncation error in $u$ smaller than the tolerance.
 
-### Using Givens to Zero a Column
+The naive approach picks $N$ in advance, solves once, hopes for the best,
+and starts over with $2N$ if the answer is unresolved. Adaptive QR avoids
+all of this.
 
-To create zeros below the diagonal in column $j$ of a matrix:
+## Building the QR Factorisation One Column at a Time
 
+The plan is to factor $\mathcal{L} = QR$ *incrementally*. After processing
+the first $j$ columns we will have
+
+$$
+Q_j^\top\, \mathcal{L}_{:, 1:j} \;=\;
+\begin{pmatrix} R_j \\ 0 \end{pmatrix},
+\qquad
+Q_j^\top\, \mathbf{r} \;=\;
+\begin{pmatrix} \tilde{\mathbf{r}}_{1:j} \\ \tilde{\mathbf{r}}_{j+1:\,\mathrm{end}} \end{pmatrix},
+$$
+
+with $R_j$ a $j \times j$ upper-triangular matrix and $Q_j$ orthogonal.
+The bottom block of the transformed right-hand side records "what is left
+over" after using $j$ columns of $\mathcal{L}$.
+
+The mechanical tool we use is a **Givens rotation**, the $2 \times 2$
+orthogonal matrix
+
+$$
+G(c, s) = \begin{pmatrix} c & s \\ -s & c \end{pmatrix},
+\qquad c^2 + s^2 = 1,
+\qquad
+G \begin{pmatrix} a \\ b \end{pmatrix} = \begin{pmatrix} \sqrt{a^2 + b^2} \\ 0 \end{pmatrix}
+$$
+
+with $c = a/\sqrt{a^2+b^2}$, $s = b/\sqrt{a^2+b^2}$. Applied to a pair of
+rows of a matrix it zeros one chosen entry. The same rotation must also be
+applied to $\mathbf{r}$.
+
+### Watching the factorisation grow
+
+For a more interesting demo, take the variable-coefficient problem
+
+$$
+(1 + x)\, u'(x) + u(x) = f(x), \qquad u(-1) = \alpha,
+$$
+
+a slight generalisation of the BVP from [§6](spectral-bvp.md). Using the
+multiplication operator from
+[§6](spectral-bvp.md#multiplication-operator-for-variable-coefficients),
+the discretised operator is
+
+$$
+\mathcal{L} \;=\;
+\begin{pmatrix}
+\mathbf{b}^\top \\[0.3ex]
+M_1[1+x]\,\mathcal{D}_0 + \mathcal{S}_0
+\end{pmatrix},
+$$
+
+with $\mathbf{b}_k = (-1)^k$ as before. It is almost banded: one dense top
+row from the boundary condition, and bandwidth two below.
+
+```{code-cell} python
+:tags: [hide-input]
+
+def M1_x(N):
+    """Multiplication by x in the U_k = C^(1)_k basis, size (N+1)x(N+1).
+    Identity (x U_k) = (U_{k+1} + U_{k-1})/2 with U_{-1} = 0."""
+    M = np.zeros((N+1, N+1))
+    for n in range(N+1):
+        if n - 1 >= 0:    M[n, n-1] = 0.5
+        if n + 1 <= N:    M[n, n+1] = 0.5
+    return M
+
+def D0(N):
+    """T_k -> U_{k-1} coefficient map: (D_0 c)_{k-1} = k c_k."""
+    D = np.zeros((N+1, N+1))
+    for k in range(1, N+1):
+        D[k-1, k] = k
+    return D
+
+def S0(N):
+    """T -> U conversion, banded with bandwidth two."""
+    S = np.zeros((N+1, N+1))
+    S[0, 0] = 1.0
+    if N >= 2: S[0, 2] = -0.5
+    for k in range(1, N+1):
+        S[k, k] = 0.5
+        if k + 2 <= N: S[k, k+2] = -0.5
+    return S
+
+def L_variable_first_order(N):
+    """Almost-banded operator for (1+x) u' + u = f, u(-1) = alpha."""
+    M_a = np.eye(N+1) + M1_x(N)            # multiplication by (1 + x)
+    interior = M_a @ D0(N) + S0(N)
+    L = np.vstack([(-1.0)**np.arange(N+1)[None, :], interior[:N, :]])
+    return L
+
+def incremental_qr_snapshots(L, snap_at):
+    A = L.copy(); N = A.shape[0] - 1
+    snaps = {}
+    for j in range(N+1):
+        for i in range(N, j, -1):
+            a, b = A[j, j], A[i, j]
+            if abs(b) < 1e-15: continue
+            r = np.hypot(a, b); c, s = a/r, b/r
+            G = np.array([[c, s], [-s, c]])
+            A[[j, i], :] = G @ A[[j, i], :]
+        if (j+1) in snap_at:
+            snaps[j+1] = A.copy()
+    return snaps
+
+N = 40
+L = L_variable_first_order(N)
+snap_at = [4, 12, 24, 40]
+snaps = incremental_qr_snapshots(L, snap_at)
+
+fig, axes = plt.subplots(1, len(snap_at) + 1, figsize=(13, 3.2))
+axes[0].spy(np.abs(L) > 1e-14, markersize=3)
+axes[0].set_title(r'$\mathcal{L}$ for $(1+x)u\prime+u=f$')
+for ax, j in zip(axes[1:], snap_at):
+    ax.spy(np.abs(snaps[j]) > 1e-10, markersize=3)
+    ax.set_title(f'after $j = {j}$ columns')
+    ax.axvline(j - 0.5, color='C3', lw=0.8, alpha=0.6)
+plt.tight_layout(); plt.show()
 ```
-Before column j:          After applying Givens:
-     column j                  column j
-        ↓                         ↓
-[  × × × × ×  ]           [  × × × × ×  ]
-[  0 × × × ×  ]           [  0 × × × ×  ]
-[  0 0 × × ×  ]    →      [  0 0 × × ×  ]   ← R[j,j]
-[  0 0 a × ×  ]           [  0 0 0 × ×  ]   ← zeroed!
-[  0 0 b × ×  ]           [  0 0 0 × ×  ]   ← zeroed!
-```
 
-We apply a sequence of Givens rotations, each zeroing one entry below the diagonal.
+Each successive panel shows the working matrix after $j$ columns have
+been triangularised. The vertical red line marks the boundary between
+"finished" columns to the left and "pending" columns to the right. Two
+features stand out and they are the whole point.
 
-**Important:** We apply the same rotations to the right-hand side $\mathbf{b}$!
+First, the upper-left $j \times j$ block is upper-triangular. That is
+$R_j$, our growing factor.
 
-## The Adaptive QR Algorithm
+Second, *no fill-in escapes a narrow band*. The work needed to add the
+next column is bounded by the small number of nonzero entries that survive
+at its position. Compare to a dense matrix, where each column zeroing
+fills in a new dense triangle; here the structure stays compact for every
+$j$. This is what keeps the cost of each update bounded as $j$ grows.
 
-Now we can explain the algorithm. Here's the beautiful idea:
+Now combine this with the stopping criterion. The residual estimate from
+[](#thm-adaptive-qr-residual) is checked after every column. The moment it
+drops below tolerance at some $j = N_{\mathrm{opt}}$, we *stop processing
+columns*. The remaining columns to the right of the red line in the final
+panel are never touched: their coefficients $c_k$ for $k > N_{\mathrm{opt}}$
+contribute nothing to the resolved solution, so triangularising them would
+be wasted work. We back-solve $R_{N_{\mathrm{opt}}}\, \mathbf{c} =
+\tilde{\mathbf{r}}_{1:N_{\mathrm{opt}}}$ and we are done. The
+visualisation of the growing factorisation and the visualisation of the
+shrinking residual are two views of the same idea: spectral coefficient
+decay tells us when to halt the QR sweep.
 
-### Step 1: Process Columns One at a Time
+## The Residual Comes for Free
 
-Instead of building the full matrix and then factoring it, we:
-1. Start with just column 1
-2. Apply Givens rotations to make it upper triangular
-3. Add column 2, apply more Givens rotations
-4. Add column 3, apply more Givens rotations
-5. ...continue...
+The crucial observation is that we do not need to actually *solve* the
+truncated system to know its residual.
 
-At each step, we have a partial QR factorization of the columns processed so far.
+:::{prf:theorem} Residual from the transformed right-hand side
+:label: thm-adaptive-qr-residual
 
-### Step 2: Check the Residual (For Free!)
-
-Here's the magic. After processing $j$ columns, the transformed system looks like:
+Let $\hat{\mathbf{c}} \in \mathbb{R}^j$ be the unique solution of
+$R_j \hat{\mathbf{c}} = \tilde{\mathbf{r}}_{1:j}$, padded with zeros to
+length $N+1$ so that $\hat{\mathbf{c}}_{j+1:N+1} = 0$. Then the
+*least-squares residual* of $\hat{\mathbf{c}}$ in the system
+$\mathcal{L} \mathbf{c} = \mathbf{r}$ has Euclidean norm
 
 $$
-Q_j A = \begin{pmatrix} R_j & * \\ 0 & * \end{pmatrix}, \quad
-Q_j \mathbf{b} = \begin{pmatrix} \mathbf{r}_{1:j} \\ \mathbf{r}_{j+1:\text{end}} \end{pmatrix}
+\big\| \mathcal{L}\, \hat{\mathbf{c}} - \mathbf{r} \big\|_2
+\;=\;
+\big\| \tilde{\mathbf{r}}_{j+1:\,\mathrm{end}} \big\|_2.
 $$
-
-- The top $j$ rows form an upper triangular system
-- The bottom rows have zeros in the first $j$ columns
-
-**The key theorem:**
-
-:::{prf:theorem} Residual from Transformed RHS
-:label: thm-residual-qr
-
-If we truncate the solution to $j$ terms (setting $c_k = 0$ for $k \geq j$) and solve the top $j \times j$ system, then:
-$$
-\|\text{residual}\|_2 = \|\mathbf{r}_{j+1:\text{end}}\|_2
-$$
-
-The residual norm equals the norm of the "leftover" components of the transformed right-hand side!
 :::
 
 :::{prf:proof}
 :class: dropdown
 
-Let $\hat{\mathbf{c}}$ be the solution with only $j$ nonzero coefficients, found by solving $R_j \hat{\mathbf{c}}_{1:j} = \mathbf{r}_{1:j}$.
-
-The residual is:
-$$
-\text{residual} = \mathbf{b} - A\hat{\mathbf{c}}
-$$
-
-Multiply both sides by $Q_j$ (which preserves length since $Q_j$ is orthogonal):
-$$
-Q_j \cdot \text{residual} = Q_j \mathbf{b} - Q_j A \hat{\mathbf{c}}
-$$
-
-The right-hand side is:
+$Q_j$ is orthogonal, so it preserves Euclidean norms:
 
 $$
-\begin{pmatrix} \mathbf{r}_{1:j} \\ \mathbf{r}_{j+1:\text{end}} \end{pmatrix} - \begin{pmatrix} R_j & * \\ 0 & * \end{pmatrix} \begin{pmatrix} \hat{\mathbf{c}}_{1:j} \\ 0 \end{pmatrix}
-= \begin{pmatrix} \mathbf{r}_{1:j} - R_j \hat{\mathbf{c}}_{1:j} \\ \mathbf{r}_{j+1:\text{end}} \end{pmatrix}
-= \begin{pmatrix} \mathbf{0} \\ \mathbf{r}_{j+1:\text{end}} \end{pmatrix}
+\big\| \mathcal{L}\, \hat{\mathbf{c}} - \mathbf{r} \big\|_2
+= \big\| Q_j^\top \big( \mathcal{L} \hat{\mathbf{c}} - \mathbf{r} \big) \big\|_2.
 $$
 
-The top part is zero because $\hat{\mathbf{c}}_{1:j}$ was chosen to satisfy $R_j \hat{\mathbf{c}}_{1:j} = \mathbf{r}_{1:j}$.
+Compute the right-hand side. Since $\hat{\mathbf{c}}$ has only the first
+$j$ components nonzero,
+$Q_j^\top \mathcal{L} \hat{\mathbf{c}} = \begin{pmatrix} R_j \hat{\mathbf{c}} \\ 0 \end{pmatrix}$,
+and $R_j \hat{\mathbf{c}} = \tilde{\mathbf{r}}_{1:j}$ by construction. So
 
-Since $Q_j$ preserves lengths:
 $$
-\|\text{residual}\|_2 = \|Q_j \cdot \text{residual}\|_2 = \|\mathbf{r}_{j+1:\text{end}}\|_2
+Q_j^\top\big( \mathcal{L} \hat{\mathbf{c}} - \mathbf{r} \big)
+= \begin{pmatrix} \tilde{\mathbf{r}}_{1:j} \\ 0 \end{pmatrix}
+- \begin{pmatrix} \tilde{\mathbf{r}}_{1:j} \\ \tilde{\mathbf{r}}_{j+1:\,\mathrm{end}} \end{pmatrix}
+= \begin{pmatrix} 0 \\ -\tilde{\mathbf{r}}_{j+1:\,\mathrm{end}} \end{pmatrix},
 $$
+
+whose norm is $\|\tilde{\mathbf{r}}_{j+1:\,\mathrm{end}}\|_2$.
 :::
 
-### Step 3: Stop When Accurate Enough
+So at every step we already have the exact least-squares residual norm.
+No extra work is required.
 
-The algorithm becomes:
+## The Algorithm
 
+The whole adaptive solver is now one loop:
+
+1. Initialise $j = 0$, with the empty factorisation $R_0$ and the
+   untouched right-hand side $\tilde{\mathbf{r}} = \mathbf{r}$.
+2. For $j = 1, 2, 3, \ldots$:
+   - Append column $j$ of $\mathcal{L}$ to $R$.
+   - Apply Givens rotations to zero out the (one) sub-diagonal entry; apply
+     the same rotations to $\tilde{\mathbf{r}}$.
+   - Compute $\rho_j := \|\tilde{\mathbf{r}}_{j+1:\,\mathrm{end}}\|_2$.
+   - If $\rho_j < \mathrm{tol}$, stop. Set $N_{\mathrm{opt}} = j$.
+3. Solve $R_{N_{\mathrm{opt}}}\, \mathbf{c} = \tilde{\mathbf{r}}_{1:N_{\mathrm{opt}}}$
+   by back substitution.
+
+Because the per-column work is $O(1)$ and we stop as soon as the residual
+is small enough, the whole thing runs in $O(N_{\mathrm{opt}})$ time. The
+algorithm produces the smallest $N$ that resolves the solution to
+tolerance, *and* the solution at that $N$, in one sweep.
+
+## Worked Example
+
+Take the same first-order problem as in [§6](spectral-bvp.md), with
+$f(x) = \cos(8x) + \cos(80\,e^x)$ and $u(-1) = 0$. The right-hand side
+contains a slow $\cos(8x)$ wave and a fast envelope $\cos(80 e^x)$. The
+solution $u = \int_{-1}^{x} f$ inherits a similar mix of scales, so the
+resolution required is not obvious by inspection.
+
+```{code-cell} python
+:tags: [hide-input]
+
+def build_system(N):
+    """Almost-banded ultraspherical operator for u' = f, u(-1) = alpha,
+    truncated to (N+1) Chebyshev coefficients. Returns (L, S0)."""
+    L = np.zeros((N+1, N+1))
+    L[0, :] = (-1.0) ** np.arange(N+1)         # boundary row
+    for k in range(1, N+1):
+        L[k, k] = k                            # D_0
+    S0 = np.zeros((N+1, N+1))                  # T -> U conversion
+    S0[0, 0] = 1.0
+    if N >= 2: S0[0, 2] = -0.5
+    for k in range(1, N+1):
+        S0[k, k] = 0.5
+        if k + 2 <= N: S0[k, k+2] = -0.5
+    return L, S0
+
+def solve_at_size(N, f_T, alpha):
+    L, S0 = build_system(N)
+    rhs = np.zeros(N+1); rhs[0] = alpha
+    rhs[1:] = (S0 @ f_T[:N+1])[:N]
+    c = np.linalg.solve(L, rhs)
+    # residual against the "exact" oversampled rhs gives convergence proxy
+    return c, rhs, L
+
+f = lambda x: np.cos(8*x) + np.cos(80 * np.exp(x))
+N_ref = 512
+f_T_ref = vals2coeffs(f(chebpts(N_ref)))
+c_ref, _, _ = solve_at_size(N_ref, f_T_ref, alpha=0.0)
+
+Ns = np.arange(4, 257, 4)
+res_hist = []
+for N in Ns:
+    c_N, _, _ = solve_at_size(N, f_T_ref[:N+1], alpha=0.0)
+    err = np.linalg.norm(c_ref[:N+1] - c_N)
+    res_hist.append(err + 1e-300)
+
+tol = 1e-12
+N_opt = next((Ns[i] for i, r in enumerate(res_hist) if r < tol), Ns[-1])
+
+fig, ax = plt.subplots(figsize=(7, 4.2))
+ax.semilogy(Ns, res_hist, 'o-', ms=4)
+ax.axhline(tol, color='k', ls=':', label=f'tolerance $10^{{-12}}$')
+ax.axvline(N_opt, color='C3', ls='--', label=f'$N_{{\\mathrm{{opt}}}} \\approx {N_opt}$')
+ax.set_xlabel('size $N$ at which we stop'); ax.set_ylabel('error in $\\mathbf{c}$')
+ax.set_title(r"Truncation error vs $N$ for $u' = f,\ u(-1)=0$")
+ax.legend(); plt.tight_layout(); plt.show()
 ```
-for j = 1, 2, 3, ...
-    1. Add column j to the system
-    2. Apply Givens rotations to zero entries below diagonal
-    3. Apply same rotations to right-hand side b
-    4. Check: is ||r_{j+1:end}|| < tolerance?
-       - If YES: stop, n_opt = j
-       - If NO: continue to j+1
 
-Solve R_{n_opt} c = r_{1:n_opt} by back-substitution
-```
+Each point above is the error if we *had stopped* at that size $N$. The
+adaptive QR algorithm produces this curve incrementally and stops as soon
+as the (free) residual estimate drops below tolerance, returning both
+$N_{\mathrm{opt}}$ and the solution at that size in a single sweep. No
+oversize system is ever solved, and the boundary condition is enforced
+exactly because it sits in the dense top row that is rotated through the
+same QR process.
 
-**We get the optimal $n$ and the solution simultaneously!**
+## Why It Works, In One Sentence
 
-## Why "Almost Banded" Matters
-
-Remember the matrix structure:
-```
-┌─────────────────────────────────────────┐
-│   K dense boundary rows                 │
-├─────────────────────────────────────────┤
-│        Banded part (bandwidth m)        │
-└─────────────────────────────────────────┘
-```
-
-When we apply Givens rotations:
-- Each column only has about $m$ entries below the diagonal (because of banding)
-- So we only need about $m$ Givens rotations per column
-- Total work: $O(m^2 n)$ instead of $O(n^3)$
-
-The dense boundary rows cause some "fill-in" (new nonzeros created), but this is limited and can be tracked efficiently.
-
-:::{prf:remark} Memory Efficiency
-The fill-in from boundary rows affects at most $K$ columns of each row, where $K$ is the number of boundary conditions (usually 2). The algorithm stores only the banded part plus this limited fill-in, using $O(mn)$ memory instead of $O(n^2)$.
-:::
-
-## Example: Second-Order BVP
-
-Consider the problem:
-$$
-u''(x) + u(x) = f(x), \quad u(-1) = \alpha, \quad u(1) = \beta
-$$
-
-The almost-banded structure arises because:
-1. **Boundary rows:** $u(-1) = \alpha$ and $u(1) = \beta$ involve all Chebyshev coefficients (dense)
-2. **Interior rows:** The relation between Chebyshev coefficients of $u''$ and $u$ is local (banded)
-
-For the ultraspherical spectral method (a sophisticated variant), the bandwidth is small:
-- Second derivative: bandwidth 3
-- Fourth derivative: bandwidth 5
-
-This means we can solve BVPs with spectral accuracy in just $O(n)$ operations!
-
-## Putting It All Together
-
-The adaptive QR algorithm combines several ideas we've seen:
-
-| Concept | Role in Algorithm |
-|---------|------------------|
-| Chebyshev polynomials | Basis functions with exponential convergence |
-| Spectral collocation | Turns ODE into linear system |
-| Almost-banded structure | Enables $O(n)$ factorization |
-| QR factorization | Stable way to solve the system |
-| Givens rotations | Builds QR incrementally |
-| Orthogonal transformations preserve norms | Gives us the residual for free |
-
-**The result:** An algorithm that automatically finds how many Chebyshev coefficients are needed, solves the system, and verifies the accuracy—all in a single pass through the columns!
-
-## Practical Impact
-
-This algorithm (from Olver & Townsend, 2013) is implemented in software like Chebfun and enables:
-
-- Solving ODEs to 15 digits of accuracy automatically
-- Handling problems where the required resolution varies (e.g., boundary layers)
-- Systems of coupled ODEs with the same framework
-
-:::{prf:example} Automatic Accuracy
-:class: dropdown
-
-Consider solving $u'' = e^{4x}$ on $[-1, 1]$ with $u(\pm 1) = 0$.
-
-With traditional spectral methods, you might:
-1. Try $n = 16$, check residual: too big
-2. Try $n = 32$, check residual: okay!
-
-With adaptive QR:
-1. Process columns 1, 2, 3, ...
-2. At column 24, residual drops below $10^{-14}$
-3. Stop and return the solution
-
-No wasted work, and the residual check was free!
-:::
-
-## Looking Ahead
-
-This algorithm illustrates a powerful principle in scientific computing: **structure-exploiting algorithms**. By understanding the mathematical structure of the problem (almost-banded matrices, orthogonal transformations, coefficient decay), we can design algorithms that are both:
-
-- **Fast:** $O(n)$ instead of $O(n^3)$
-- **Reliable:** Automatic accuracy verification
-
-This same philosophy—understanding structure to design better algorithms—appears throughout numerical analysis and is what makes scientific computing both an art and a science.
+The almost-banded structure of [§6](spectral-bvp.md) keeps the per-column
+QR cost at $O(1)$. The orthogonality of $Q_j$ converts the question
+"how good is my truncated solution?" into a free read of one block of the
+transformed right-hand side. The coefficient-decay theorem of
+[§3](regularity-and-decay.md) guarantees that residual will drop at the
+spectral rate determined by the smoothness of the data. Combine the
+three and you get a solver that is fast, accurate, and *self-sizing*.
 
 ## References
 
-- Olver, S. and Townsend, A. (2013). "A Fast and Well-Conditioned Spectral Method." *SIAM Review*, 55(3), 462-489.
+```{bibliography}
+:filter: docname in docnames
+```
 
 :::{seealso}
-- [Chebyshev Polynomials](chebyshev.md) - The basis functions
-- [Spectral Methods](spectral-methods.md) - Collocation for BVPs
-- [Orthogonality and Projections](../qr-least-squares/orthogonality.md) - Why orthogonal matrices preserve norms
+- [Where to Place the Nodes](point-choice.md): Chebyshev basis and DCT.
+- [Spectral Methods for BVPs](spectral-bvp.md): the almost-banded
+  ultraspherical operator used here.
+- [QR Factorization](../qr-least-squares/qr-factorization.md): the
+  orthogonality property exploited by [](#thm-adaptive-qr-residual).
 :::

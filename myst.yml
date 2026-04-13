@@ -43,95 +43,118 @@ project:
       title: Local Approximation
       children:
         - file: approximation-theory/taylor.md
+          title: "§1 Taylor's Theorem"
         - file: approximation-theory/numerical-differentiation.md
+          title: "§2 Numerical Differentiation"
         - file: approximation-theory/numerical-integration.md
+          title: "§3 Numerical Integration"
         - file: approximation-theory/exercises.md
+          title: Exercises
     - file: error-stability/index.md
       title: Floating Point and Error Analysis
       children:
         - file: error-stability/floating-point.md
+          title: "§1 Floating-Point Arithmetic"
         - file: error-stability/condition-numbers.md
+          title: "§2 Condition Numbers"
         - file: error-stability/stability.md
+          title: "§3 Stable and Unstable Algorithms"
         - file: error-stability/fast-inverse-sqrt.md
+          title: "§4 Fast Inverse Square Root"
         - file: error-stability/exercises.md
+          title: Exercises
     # PART II: ODES
     - file: odes/index.md
       title: Numerical Methods for ODEs
       children:
         - file: odes/forward-euler.md
+          title: "§1 Forward Euler"
         - file: odes/backward-euler.md
+          title: "§2 Backward Euler"
         - file: odes/runge-kutta.md
+          title: "§3 Runge–Kutta and Adaptive Stepping"
         - file: odes/euler_maruyama.md
+          title: "§4 Euler–Maruyama"
         # - file: odes/stability.md             # NOT IN SCHEDULE
     # PART III: NONLINEAR EQUATIONS
     - file: nonlinear-equations/index.md
       title: Nonlinear Equations
       children:
         - file: nonlinear-equations/bisection.md
+          title: "§1 Bisection"
         - file: nonlinear-equations/fixed-point.md
+          title: "§2 Fixed-Point Iteration"
         - file: nonlinear-equations/newton.md
+          title: "§3 Newton's Method"
         - file: nonlinear-equations/practical-root-finding.md
+          title: "§4 Practical Root Finding"
         - file: nonlinear-equations/error-analysis.md
+          title: "§5 Error Analysis"
         - file: nonlinear-equations/exercises.md
+          title: Exercises
     # PART IV: LINEAR ALGEBRA
     - file: qr-least-squares/index.md
       title: Linear Algebra and QR Factorization
       children:
         - file: qr-least-squares/linear-algebra-fundamentals.md
+          title: "§1 Norms and Conditioning"
         - file: qr-least-squares/orthogonality.md
+          title: "§2 Orthogonality and Projections"
         - file: direct-methods/triangular.md
+          title: "§3 Triangular Systems"
         - file: qr-least-squares/condition-stability.md
+          title: "§4 Stability in Linear Systems"
         - file: qr-least-squares/gram-schmidt.md
+          title: "§5 Gram–Schmidt"
         - file: qr-least-squares/qr-factorization.md
+          title: "§6 QR Factorization"
         - file: qr-least-squares/least-squares.md
+          title: "§7 Least Squares"
         - file: qr-least-squares/exercises.md
+          title: Exercises
         # - file: qr-least-squares/iterative-methods.md
     # NONLINEAR SYSTEMS - NOT IN SCHEDULE
     - file: nonlinear-systems/index.md
       title: "Nonlinear Systems (Optional)"
       children:
         - file: nonlinear-systems/newton-systems.md
+          title: "§1 Newton's Method for Systems"
         - file: nonlinear-systems/globalization.md
+          title: "§2 Globalization Strategies"
         - file: nonlinear-systems/quasi-newton.md
+          title: "§3 Quasi-Newton Methods"
         # - file: nonlinear-systems/constrained-optimization.md
         # - file: nonlinear-systems/exercises.md
     # PART V: APPROXIMATION THEORY (ADVANCED)
     - file: interpolation/index.md
       title: Approximation Theory
       children:
-        # Core interpolation
         - file: interpolation/lagrange.md
-        - file: interpolation/chebyshev.md
-        # Fourier and transforms
-        - file: notebooks/fourier-dct.ipynb
-          title: Fourier Transform and DCT
-        - file: interpolation/values-coefficients.md
-        # Calculus via spectral methods
-        - file: notebooks/chebyshev-differentiation.ipynb
-        - file: notebooks/chebyshev-integration.ipynb
-        # - file: interpolation/differentiation.md
-        #  title: Differentiation Matrices (old)
-        #- file: interpolation/differentiation-matrices.md
-        #  title: Differentiation Matrices (to merge)
-        # - file: interpolation/integration.md
-        #   title: Integration via Chebyshev (old)
-        # Convergence theory
-        - file: interpolation/spectral-accuracy.md
-        - file: interpolation/gibbs.md
-        # Spectral methods for BVPs
-        - file: interpolation/spectral-methods.md
-          title: Spectral Methods for BVPs
+          title: "§1 Polynomial Interpolation"
+        - file: interpolation/point-choice.md
+          title: "§2 Where to Place the Nodes"
+        - file: interpolation/regularity-and-decay.md
+          title: "§3 Regularity and Coefficient Decay"
+        - file: interpolation/differentiation.md
+          title: "§4 Differentiation as a Linear Operator"
+        - file: interpolation/integration.md
+          title: "§5 Integration as a Linear Functional"
+        - file: interpolation/spectral-bvp.md
+          title: "§6 Spectral Methods for BVPs"
         - file: interpolation/adaptive-qr.md
-          title: Adaptive QR for BVPs
-        # Exercises
+          title: "§7 Adaptive QR"
         - file: interpolation/exercises.md
+          title: Exercises
     - file: neural-networks/index.md
       title: Neural Networks as Universal Approximators
       children:
         - file: neural-networks/universal-approximation.md
+          title: "§1 Universal Approximation"
         - file: neural-networks/barron-spaces.md
+          title: "§2 Barron Spaces"
         # - file: neural-networks/deep-networks.md
         - file: neural-networks/exercises.md
+          title: Exercises
     # NOTEBOOKS
     - file: notebooks/index.md
       title: Interactive Notebooks
@@ -150,15 +173,22 @@ project:
         - file: notebooks/gaussian-elimination-notebook.ipynb
         - file: notebooks/stability-ge.ipynb
         - file: notebooks/deflated-continuation.ipynb
+        - file: notebooks/fourier-dct.ipynb
+        - file: notebooks/chebyshev-differentiation.ipynb
+        - file: notebooks/chebyshev-integration.ipynb
         # - file: notebooks/jacobi-gauss-seidel.ipynb
     # APPENDICES
     - file: direct-methods/index.md
       title: "Appendix"
       children:
         - file: direct-methods/gaussian-elimination.md
+          title: "§1 Gaussian Elimination"
         - file: direct-methods/lu-decomposition.md
+          title: "§2 LU Decomposition"
         - file: direct-methods/pivoting.md
+          title: "§3 Pivoting"
         - file: direct-methods/exercises.md
+          title: Exercises
     # - file: appendix/index.md
     #   title: Appendices
     #   children:
