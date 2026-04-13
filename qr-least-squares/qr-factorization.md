@@ -231,6 +231,14 @@ The sign choice avoids cancellation when $a$ is nearly parallel to $e_1$.
 Note that step 4 applies the reflection only to the submatrix, and the
 matrix-vector product $v^T A_{k:m,k:n}$ avoids forming $H$ explicitly.
 
+For $A \in \mathbb{R}^{m \times n}$, the factorization costs
+$2mn^2 - \tfrac{2}{3}n^3$ flops; forming $Q$ explicitly costs an additional
+$2mn^2$, while applying $Q^T$ to a single vector costs only $4mn - 2n^2$. In
+the square case $m = n$, the factorization cost reduces to $\tfrac{4}{3}n^3$
+flops, twice the cost of LU factorization. For
+least squares we usually do not need $Q$ explicitly, just $Q^T b$, which can be
+computed by applying the Householder reflectors sequentially.
+
 ## Numerical Stability
 
 We developed the framework of [forward and backward stability](condition-stability.md)
@@ -239,6 +247,14 @@ is unattainable ([](#prop-forward-stability-impossible)), and the right standard
 is [backward stability](condition-stability.md#def-backward-stable-linalg): the
 computed result is the exact result for a slightly perturbed input. Householder
 QR achieves this.
+
+What does this mean for a *factorization*? The algorithm takes $A$ and returns
+computed factors $\hat{Q}, \hat{R}$. These will not satisfy $\hat{Q}\hat{R} = A$
+exactly. Backward stability asks for the next best thing: there exists a small
+perturbation $\delta A$ such that $\hat{Q}\hat{R} = A + \delta A$ *exactly*. In
+other words, the computed factors are the exact QR factorization of a nearby
+matrix. The size of $\delta A$ is the backward error, and we want
+$\|\delta A\|/\|A\| = O(\varepsilon_{\text{mach}})$.
 
 :::{prf:theorem} Backward Stability of Householder QR
 :label: thm-householder-stability
@@ -253,7 +269,10 @@ Moreover, $\hat{Q}$ is orthogonal to machine precision:
 $\|\hat{Q}^T\hat{Q} - I\| = O(\varepsilon_{\text{mach}})$.
 :::
 
-:::{dropdown} Proof sketch (following Higham, *Accuracy and Stability of Numerical Algorithms*, Ch. 19)
+:::{prf:proof}
+:class: dropdown
+
+(Sketch, following Higham, *Accuracy and Stability of Numerical Algorithms*, Ch. 19.)
 
 The full proof tracks rounding errors through each Householder step. We outline
 the three key ingredients and how they combine.
@@ -290,7 +309,26 @@ $$
 
 The errors accumulate *additively* (factor $n$), not multiplicatively
 (factor $2^n$). This is because each orthogonal factor has unit norm, so
-the error at step $k$ is not amplified by subsequent steps.
+the error at step $k$ is not amplified by subsequent steps. Concretely, if
+$x$ carries an error $e$, then after multiplication by an orthogonal $Q$
+the error is $\|Q(x+e) - Qx\|_2 = \|Qe\|_2 = \|e\|_2$: the perturbation
+is transported, never magnified. Contrast this with a general matrix $M$,
+where $\|M e\|_2$ can be as large as $\|M\|_2 \|e\|_2$, and a chain of $n$
+such steps can blow the error up by $\|M\|_2^n$.
+
+Why does this turn multiplication into addition? Expand the perturbed product:
+
+$$
+(H_n + \delta H_n) \cdots (H_1 + \delta H_1) = H_n \cdots H_1 + \sum_{k=1}^n H_n \cdots H_{k+1}\, \delta H_k\, H_{k-1} \cdots H_1 + O(\varepsilon^2)
+$$
+
+The leading term is $Q^T = H_n \cdots H_1$. Each first-order term is a single
+$\delta H_k$ sandwiched between orthogonal factors. Since orthogonal matrices
+have unit norm, the sandwich does not change the size:
+$\|H_n \cdots H_{k+1}\, \delta H_k\, H_{k-1} \cdots H_1\|_2 = \|\delta H_k\|_2 = O(\varepsilon)$.
+Summing $n$ such terms gives $O(n\varepsilon)$ — addition, not multiplication.
+For non-orthogonal factors the sandwich would scale each term by
+$\prod \|M_j\|_2$, and the sum would inherit that multiplicative blow-up.
 
 **Step 3: Rewriting as a backward error on $A$.**
 
@@ -358,19 +396,6 @@ The key difference: the elementary matrices in GE are triangular (cheap but can
 amplify errors), while the Householder reflectors are orthogonal (preserve
 norms, no error amplification).
 :::
-
-## Cost Analysis
-
-For $A \in \mathbb{R}^{m \times n}$:
-
-| Operation | Flops |
-|-----------|-------|
-| QR factorization (Householder) | $2mn^2 - \frac{2}{3}n^3$ |
-| Form $Q$ explicitly | Additional $2mn^2$ |
-| Apply $Q^T$ to a vector | $4mn - 2n^2$ |
-
-For least squares, we often do not need $Q$ explicitly, just $Q^T b$, which can
-be computed by applying the Householder reflectors sequentially.
 
 ## Solving Linear Systems with QR
 

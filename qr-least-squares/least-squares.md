@@ -60,7 +60,7 @@ left_cx, right_cx = -2.5, 2.5
 null_verts = diamond(left_cx, -sn, sn)
 ax.add_patch(Polygon(null_verts, facecolor='#d62728', alpha=0.15,
                      edgecolor='#d62728', lw=2))
-ax.text(left_cx, -sn, r'$\mathrm{N}(A)$', ha='center', va='center',
+ax.text(left_cx, -sn-0.1, r'$\mathrm{N}(A)$', ha='center', va='center',
         fontsize=12, color='#d62728', fontweight='bold')
 ax.text(left_cx - sn - 0.1, -sn, 'dim $n{-}r$', ha='right', fontsize=9, color='#d62728')
 
@@ -81,7 +81,7 @@ ax.text(left_cx, 2*s + 0.25, r'$\mathbb{R}^n$',
 coker_verts = diamond(right_cx, -sn, sn)
 ax.add_patch(Polygon(coker_verts, facecolor='#ff7f0e', alpha=0.15,
                      edgecolor='#ff7f0e', lw=2))
-ax.text(right_cx, -sn, r'$\mathrm{N}(A^T)$', ha='center', va='center',
+ax.text(right_cx, -sn-0.1, r'$\mathrm{N}(A^T)$', ha='center', va='center',
         fontsize=12, color='#ff7f0e', fontweight='bold')
 ax.text(right_cx + sn + 0.1, -sn, 'dim $m{-}r$', ha='left', fontsize=9, color='#ff7f0e')
 
@@ -125,15 +125,51 @@ ax.text(b_pos[0] - 0.25, b_pos[1], r'$\mathbf{b}$', ha='right', va='center',
 ax.plot([b_pos[0], proj_range[0]], [b_pos[1], proj_range[1]],
         '--', color='#2ca02c', lw=1.5, alpha=0.7)
 ax.plot(proj_range[0], proj_range[1], 'o', color='#2ca02c', markersize=5, zorder=5)
-ax.text(proj_range[0] - 0.25, proj_range[1] + 0.12, r'$A\hat{\mathbf{x}}$',
-        fontsize=11, color='#2ca02c', ha='center')
+ax.text(proj_range[0] + 0.15, proj_range[1], r'$\tilde{\mathbf{b}}$',
+        fontsize=12, color='#2ca02c', ha='center')
 
 # Dashed line from b to projection in N(A^T)
 ax.plot([b_pos[0], proj_coker[0]], [b_pos[1], proj_coker[1]],
         '--', color='#ff7f0e', lw=1.5, alpha=0.7)
 ax.plot(proj_coker[0], proj_coker[1], 'o', color='#ff7f0e', markersize=5, zorder=5)
-ax.text(proj_coker[0] - 0.25, proj_coker[1] - 0.18, r'$\mathbf{r}$',
+ax.text(proj_coker[0] + 0.1, proj_coker[1] - 0.18, r'$\mathbf{r}$',
         fontsize=11, color='#ff7f0e', ha='center')
+
+# Same construction on the left: x = x_row + x_null
+proj_row = np.array([left_cx + s/2, s/2])
+proj_null = np.array([left_cx + sn/2, -sn + sn/2])
+x_pos = proj_row + proj_null - np.array([left_cx, 0])
+
+ax.plot(x_pos[0], x_pos[1], 'ko', markersize=6, zorder=5)
+ax.text(x_pos[0] + 0.25, x_pos[1], r'$\mathbf{x}$', ha='left', va='center',
+        fontsize=14, fontweight='bold')
+
+ax.plot([x_pos[0], proj_row[0]], [x_pos[1], proj_row[1]],
+        '--', color='#1f77b4', lw=1.5, alpha=0.7)
+ax.plot(proj_row[0], proj_row[1], 'o', color='#1f77b4', markersize=5, zorder=5)
+ax.text(proj_row[0] - 0.12, proj_row[1] + 0.04, r'$\mathbf{x}_r$',
+        fontsize=12, color='#1f77b4', ha='center')
+
+ax.plot([x_pos[0], proj_null[0]], [x_pos[1], proj_null[1]],
+        '--', color='#d62728', lw=1.5, alpha=0.7)
+ax.plot(proj_null[0], proj_null[1], 'o', color='#d62728', markersize=5, zorder=5)
+ax.text(proj_null[0] - 0.1, proj_null[1] - 0.15, r'$\mathbf{x}_n$',
+        fontsize=11, color='#d62728', ha='center')
+
+# Curved arrow showing A: x_r in R(A^T) maps to tilde b = A x_hat in R(A)
+from matplotlib.patches import FancyArrowPatch
+arrow = FancyArrowPatch(proj_row, proj_range,
+                        connectionstyle='arc3,rad=-0.35',
+                        arrowstyle='->', mutation_scale=15,
+                        color='black', lw=1.5, alpha=0.8)
+ax.add_patch(arrow)
+arrow_x = FancyArrowPatch(x_pos, proj_range,
+                          connectionstyle='arc3,rad=-0.35',
+                          arrowstyle='->', mutation_scale=15,
+                          color='black', lw=1.5, alpha=0.8)
+ax.add_patch(arrow_x)
+ax.text(0, (proj_row[1] + proj_range[1]) / 2 + 0.55, r'$A$',
+        ha='center', fontsize=12, fontweight='bold')
 
 ax.set_xlim(-4.5, 4.5)
 ax.set_ylim(-2.2, 2.8)

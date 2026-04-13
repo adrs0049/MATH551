@@ -499,9 +499,8 @@ $$
 \frac{\|\tilde{\mathbf{x}} - \mathbf{x}\|}{\|\mathbf{x}\|} = O(\kappa(A) \cdot \varepsilon_{\text{mach}})
 $$
 
-No algorithm can undo this. The input perturbation gets amplified by $\kappa(A)$,
-and no amount of clever arithmetic can recover the lost information. An
-algorithm that achieved $O(\varepsilon_{\text{mach}})$ forward error regardless
+No algorithm can undo this. The input perturbation gets amplified by $\kappa(A)$.
+An algorithm that achieved $O(\varepsilon_{\text{mach}})$ forward error regardless
 of $\kappa(A)$ would have to "know" the true $A$ despite only having access to
 $\tilde{A}$.
 
@@ -551,12 +550,64 @@ A backward stable algorithm achieves the best forward error that any algorithm
 can achieve on that problem. If the answer is not accurate enough, the problem
 is to blame, not the algorithm.
 
+:::{prf:example} Why backward stability can still give a "bad" answer
+:label: ex-backward-stable-bad
+:class: dropdown
+
+Consider the ill-conditioned $2 \times 2$ system
+
+$$
+A = \begin{pmatrix} 1 & 1 \\ 1 & 1 + 10^{-12} \end{pmatrix}, \qquad
+\mathbf{b} = \begin{pmatrix} 2 \\ 2 + 10^{-12} \end{pmatrix}.
+$$
+
+The true solution is $\mathbf{x} = (1, 1)^T$. Here
+$\kappa(A) \approx 4 \times 10^{12}$.
+
+Run a backward stable solver (say Householder QR) in double precision
+($\varepsilon_{\text{mach}} \approx 10^{-16}$). You might get, for example,
+
+$$
+\hat{\mathbf{x}} = \begin{pmatrix} 1.0004 \\ 0.9996 \end{pmatrix}.
+$$
+
+This answer is wrong in the 4th digit. But the algorithm is blameless. There
+exists a perturbation $(\delta A, \delta\mathbf{b})$ with
+$\|\delta A\|/\|A\|, \|\delta\mathbf{b}\|/\|\mathbf{b}\| \sim 10^{-16}$ such that
+
+$$
+(A + \delta A)\hat{\mathbf{x}} = \mathbf{b} + \delta\mathbf{b}
+$$
+
+holds *exactly*. The computed $\hat{\mathbf{x}}$ is the true solution of a system
+whose coefficients agree with $(A, \mathbf{b})$ to 16 digits.
+
+**Where did the 4 digits go?** The condition number amplifies the input
+uncertainty:
+
+$$
+\frac{\|\hat{\mathbf{x}} - \mathbf{x}\|}{\|\mathbf{x}\|}
+\lesssim \kappa(A) \cdot \varepsilon_{\text{mach}}
+\approx 4 \times 10^{12} \cdot 10^{-16} = 4 \times 10^{-4}.
+$$
+
+The lost accuracy is real, but it was lost the moment $A$ was rounded into
+floating point. Any other backward stable algorithm produces an answer in the
+same neighborhood. The only way to do better is to reduce $\kappa(A)$ by
+reformulating the problem, or to use higher precision.
+
+"Exact solution of a nearby problem" is exactly as strong as the data
+deserves. For well-conditioned $A$, nearby problems have nearby solutions, so
+the answer is accurate. For ill-conditioned $A$, nearby problems can have very
+different solutions, so accuracy is unavailable regardless of the algorithm.
+:::
+
 :::{prf:remark} Which Algorithms Are Backward Stable?
 :label: rmk-backward-stable-algorithms
 :class: dropdown
 
 - **Householder QR** is backward stable (see
-  [](#thm-householder-stability)). This is the gold standard.
+  [](#thm-householder-stability)).
 - **LU with partial pivoting** is backward stable in practice, though the
   theoretical worst case allows growth factor $2^{n-1}$ (see the
   [stability notebook](../notebooks/stability-ge.ipynb)).
@@ -581,6 +632,39 @@ Computing $\kappa(A) = \|A\| \|A^{-1}\|$ exactly requires $A^{-1}$, which costs 
 ### Hager's Algorithm: A Clever Trick
 
 The key insight (Hager, 1984; refined by Higham) is that we can **estimate** $\|A^{-1}\|$ using only a few solves with the already-factored matrix.
+
+#### Intuitive Derivation
+
+We want $\|B\|_1$ where $B = A^{-1}$, without forming $B$. Recall
+
+$$
+\|B\|_1 = \max_{\mathbf{x} \neq 0} \frac{\|B\mathbf{x}\|_1}{\|\mathbf{x}\|_1}
+= \max_{\|\mathbf{x}\|_1 = 1} \|B\mathbf{x}\|_1.
+$$
+
+So we want to find the unit-1-norm vector $\mathbf{x}$ that makes $\|B\mathbf{x}\|_1$ largest. This is a constrained optimization; we will climb toward the maximum using only actions we can perform cheaply.
+
+**Step 1: evaluate the objective.** For a given $\mathbf{x}$, form $\mathbf{y} = B\mathbf{x} = A^{-1}\mathbf{x}$ by solving $A\mathbf{y} = \mathbf{x}$. One triangular solve using the stored LU factors. The current value of the objective is $\|\mathbf{y}\|_1 = \sum_i |y_i|$.
+
+**Step 2: find an ascent direction.** Write $f(\mathbf{x}) = \|B\mathbf{x}\|_1 = \sum_i |(B\mathbf{x})_i|$. Where differentiable,
+
+$$
+\nabla f(\mathbf{x}) = B^T \boldsymbol\xi, \qquad \xi_i = \operatorname{sign}(y_i).
+$$
+
+To compute this gradient we need to apply $B^T = (A^{-1})^T = (A^T)^{-1}$ to $\boldsymbol\xi$, that is, solve $A^T \mathbf{z} = \boldsymbol\xi$. A second triangular solve (same factors, transposed).
+
+**Step 3: move along the gradient.** The feasible set $\{\|\mathbf{x}\|_1 \leq 1\}$ is a polytope. A linear objective over a polytope is maximized at a vertex, and the vertices of the 1-norm ball are the signed unit vectors $\pm \mathbf{e}_j$. The best vertex is the one that maximizes $\boldsymbol\xi^T B \mathbf{x} = \mathbf{z}^T \mathbf{x}$, namely
+
+$$
+\mathbf{x}_{\text{new}} = \operatorname{sign}(z_j)\, \mathbf{e}_j, \qquad j = \arg\max_i |z_i|.
+$$
+
+Jumping to this vertex is a single coordinate step, not a small increment.
+
+**Step 4: stop when no vertex improves.** If $\|\mathbf{z}\|_\infty \leq \mathbf{z}^T \mathbf{x}$, the current vertex already maximizes the linearized objective, so we have reached a local maximum of $f$. Return $\|\mathbf{y}\|_1$ as the estimate of $\|B\|_1$.
+
+The starting point $\mathbf{x} = \mathbf{1}/n$ is interior and avoids an unlucky first gradient. Each iteration costs two triangular solves; convergence typically takes 2-5 iterations. The estimate is a lower bound on $\|A^{-1}\|_1$, and in practice agrees with the true value to within a small factor.
 
 :::{prf:algorithm} Hager's 1-Norm Estimator
 :label: alg-hager
