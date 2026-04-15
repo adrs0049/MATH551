@@ -187,7 +187,9 @@ exact answer.
 :::::::{prf:theorem} Distance to Singularity
 :label: thm-distance-singularity
 
-For any invertible $A \in \mathbb{R}^{n \times n}$ with the 2-norm,
+For any invertible $A \in \mathbb{R}^{n \times n}$ with the 2-norm, the
+distance to the set of singular matrices
+$\Sigma = \{M \in \mathbb{R}^{n\times n} : \det(M) = 0\}$ is
 
 $$
 \operatorname{dist}_2(A, \Sigma)
@@ -571,16 +573,29 @@ $$
 \hat{\mathbf{x}} = \begin{pmatrix} 1.0004 \\ 0.9996 \end{pmatrix}.
 $$
 
-This answer is wrong in the 4th digit. But the algorithm is blameless. There
-exists a perturbation $(\delta A, \delta\mathbf{b})$ with
-$\|\delta A\|/\|A\|, \|\delta\mathbf{b}\|/\|\mathbf{b}\| \sim 10^{-16}$ such that
+This answer is wrong in the 4th digit. But the algorithm is blameless. To see
+why, compute the residual:
+
+$$
+A\hat{\mathbf{x}} - \mathbf{b}
+= \begin{pmatrix} 1.0004 + 0.9996 \\ 1.0004 + 0.9996\,(1 + 10^{-12}) \end{pmatrix}
+- \begin{pmatrix} 2 \\ 2 + 10^{-12} \end{pmatrix}
+= \begin{pmatrix} 0 \\ -4 \times 10^{-16} \end{pmatrix}.
+$$
+
+So setting $\delta A = 0$ and
+$\delta\mathbf{b} = A\hat{\mathbf{x}} - \mathbf{b} = (0,\, -4 \times 10^{-16})^T$
+gives
 
 $$
 (A + \delta A)\hat{\mathbf{x}} = \mathbf{b} + \delta\mathbf{b}
 $$
 
-holds *exactly*. The computed $\hat{\mathbf{x}}$ is the true solution of a system
-whose coefficients agree with $(A, \mathbf{b})$ to 16 digits.
+*exactly*, with $\|\delta\mathbf{b}\|/\|\mathbf{b}\| \approx 2 \times 10^{-16}$.
+The computed $\hat{\mathbf{x}}$ is the true solution of a right-hand side that
+agrees with $\mathbf{b}$ to 16 digits. (One could equally absorb the residual
+into $\delta A$ via $\delta A = \mathbf{r}\hat{\mathbf{x}}^T / \|\hat{\mathbf{x}}\|^2$;
+the backward error is not unique.)
 
 **Where did the 4 digits go?** The condition number amplifies the input
 uncertainty:
@@ -665,6 +680,90 @@ Jumping to this vertex is a single coordinate step, not a small increment.
 **Step 4: stop when no vertex improves.** If $\|\mathbf{z}\|_\infty \leq \mathbf{z}^T \mathbf{x}$, the current vertex already maximizes the linearized objective, so we have reached a local maximum of $f$. Return $\|\mathbf{y}\|_1$ as the estimate of $\|B\|_1$.
 
 The starting point $\mathbf{x} = \mathbf{1}/n$ is interior and avoids an unlucky first gradient. Each iteration costs two triangular solves; convergence typically takes 2-5 iterations. The estimate is a lower bound on $\|A^{-1}\|_1$, and in practice agrees with the true value to within a small factor.
+
+#### A 2D picture
+
+The geometry is easiest to see in 2D. The feasible set $\{\|\mathbf{x}\|_1 \le 1\}$ is the diamond with vertices $\pm \mathbf{e}_1, \pm \mathbf{e}_2$. The objective $f(\mathbf{x}) = \|B\mathbf{x}\|_1$ is convex, so its maximum on the diamond is attained at one of these four vertices. Hager's iteration is a vertex-hopping ascent: from the current point, the gradient $\mathbf{z} = B^T \operatorname{sign}(B\mathbf{x})$ singles out the vertex $\operatorname{sign}(z_j)\,\mathbf{e}_j$ with $j = \arg\max_i |z_i|$ as the best linear-prediction step.
+
+```{code-cell} python
+:tags: [hide-input]
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon, FancyArrowPatch
+
+B = np.array([[1.0, 2.0],
+              [3.0, 1.0]])
+
+vertices = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]], dtype=float)
+vals = [np.linalg.norm(B @ v, 1) for v in vertices]
+
+x0 = np.array([0.5, 0.5])
+y0 = B @ x0
+xi = np.sign(y0)
+z = B.T @ xi
+j = int(np.argmax(np.abs(z)))
+x_new = np.sign(z[j]) * np.eye(2)[j]
+
+fig, ax = plt.subplots(figsize=(7, 7))
+
+ax.add_patch(Polygon(vertices, closed=True, facecolor='#1f77b4',
+                     alpha=0.12, edgecolor='#1f77b4', lw=2))
+
+for c in [1.0, 2.0, 3.0]:
+    ts = np.linspace(0, 2*np.pi, 400)
+    pts = []
+    for t in ts:
+        d = np.array([np.cos(t), np.sin(t)])
+        nb = np.linalg.norm(B @ d, 1)
+        if nb > 0:
+            pts.append((c / nb) * d)
+    pts = np.array(pts)
+    ax.plot(pts[:, 0], pts[:, 1], color='#888888', lw=0.8, alpha=0.7)
+    # label one level set
+    if c == 2.0:
+        ax.text(pts[50, 0]*1.02, pts[50, 1]*1.02, f'$f={c:.0f}$',
+                fontsize=9, color='#555555')
+
+for v, val in zip(vertices, vals):
+    ax.plot(*v, 'o', color='#1f77b4', markersize=9, zorder=5)
+    off = 0.22 * v / max(np.linalg.norm(v), 1e-9)
+    ax.text(v[0] + off[0], v[1] + off[1], f'$f={val:.0f}$',
+            ha='center', va='center', fontsize=12, color='#1f77b4',
+            fontweight='bold')
+
+ax.plot(*x0, 'ks', markersize=9, zorder=6)
+ax.text(x0[0] - 0.05, x0[1] + 0.10, r'$\mathbf{x}_0=\frac{1}{2}\mathbf{1}$',
+        fontsize=12, ha='right')
+
+g = z / np.linalg.norm(z)
+ax.add_patch(FancyArrowPatch(x0, x0 + 0.4 * g,
+                             arrowstyle='->', mutation_scale=18,
+                             color='#2ca02c', lw=2.2))
+ax.text(x0[0] + 0.4*g[0] + 0.05, x0[1] + 0.4*g[1],
+        r'$\nabla f$', fontsize=12, color='#2ca02c')
+
+ax.add_patch(FancyArrowPatch(x0, x_new,
+                             arrowstyle='->', mutation_scale=20,
+                             color='#d62728', lw=2.4,
+                             connectionstyle='arc3,rad=-0.18'))
+ax.plot(*x_new, 'o', color='#d62728', markersize=11, zorder=6)
+ax.text(x_new[0] + 0.05, x_new[1] - 0.22,
+        r'$\mathbf{x}_{\mathrm{new}}=\mathbf{e}_1$',
+        fontsize=12, color='#d62728')
+
+ax.set_xlim(-1.6, 1.8)
+ax.set_ylim(-1.6, 1.6)
+ax.set_aspect('equal')
+ax.axhline(0, color='lightgray', lw=0.5, zorder=0)
+ax.axvline(0, color='lightgray', lw=0.5, zorder=0)
+ax.set_xlabel('$x_1$')
+ax.set_ylabel('$x_2$')
+plt.tight_layout()
+plt.show()
+```
+
+**Reading the figure.** The shaded diamond is the feasible set $\{\|\mathbf{x}\|_1 \le 1\}$, with vertices $\pm\mathbf{e}_1, \pm\mathbf{e}_2$ (blue dots). Each vertex is labeled with the objective value $f(v) = \|Bv\|_1$; the maximum, $f(+\mathbf{e}_1) = 4$, is exactly $\|B\|_1$ (the largest column sum). Gray curves are level sets $\{f(\mathbf{x}) = c\}$ for $c = 1, 2, 3$. The black square is the interior start $\mathbf{x}_0 = \mathbf{1}/2$; the green arrow is the gradient $\nabla f(\mathbf{x}_0) = B^T \operatorname{sign}(B\mathbf{x}_0)$, which selects $j = \arg\max_i |z_i| = 1$. The red arrow is the resulting vertex jump to $\mathbf{x}_{\mathrm{new}} = \mathbf{e}_1$, where the algorithm terminates.
 
 :::{prf:algorithm} Hager's 1-Norm Estimator
 :label: alg-hager

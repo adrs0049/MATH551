@@ -267,10 +267,16 @@ factorization is $A = Q_1 R_1$.
 :label: thm-qr-least-squares
 
 Let $A$ be $m \times n$ with $m > n$ and $\text{rank}(A) = n$. The least
-squares solution of $A\mathbf{x} \approx \mathbf{b}$ is the solution of:
+squares solution
 
 $$
-R_1 \hat{\mathbf{x}} = Q_1^T \mathbf{b}
+\hat{\mathbf{x}} = \arg\min_{\mathbf{x} \in \mathbb{R}^n} \|A\mathbf{x} - \mathbf{b}\|_2
+$$
+
+is the unique solution of the upper triangular system
+
+$$
+R_1 \hat{\mathbf{x}} = Q_1^T \mathbf{b}.
 $$
 
 The residual norm is $\|A\hat{\mathbf{x}} - \mathbf{b}\| = \|Q_2^T\mathbf{b}\|$.
@@ -308,14 +314,103 @@ minimum occurs when $R_1\mathbf{x} = Q_1^T\mathbf{b}$, and the minimum
 residual is $\|Q_2^T\mathbf{b}\|$.
 :::
 
-The algorithm is:
+## Perturbation Theory for Least Squares
+
+Before choosing an algorithm, we ask how sensitive the solution
+$\hat{\mathbf{x}}$ is to perturbations in the data $A$ and $\mathbf{b}$.
+Unlike square systems, the answer depends not only on $\kappa_2(A)$ but also
+on the size of the residual.
+
+Recall the 2-norm condition number of a tall full-rank matrix:
+
+$$
+\kappa_2(A) = \frac{\sigma_{\max}(A)}{\sigma_{\min}(A)} = \|A\|_2 \, \|A^\dagger\|_2,
+$$
+
+where $A^\dagger = (A^T A)^{-1} A^T$ is the pseudoinverse.
+
+:::{prf:theorem} Least Squares Perturbation Bound
+:label: thm-ls-perturbation
+
+Let $A \in \mathbb{R}^{m \times n}$ have full column rank, let $\hat{\mathbf{x}}$
+solve $\min \|A\mathbf{x} - \mathbf{b}\|_2$ with residual
+$\mathbf{r} = \mathbf{b} - A\hat{\mathbf{x}}$, and let $\theta$ be the angle
+between $\mathbf{b}$ and $\text{R}(A)$, so
+
+$$
+\sin\theta = \frac{\|\mathbf{r}\|_2}{\|\mathbf{b}\|_2}.
+$$
+
+Let $\hat{\mathbf{x}} + \delta\mathbf{x}$ solve the perturbed problem with data
+$A + \delta A$, $\mathbf{b} + \delta\mathbf{b}$. If
+
+$$
+\varepsilon = \max\!\left( \frac{\|\delta A\|_2}{\|A\|_2}, \frac{\|\delta\mathbf{b}\|_2}{\|\mathbf{b}\|_2} \right)
+$$
+
+is small enough that $\varepsilon\, \kappa_2(A) < 1$, then to first order
+
+$$
+\frac{\|\delta\mathbf{x}\|_2}{\|\hat{\mathbf{x}}\|_2}
+\;\lesssim\;
+\varepsilon \left( \frac{2\,\kappa_2(A)}{\cos\theta} + \kappa_2(A)^2 \tan\theta \right).
+$$
+:::
+
+:::{prf:remark} Reading the Bound
+:label: rmk-ls-perturbation
+
+Two regimes deserve attention.
+
+1. **Small residual** ($\sin\theta \approx 0$, $\mathbf{b}$ nearly in $\text{R}(A)$).
+   Then $\tan\theta \approx 0$ and the bound collapses to
+   $\|\delta\mathbf{x}\|/\|\hat{\mathbf{x}}\| \lesssim 2\varepsilon\,\kappa_2(A)$.
+   The least squares problem is as well conditioned as a square linear system.
+
+2. **Large residual** ($\sin\theta$ not small).
+   The $\kappa_2(A)^2 \tan\theta$ term dominates. Sensitivity scales with the
+   **square** of the condition number, even when $A$ itself is only mildly
+   ill conditioned.
+
+This $\kappa_2(A)^2$ term is the central obstruction in least squares.
+:::
+
+:::{prf:remark} Why This Rules Out the Normal Equations
+:label: rmk-normal-eq-warning
+
+Forming $A^T A$ produces a square system with condition number
+
+$$
+\kappa_2(A^T A) = \kappa_2(A)^2.
+$$
+
+Solving it by Cholesky in finite precision incurs a relative error of
+order $\varepsilon_{\text{mach}}\, \kappa_2(A)^2$ **regardless of the residual**.
+QR instead works directly with $A$ and inherits only the intrinsic
+conditioning from {prf:ref}`thm-ls-perturbation`. Comparing the two:
+
+- **Small residual** ($\tan\theta \approx 0$): the problem is $\kappa_2(A)$
+  conditioned. QR delivers that. Normal equations still pay $\kappa_2(A)^2$,
+  so they are **strictly worse**, sometimes catastrophically.
+- **Large residual**: the problem itself is already $\kappa_2(A)^2$
+  conditioned. Normal equations are no worse than the inherent sensitivity;
+  QR offers no accuracy advantage here.
+
+The asymmetry is the point: QR is never worse and is much better whenever the
+residual is small, which is the typical regime for a well-posed fitting
+problem.
+:::
+
+## Algorithm
+
+The QR-based algorithm is:
 
 1. **Factor:** compute $A = Q_1 R_1$ via Householder
 2. **Transform:** compute $\tilde{\mathbf{b}} = Q_1^T\mathbf{b}$
 3. **Solve:** back substitution on $R_1\hat{\mathbf{x}} = \tilde{\mathbf{b}}$
 
 Since we never form $A^T A$, the effective condition number is $\kappa(A)$
-rather than $\kappa(A)^2$.
+rather than $\kappa(A)^2$ in the small-residual regime.
 
 :::{prf:remark} Normal Equations
 :label: rmk-normal-equations

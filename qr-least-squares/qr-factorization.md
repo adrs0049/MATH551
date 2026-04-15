@@ -69,8 +69,15 @@ it to be $I$.
 
 Gram-Schmidt constructs QR by orthogonalizing columns via subtraction, which
 is numerically unstable (see [loss of orthogonality](gram-schmidt.md#ex-gs-nearly-parallel)).
-The stable alternative is to triangularize $A$ by *multiplying* with orthogonal
-matrices:
+The stable alternative is the same idea as column elimination in
+[Gaussian elimination](../direct-methods/gaussian-elimination.md), with one
+substitution: instead of eliminating below the diagonal by subtracting
+multiples of rows (recorded as triangular factors $L_k$), we eliminate by
+applying orthogonal reflectors $H_k$ that zero entries below the diagonal
+of each column. The triangular factors of GE are cheap but can amplify
+errors; the orthogonal reflectors of Householder preserve norms and do not.
+
+Concretely, we triangularize $A$ by multiplying with orthogonal matrices:
 
 $$
 Q_n \cdots Q_2 Q_1 A = R \quad \Rightarrow \quad A = \underbrace{Q_1^T Q_2^T \cdots Q_n^T}_{Q} R
@@ -287,60 +294,85 @@ $$
 \text{fl}(H_k B) = (H_k + \delta H_k) B, \quad \|\delta H_k\| = O(\varepsilon_{\text{mach}})
 $$
 
-The perturbation $\delta H_k$ is small because $H_k$ is orthogonal:
-$\|H_k\|_2 = 1$, so no intermediate quantity is amplified. This is the
-critical difference from Gaussian elimination, where the elementary matrices
-$L_k$ can have large entries (the multipliers).
+To see why $\delta H_k$ is small, look at how $H_k B = B - 2 v_k (v_k^T B)$
+is actually computed. The two intermediate quantities are the row vector
+$w^T = v_k^T B$ and the rank-one update $2 v_k w^T$. Apply the standard
+floating-point error model:
 
-**Step 2: The perturbations compose linearly, not exponentially.**
+- $w^T$ is a row of dot products. Each computed entry $\hat{w}_j$ satisfies
+  $|\hat{w}_j - w_j| \le c\,\varepsilon\, \|v_k\|_2\, \|B e_j\|_2$ for a small
+  constant $c$. Since $\|v_k\|_2 = 1$, this is $O(\varepsilon)\,\|B\|_2$.
+- The subtraction $B - 2 v_k \hat{w}^T$ adds another $O(\varepsilon)\,\|B\|_2$
+  per entry from the multiply-add.
+
+Collecting both, the computed result equals $(H_k + \delta H_k) B$ with
+$\|\delta H_k\|_2 = O(\varepsilon)$. The constant does **not** depend on
+$\|B\|$ because $\|v_k\|_2 = 1$ and $H_k$ does not stretch any direction.
+
+Contrast this with Gaussian elimination. The elementary matrix
+$L_k = I + \ell_k e_k^T$ contains the multipliers
+$\ell_k = a_{ik}/a_{kk}$, which can be arbitrarily large when $|a_{kk}|$ is
+small. The analogous bound there carries a $\|L_k\|$ factor, which is
+exactly the growth factor that pivoting tries to control. Orthogonal $H_k$
+has $\|H_k\|_2 = 1$ unconditionally, so no such amplification appears.
+
+**Step 2: The perturbations compose additively, not multiplicatively.**
 
 After $n$ steps, the computed upper triangular factor $\hat{R}$ satisfies
 
 $$
-\hat{R} = (H_n + \delta H_n) \cdots (H_1 + \delta H_1) A
+\hat{R} = (H_n + \delta H_n) \cdots (H_1 + \delta H_1) A.
 $$
 
-Each perturbed reflector $H_k + \delta H_k$ is close to orthogonal. The
-product of $n$ nearly-orthogonal matrices is still nearly orthogonal:
+We claim the perturbed product equals $Q^T + E$ with
+$\|E\|_2 = O(n\varepsilon_{\text{mach}})$, where $Q^T = H_n \cdots H_1$. The
+key point is the $n$, not $2^n$.
+
+Start with two factors. Writing $\hat{H}_k = H_k + \delta H_k$ with
+$\|\delta H_k\|_2 = O(\varepsilon)$,
 
 $$
-(H_n + \delta H_n) \cdots (H_1 + \delta H_1) = Q^T + E, \quad \|E\| = O(n\varepsilon_{\text{mach}})
+\hat{H}_2 \hat{H}_1 = H_2 H_1 + H_2\, \delta H_1 + \delta H_2\, H_1 + \delta H_2\, \delta H_1.
 $$
 
-The errors accumulate *additively* (factor $n$), not multiplicatively
-(factor $2^n$). This is because each orthogonal factor has unit norm, so
-the error at step $k$ is not amplified by subsequent steps. Concretely, if
-$x$ carries an error $e$, then after multiplication by an orthogonal $Q$
-the error is $\|Q(x+e) - Qx\|_2 = \|Qe\|_2 = \|e\|_2$: the perturbation
-is transported, never magnified. Contrast this with a general matrix $M$,
-where $\|M e\|_2$ can be as large as $\|M\|_2 \|e\|_2$, and a chain of $n$
-such steps can blow the error up by $\|M\|_2^n$.
+The last term is $O(\varepsilon^2)$ and we drop it. The two first-order terms
+each contain a single $\delta H_k$ flanked by orthogonal factors. Since
+$\|H_k\|_2 = 1$, the flanking does not change the size:
+$\|H_2\, \delta H_1\|_2 = \|\delta H_1\|_2 = O(\varepsilon)$, and likewise
+for the other term. The total error is bounded by
+$\|\delta H_1\|_2 + \|\delta H_2\|_2 = O(\varepsilon)$, the **sum** of the
+factor errors rather than a product.
 
-Why does this turn multiplication into addition? Expand the perturbed product:
+If $H_1, H_2$ were not orthogonal the sandwich $H_2\, \delta H_1$ would
+scale by $\|H_2\|_2$, and with $n$ factors the analogous bound carries a
+$\prod \|H_j\|_2$ amplification. Orthogonality is exactly what kills this
+multiplicative blow-up.
 
-$$
-(H_n + \delta H_n) \cdots (H_1 + \delta H_1) = H_n \cdots H_1 + \sum_{k=1}^n H_n \cdots H_{k+1}\, \delta H_k\, H_{k-1} \cdots H_1 + O(\varepsilon^2)
-$$
-
-The leading term is $Q^T = H_n \cdots H_1$. Each first-order term is a single
-$\delta H_k$ sandwiched between orthogonal factors. Since orthogonal matrices
-have unit norm, the sandwich does not change the size:
-$\|H_n \cdots H_{k+1}\, \delta H_k\, H_{k-1} \cdots H_1\|_2 = \|\delta H_k\|_2 = O(\varepsilon)$.
-Summing $n$ such terms gives $O(n\varepsilon)$ — addition, not multiplication.
-For non-orthogonal factors the sandwich would scale each term by
-$\prod \|M_j\|_2$, and the sum would inherit that multiplicative blow-up.
+Extending to $n$ factors gives the same conclusion: each of the $n$
+first-order terms is a single $\delta H_k$ flanked by orthogonal matrices,
+contributing $O(\varepsilon)$, so the total is $O(n\varepsilon)$.
 
 **Step 3: Rewriting as a backward error on $A$.**
 
-From Step 2: $\hat{R} = (Q^T + E)A$, so $Q\hat{R} = A + QEA$. Setting
-$\delta A = QEA$:
+The computed $\hat{Q}$ is implicitly defined as the inverse of the product
+of computed reflectors:
+$\hat{Q}^T := \hat{H}_n \cdots \hat{H}_1 = Q^T + E$. Transposing,
+$\hat{Q} = Q + E^T$. Substituting into $\hat{Q}\hat{R}$ and using
+$\hat{R} = \hat{Q}^T A = (Q^T + E)A$ from Step 2,
 
 $$
-\frac{\|\delta A\|}{\|A\|} = \frac{\|QEA\|}{\|A\|} \leq \|Q\| \cdot \|E\| = O(n\varepsilon_{\text{mach}})
+\hat{Q}\hat{R} = (Q + E^T)(Q^T + E) A
+= A + (QE + E^T Q^T) A + O(\varepsilon^2),
 $$
 
-since $\|Q\|_2 = 1$. This gives $\hat{Q}\hat{R} = A + \delta A$ with
-$\|\delta A\|/\|A\| = O(n\varepsilon_{\text{mach}})$.
+where we used $QQ^T = I$. Setting
+$\delta A = (QE + E^T Q^T) A$, the relative backward error satisfies
+
+$$
+\frac{\|\delta A\|}{\|A\|} \leq 2\|Q\|_2\, \|E\|_2 = O(n\varepsilon_{\text{mach}}),
+$$
+
+since $\|Q\|_2 = 1$.
 
 **Takeaway.** The proof works because orthogonal matrices have three
 properties that prevent error growth: unit norm ($\|Q\|_2 = 1$, no
@@ -358,44 +390,58 @@ $O(\varepsilon_{\text{mach}})$ regardless of conditioning.
 ## Why Orthogonal Transformations Are Ideal
 
 The stability of Householder QR is not accidental. It reflects a deeper
-principle about orthogonal matrices.
+principle: **errors under composition of orthogonal matrices add, they do
+not multiply.**
 
-:::{prf:remark} Orthogonal Transformations and Numerical Stability
-:label: rmk-orthogonal-stability
+For a single orthogonal $Q$ this is obvious. If $x$ carries an error $e$,
+then
 
-For orthogonal $Q$ (i.e., $Q^TQ = I$):
+$$
+\|Q(x+e) - Qx\|_2 = \|Qe\|_2 = \|e\|_2.
+$$
 
-1. $\kappa_2(Q) = 1$: perfectly conditioned.
-2. $\|Qx\|_2 = \|x\|_2$: preserves lengths.
-3. No cancellation in $Qx$: errors do not amplify.
+The error is transported, never magnified. The composition property is the
+consequence we cashed in during Step 2 of
+{prf:ref}`thm-householder-stability`. The perturbed product expands to
 
-Multiplying by an orthogonal matrix cannot make a problem worse. This is why
-orthogonal transformations are the tool of choice throughout numerical linear
-algebra, from QR factorization to eigenvalue algorithms.
-:::
+$$
+(H_n + \delta H_n) \cdots (H_1 + \delta H_1)
+= H_n \cdots H_1
++ \sum_{k=1}^{n} H_n \cdots H_{k+1}\, \delta H_k\, H_{k-1} \cdots H_1
++ O(\varepsilon^2).
+$$
 
-:::{prf:remark} The Parallel: GE to LU, Householder to QR
-:label: rmk-ge-householder-parallel
-:class: dropdown
+For orthogonal $H_k$ each summand has norm $\|\delta H_k\|_2$ because the
+flanking factors have unit norm, so the total first-order error is bounded
+by
 
-Both factorizations follow the same pattern: transform $A$ column by column,
-recording the operations as matrix factors.
+$$
+\sum_{k=1}^{n} \|\delta H_k\|_2 = O(n\varepsilon).
+$$
 
-| Algorithm | Step $k$ | Records | Result |
-|-----------|----------|---------|--------|
-| Gaussian elimination | Subtracts multiples of row $k$ from rows below | Multipliers in $L$ | $U$ |
-| Householder | Reflects column $k$ to zero entries below diagonal | Reflectors in $Q$ | $R$ |
+For general invertible factors $M_k$ the same expansion holds, but the
+sandwich inequality gives
 
-For GE: each elementary row operation is a lower triangular matrix $L_k$, and
-the product $L = L_1^{-1} L_2^{-1} \cdots L_n^{-1}$ collects the multipliers.
+$$
+\| M_n \cdots M_{k+1}\, \delta M_k\, M_{k-1} \cdots M_1 \|_2
+\leq \|\delta M_k\|_2 \prod_{j \neq k} \|M_j\|_2,
+$$
 
-For Householder: each reflection is an orthogonal matrix $H_k$, and the product
-$Q = H_1 H_2 \cdots H_n$ is orthogonal.
+so the total error is bounded by
 
-The key difference: the elementary matrices in GE are triangular (cheap but can
-amplify errors), while the Householder reflectors are orthogonal (preserve
-norms, no error amplification).
-:::
+$$
+\sum_{k=1}^{n} \|\delta M_k\|_2 \prod_{j \neq k} \|M_j\|_2
+= O\!\left( \varepsilon \prod_{j=1}^{n} \|M_j\|_2 \right),
+$$
+
+multiplicative in the factor norms. If each $\|M_j\|_2 = \|M\|_2$, this is
+$O(\varepsilon \|M\|_2^n)$, the exponential blow-up that orthogonality
+avoids.
+
+This is why orthogonal transformations are the tool of choice throughout
+numerical linear algebra, from QR factorization to eigenvalue algorithms:
+they are the only family of matrices for which long sequences of operations
+do not amplify rounding errors.
 
 ## Solving Linear Systems with QR
 
