@@ -392,8 +392,6 @@ transformed right-hand side. The coefficient-decay theorem of
 spectral rate determined by the smoothness of the data. Combine the
 three and you get a solver that is fast, accurate, and *self-sizing*.
 
-## References
-
 ```{bibliography}
 :filter: docname in docnames
 ```

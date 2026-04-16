@@ -350,8 +350,6 @@ $\max_x |\omega(x)|$ small is the entire point of the next section: equispaced
 nodes leave $|\omega|$ enormous near the endpoints (Runge), while Chebyshev
 nodes minimize it.
 
-## References
-
 ```{bibliography}
 :filter: docname in docnames
 ```

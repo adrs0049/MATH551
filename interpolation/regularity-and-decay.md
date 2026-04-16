@@ -245,8 +245,6 @@ without overshoot.
 **If you must approximate discontinuous data, split the domain at the
 jumps and do piecewise interpolation on each smooth piece.**
 
-## References
-
 ```{bibliography}
 :filter: docname in docnames
 ```

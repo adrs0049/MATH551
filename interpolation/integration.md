@@ -184,8 +184,6 @@ $C^2$ integrand both rules eventually drop algebraically, but
 Clenshaw–Curtis benefits from each extra derivative the integrand has,
 while trapezoid is permanently stuck at second order.
 
-## References
-
 ```{bibliography}
 :filter: docname in docnames
 ```
