@@ -120,7 +120,7 @@ geometric. The reward is dramatic. The cost is two-fold:
 
 1. **Density.** $L_N$ is dense, so each solve costs $O(N^3)$ instead of
    $O(N)$ for tridiagonal FD.
-2. **Conditioning.** From [§4](differentiation.md), $\kappa(D_N^2) \sim N^4$.
+2. **Conditioning.** From [§5](differentiation.md), $\kappa(D_N^2) \sim N^4$.
    Backward stability of `solve` then bounds the achievable accuracy at
    $\kappa(L_N) \cdot \varepsilon_{\mathrm{mach}} \sim N^4 \cdot 10^{-16}$.
    Pushing $N$ much above $\sim 10^3$ in double precision is hopeless.

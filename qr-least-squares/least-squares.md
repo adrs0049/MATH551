@@ -14,6 +14,12 @@ downloads:
 
 # Least Squares Problems
 
+:::{note} Optional
+This section is optional reading. It leans more heavily on linear algebra
+than the rest of the chapter and is not required by anything that
+follows.
+:::
+
 :::{tip} Big Idea
 The least squares problem $\min \|A\mathbf{x} - \mathbf{b}\|$ arises whenever a
 linear system is not exactly solvable. There are two cases:

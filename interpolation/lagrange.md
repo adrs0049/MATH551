@@ -20,8 +20,10 @@ representations of the same polynomial: its values $\{f_j\}$ at $n+1$ nodes
 and its coefficients $\{c_j\}$ in some basis of $\mathbb{P}_n$. The
 Vandermonde matrix is that change-of-basis map. In the **monomial** basis
 this map is catastrophically ill-conditioned. In the **Lagrange** basis it is
-the identity, but naive evaluation is unstable. The **barycentric** formula
-is the only practical way to evaluate a Lagrange interpolant.
+the identity, but naive evaluation is unstable. The naive Lagrange
+evaluation and the Vandermonde linear solve are numerically unstable for
+moderate $n$ and are not the algorithms used in practice. The
+**barycentric** formula is.
 :::
 
 ## The Interpolation Problem
@@ -205,13 +207,18 @@ def lagrange_basis(j, x, nodes):
     return out
 
 fig, ax = plt.subplots(figsize=(7, 4))
+total = np.zeros_like(xx)
 for j in range(n+1):
-    ax.plot(xx, lagrange_basis(j, xx, x_nodes), label=f'$\\ell_{j}$')
+    lj = lagrange_basis(j, xx, x_nodes)
+    line, = ax.plot(xx, lj, label=f'$\\ell_{j}$')
+    ax.plot(x_nodes[j], 1, 'o', color=line.get_color(), ms=6)
+    total += lj
+ax.plot(xx, total, 'k--', lw=1.6, label=r'$\sum_j \ell_j$')
 ax.plot(x_nodes, np.zeros_like(x_nodes), 'ko', ms=5)
 ax.axhline(1, color='gray', lw=0.5)
 ax.axhline(0, color='gray', lw=0.5)
 ax.set_xlabel('$x$')
-ax.set_ylim([-0.7, 1.1])
+ax.set_ylim([-0.7, 1.2])
 ax.set_title(f'Lagrange basis polynomials, $n={n}$')
 ax.legend(ncol=3, fontsize=9, loc='lower center')
 plt.tight_layout()
@@ -233,9 +240,43 @@ $$
 \lambda_j = \frac{1}{\prod_{k \ne j}(x_j - x_k)}.
 $$
 
-Then $\ell_j(x) = \ell(x)\, \lambda_j / (x - x_j)$. Substituting and using the
-fact that the $\ell_j$ are a partition of unity ($\sum_j \ell_j(x) = 1$) gives
-the **second barycentric formula**:
+Then $\ell_j(x) = \ell(x)\, \lambda_j / (x - x_j)$, which expresses each
+basis function through the common polynomial $\ell(x)$ and its weight
+$\lambda_j$. Combining this factorisation with the following basic
+property of the Lagrange basis gives the second barycentric formula.
+
+:::{prf:lemma} Partition of unity
+:label: lem-pou
+
+For any distinct nodes $x_0, \ldots, x_n$, the Lagrange basis satisfies
+
+$$
+\sum_{j=0}^n \ell_j(x) \;\equiv\; 1 \qquad \text{for all } x \in \mathbb{R}.
+$$
+:::
+
+:::{prf:proof}
+:class: dropdown
+
+Consider the data $f_j = 1$ at each node $x_j$. There are *two*
+polynomials in $\mathbb{P}_n$ that match this data:
+
+- The constant polynomial $p(x) \equiv 1$, which obviously satisfies
+  $p(x_j) = 1$ at every $x_j$ and has degree $0 \le n$.
+- The Lagrange interpolant
+  $q(x) = \sum_{j=0}^n 1 \cdot \ell_j(x) = \sum_{j=0}^n \ell_j(x)$,
+  which by construction satisfies $q(x_j) = \ell_j(x_j) = 1$ and is a
+  sum of polynomials of degree $\le n$.
+
+By the uniqueness half of [](#thm-interp-existence), there is only
+*one* polynomial in $\mathbb{P}_n$ matching the data, so $p \equiv q$
+as polynomials. Equality of polynomials means equality at every $x$,
+not just at the nodes:
+
+$$
+1 \;=\; \sum_{j=0}^n \ell_j(x) \qquad \text{for all } x \in \mathbb{R}.
+$$
+:::
 
 :::{prf:proposition} Barycentric Interpolation Formula
 :label: prop-bary
@@ -247,108 +288,148 @@ p_n(x) = \frac{\displaystyle\sum_{j=0}^n \frac{\lambda_j}{x - x_j}\, f_j}
 $$
 :::
 
-Once the weights $\lambda_j$ are computed once in $O(n^2)$, each evaluation
-costs $O(n)$. For Chebyshev nodes (next section) the weights have a
-trivial closed form $\lambda_j = (-1)^j \delta_j$ with $\delta_j = \tfrac12$
-at the endpoints and $1$ otherwise. No precomputation at all.
+:::{prf:proof}
+:class: dropdown
 
-### Naive Lagrange vs. Barycentric
+Start from the Lagrange formula and substitute
+$\ell_j(x) = \ell(x)\, \lambda_j / (x - x_j)$:
+
+$$
+p_n(x) \;=\; \sum_{j=0}^n f_j\, \ell_j(x)
+\;=\; \ell(x) \sum_{j=0}^n \frac{\lambda_j}{x - x_j}\, f_j.
+$$
+
+The partition of unity identity $\sum_j \ell_j(x) = 1$, with the same
+substitution applied, gives
+
+$$
+1 \;=\; \sum_{j=0}^n \ell_j(x)
+\;=\; \ell(x) \sum_{j=0}^n \frac{\lambda_j}{x - x_j},
+\qquad \text{so} \qquad
+\ell(x) \;=\; \frac{1}{\displaystyle \sum_{j=0}^n \frac{\lambda_j}{x - x_j}}.
+$$
+
+Substituting this expression for $\ell(x)$ into the formula for $p_n$
+eliminates the prefactor and produces the ratio in the proposition. At
+a node $x = x_j$ both sums share a $1/(x - x_j)$ singularity that
+cancels in the ratio, leaving $p_n(x_j) = f_j$.
+:::
+
+Once the weights $\lambda_j$ are computed once in $O(n^2)$, each
+evaluation costs $O(n)$.
+
+### First vs. Second Barycentric Formula
+
+The same derivation produces a **first barycentric formula** that we
+mostly skip but is worth naming:
+
+$$
+p_n(x) = \ell(x) \sum_{j=0}^n \frac{\lambda_j}{x - x_j}\, f_j,
+\qquad \ell(x) = \prod_{k=0}^n (x - x_k).
+$$
+
+Both formulas evaluate the same polynomial; they differ only in numerical
+behaviour, and the difference matters at the boundary of where they apply.
+
+- **Second formula** (the one in [](#prop-bary)). Forward-stable for
+  $x \in [-1,1]$ at Chebyshev nodes. The weights appear in both the
+  numerator and the denominator, so multiplying every $\lambda_j$ by a
+  common factor leaves $p_n(x)$ unchanged. This **scale invariance** lets
+  us rescale the $\lambda_j$ to keep them in floating-point range no
+  matter how large $n$ grows. The closed-form Chebyshev weights $\pm 1$
+  (with $\pm \tfrac12$ at the endpoints) are exactly the result of using
+  this freedom to strip a common factor of $2^{n-1}/n$ off the raw
+  expression.
+
+- **First formula.** Backward-stable, including for $x \notin [-1,1]$ and
+  for non-Chebyshev nodes. Use it when extrapolating, or when your nodes
+  come from a distribution far from Chebyshev (e.g.\ equispaced — though
+  for equispaced nodes the underlying *problem* is so ill-conditioned that
+  no choice of evaluation algorithm can save it). The price is that the
+  $\ell(x)$ prefactor is now outside the sum, so the formula is *not*
+  scale invariant: rescaling $\lambda_j$ rescales $p_n(x)$. The raw
+  weights $\lambda_j$ also grow geometrically in $n$ for almost any node
+  family, so overflow is a real concern.
+
+In this chapter we work exclusively with Chebyshev nodes and evaluate on
+$[-1,1]$, so the second formula is the right default.
+
+### A Concrete Example
+
+Here is the Lagrange interpolant of $f(x) = e^{\sin 5x}$ through $n+1$
+nodes on $[-1,1]$, evaluated via the barycentric formula from
+[](#prop-bary). The left panel uses **equispaced** nodes; the right
+panel uses the **Chebyshev nodes** $x_j = \cos(j\pi/n)$, properly
+motivated in [](point-choice.md). For this smooth $f$ both work fine;
+the visual difference becomes important once $f$ is harder.
 
 ```{code-cell} python
 :tags: [hide-input]
 
-def lagrange_naive(xeval, x, f):
+f = lambda x: np.exp(np.sin(5*x))
+
+def bary_weights(x):
     n = len(x)
-    out = np.zeros_like(xeval)
+    w = np.ones(n)
     for j in range(n):
-        Lj = np.ones_like(xeval)
         for i in range(n):
             if i != j:
-                Lj *= (xeval - x[i]) / (x[j] - x[i])
-        out += f[j] * Lj
-    return out
-
-def bary_weights_cheb(n):
-    w = np.ones(n+1)
-    w[0] = 0.5; w[-1] = 0.5
-    w[1::2] *= -1
+                w[j] /= (x[j] - x[i])
     return w
 
-def bary(xeval, x, f, w):
+def bary_eval(xeval, x, fvals, w):
     diff = xeval[:, None] - x[None, :]
     at_node = np.isclose(diff, 0.0)
-    diff[at_node] = 1.0
+    diff = np.where(at_node, 1.0, diff)
     terms = w / diff
-    out = (terms * f).sum(axis=1) / terms.sum(axis=1)
-    r, c = np.where(at_node)
-    out[r] = f[c]
+    out = (terms * fvals).sum(axis=1) / terms.sum(axis=1)
+    row, col = np.where(at_node)
+    out[row] = fvals[col]
     return out
 
-ns = np.arange(10, 201, 10)
-xe = np.linspace(-0.999, 0.999, 200)
-true = np.exp(np.sin(5*xe))
-err_naive, err_bary = [], []
-for n in ns:
-    xn = np.cos(np.pi * np.arange(n+1) / n)
-    fn = np.exp(np.sin(5*xn))
-    w = bary_weights_cheb(n)
-    err_naive.append(np.max(np.abs(lagrange_naive(xe, xn, fn) - true)))
-    err_bary.append(np.max(np.abs(bary(xe, xn, fn, w) - true)))
+xx = np.linspace(-1, 1, 400)
+ns = [6, 10, 14]
+colors = ['C0', 'C1', 'C3']
 
-fig, ax = plt.subplots(figsize=(7, 4))
-ax.semilogy(ns, err_naive, 'o-', label='naive Lagrange')
-ax.semilogy(ns, err_bary, 's-', label='barycentric')
-ax.axhline(np.finfo(float).eps, color='k', ls=':', alpha=0.6,
-           label=r'$\varepsilon_{\mathrm{mach}}$')
-ax.set_xlabel('$n$')
-ax.set_ylabel(r'max error  $|p_n - f|$')
-ax.set_title(r'Evaluating the Chebyshev interpolant of $e^{\sin 5x}$')
-ax.legend()
+fig, axes = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
+
+# (a) equispaced nodes
+ax = axes[0]
+ax.plot(xx, f(xx), 'k', lw=2, label=r'$f$')
+for n, color in zip(ns, colors):
+    xn = np.linspace(-1, 1, n+1)
+    fn = f(xn)
+    wn = bary_weights(xn)
+    ax.plot(xx, bary_eval(xx, xn, fn, wn), color=color, lw=1.2,
+            label=f'$p_{{{n}}}$')
+    ax.plot(xn, fn, 'o', color=color, ms=4)
+ax.set_xlabel('$x$')
+ax.set_title('equispaced nodes')
+ax.legend(fontsize=9, loc='lower center', ncol=2)
+
+# (b) Chebyshev nodes
+ax = axes[1]
+ax.plot(xx, f(xx), 'k', lw=2, label=r'$f$')
+for n, color in zip(ns, colors):
+    xn = np.cos(np.pi * np.arange(n+1) / n)
+    fn = f(xn)
+    wn = bary_weights(xn)
+    ax.plot(xx, bary_eval(xx, xn, fn, wn), color=color, lw=1.2,
+            label=f'$p_{{{n}}}$')
+    ax.plot(xn, fn, 'o', color=color, ms=4)
+ax.set_xlabel('$x$')
+ax.set_title('Chebyshev nodes')
+ax.legend(fontsize=9, loc='lower center', ncol=2)
+
+fig.suptitle(r'Lagrange interpolant of $f(x) = e^{\sin 5x}$')
 plt.tight_layout()
 plt.show()
 ```
 
-The mathematical interpolant is the same; only the *evaluation algorithm*
-differs. The naive formula loses digits as $n$ grows because the products
-$\prod_i (x - x_i)$ overflow and underflow against each other. The
-barycentric formula is backward stable; see {cite:t}`Higham2004` and
-{cite:t}`BerrutTrefethen2004` for the analysis.
-
-## The Interpolation Error
-
-How well does $p_n$ approximate a function $f$ from which the values
-$f_j = f(x_j)$ are sampled?
-
-:::{prf:theorem} Interpolation Error Formula
-:label: thm-interp-error
-
-If $f \in C^{n+1}[a,b]$ and $p_n$ interpolates $f$ at $x_0, \ldots, x_n \in
-[a,b]$, then for every $x \in [a,b]$ there exists $\xi \in [a,b]$ with
-
-$$
-f(x) - p_n(x) = \frac{f^{(n+1)}(\xi)}{(n+1)!} \prod_{j=0}^n (x - x_j).
-$$
-:::
-
-:::{prf:proof}
-:class: dropdown
-
-Fix $x \notin \{x_j\}$ and define
-$g(t) = f(t) - p_n(t) - K \prod_j (t - x_j)$ with $K$ chosen so $g(x) = 0$.
-Then $g$ has $n+2$ zeros in $[a,b]$ (the $n+1$ nodes plus $x$). By Rolle's
-theorem, $g^{(n+1)}$ has a zero $\xi$. Differentiating: $g^{(n+1)}(t) =
-f^{(n+1)}(t) - K(n+1)!$, so $K = f^{(n+1)}(\xi)/(n+1)!$.
-:::
-
-Two factors control the error:
-
-1. **Smoothness of $f$**, through $f^{(n+1)}(\xi)$.
-2. **Node placement**, through the **node polynomial** $\omega(x) = \prod (x - x_j)$.
-
-The node polynomial is the lever we control. Choosing the nodes to make
-$\max_x |\omega(x)|$ small is the entire point of the next section: equispaced
-nodes leave $|\omega|$ enormous near the endpoints (Runge), while Chebyshev
-nodes minimize it.
+The interpolant passes through every data point by construction, and as
+$n$ grows it tracks $f$ more and more closely across the interval. Whether
+this convergence continues as $n \to \infty$, and how fast, depends on both
+$f$ and the choice of nodes. We take that up in the next two sections.
 
 ```{bibliography}
 :filter: docname in docnames

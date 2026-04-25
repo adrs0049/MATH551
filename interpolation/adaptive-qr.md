@@ -20,20 +20,30 @@ solution. Build the QR factorisation of the discretised system one column
 at a time, and stop as soon as the *residual* of the truncated solution
 drops below tolerance. The residual at every step is read off for free
 from the transformed right-hand side, and the almost-banded structure of
-the ultraspherical operator from [§6](spectral-bvp.md) makes each Givens
+the ultraspherical operator from [§7](spectral-bvp.md) makes each Givens
 update $O(1)$ work. The result is a single-pass solver that returns both
 the solution and the smallest $N$ that resolves it.
 :::
 
-## The Stopping Idea
+## From Function-Space to System Adaptivity
 
-Why does watching the coefficient tail work? Because the
-[regularity-decay theorem](#thm-algebraic-decay) says that for a smooth
-$u$ the Chebyshev coefficients $\lvert c_k \rvert$ decay geometrically or
-algebraically to round-off. Once the tail has flattened at the noise
-floor, every higher coefficient contributes nothing more to
-$\|u - p_n\|_\infty$. The smallest $N$ at which this happens is the
-$N_{\mathrm{opt}}$ we want.
+For a *known* function $f$, the adaptive truncation in
+[](regularity-and-decay.md#alg-adaptive-cheb) already does what we want:
+sample, DCT, watch the coefficient tail, stop when it drops below
+tolerance. This section extends that idea to the *unknown* solution
+$u$ of the ultraspherical BVP system from [§7](spectral-bvp.md), where
+we cannot compute the coefficient tail directly because $u$ is what we
+are solving for.
+
+The substitute is the **residual** of the truncated linear system. As we
+build the QR factorisation of the discretised operator one column at a
+time, the residual of the solution truncated at column $N$ is read off
+for free from the transformed right-hand side. It plays the same role
+as the coefficient tail did for a known function: once the residual
+drops below tolerance, the current $N$ is sufficient and every
+additional column is wasted work. The almost-banded structure of the
+ultraspherical operator makes each Givens update $O(1)$, so the whole
+sweep costs $O(N)$.
 
 ```{code-cell} python
 :tags: [hide-input]
@@ -48,33 +58,11 @@ def vals2coeffs(v):
     c = fft.dct(v[::-1], type=1, norm='forward')
     c[1:n] *= 2
     return c
-
-n = 1024; x = chebpts(n)
-c_smooth = np.abs(vals2coeffs(np.exp(np.sin(5*x))))
-
-tol = 1e-14
-N_opt = next(k for k in range(len(c_smooth)) if c_smooth[k] < tol)
-
-fig, ax = plt.subplots(figsize=(7, 4.2))
-ax.semilogy(c_smooth + 1e-20, '.', ms=3, label=r'$|c_k|$ for $e^{\sin 5x}$')
-ax.axhline(tol, color='k', ls=':', label='tolerance')
-ax.axvline(N_opt, color='C3', ls='--',
-           label=f'$N_{{\\mathrm{{opt}}}} = {N_opt}$')
-ax.set_xlim(0, 80); ax.set_ylim(1e-18, 5)
-ax.set_xlabel('$k$'); ax.set_ylabel(r'$|c_k|$')
-ax.set_title('Stop where the tail crosses the tolerance')
-ax.legend(); plt.tight_layout(); plt.show()
 ```
-
-The rest of this section is the *systems analogue*. Instead of computing
-the coefficient tail of a known function, we are solving the
-ultraspherical system from [§6](spectral-bvp.md) for an *unknown*
-$\mathbf{c}$. The residual plays the role of the tail, and the QR
-factorisation gives it to us for free.
 
 ## The Discretised Problem
 
-We use the same first-order BVP as in [§6](spectral-bvp.md):
+We use the same first-order BVP as in [§7](spectral-bvp.md):
 
 $$
 u'(x) = f(x), \qquad u(-1) = \alpha, \qquad x \in [-1, 1].
@@ -140,9 +128,9 @@ $$
 (1 + x)\, u'(x) + u(x) = f(x), \qquad u(-1) = \alpha,
 $$
 
-a slight generalisation of the BVP from [§6](spectral-bvp.md). Using the
+a slight generalisation of the BVP from [§7](spectral-bvp.md). Using the
 multiplication operator from
-[§6](spectral-bvp.md#multiplication-operator-for-variable-coefficients),
+[§7](spectral-bvp.md#multiplication-operator-for-variable-coefficients),
 the discretised operator is
 
 $$
@@ -318,7 +306,7 @@ tolerance, *and* the solution at that $N$, in one sweep.
 
 ## Worked Example
 
-Take the same first-order problem as in [§6](spectral-bvp.md), with
+Take the same first-order problem as in [§7](spectral-bvp.md), with
 $f(x) = \cos(8x) + \cos(80\,e^x)$ and $u(-1) = 0$. The right-hand side
 contains a slow $\cos(8x)$ wave and a fast envelope $\cos(80 e^x)$. The
 solution $u = \int_{-1}^{x} f$ inherits a similar mix of scales, so the
@@ -384,7 +372,7 @@ same QR process.
 
 ## Why It Works, In One Sentence
 
-The almost-banded structure of [§6](spectral-bvp.md) keeps the per-column
+The almost-banded structure of [§7](spectral-bvp.md) keeps the per-column
 QR cost at $O(1)$. The orthogonality of $Q_j$ converts the question
 "how good is my truncated solution?" into a free read of one block of the
 transformed right-hand side. The coefficient-decay theorem of

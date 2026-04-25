@@ -788,6 +788,14 @@ plt.show()
 
 See the [Condition Number Estimation notebook](./CondNumberEst.ipynb) for a Python implementation.
 
+:::{prf:remark} $\infty$-norm version
+:label: rmk-hager-infty
+
+Applying Hager to $A^T$ estimates $\|A^{-1}\|_\infty$, since
+$\|B\|_\infty = \|B^T\|_1$. So Hager gives cheap $\kappa_1(A)$ or
+$\kappa_\infty(A)$ estimates; the 2-norm would need an SVD.
+:::
+
 :::{prf:remark} Why the 1-norm is sufficient
 :label: rmk-1-norm-sufficient
 :class: dropdown
@@ -828,6 +836,58 @@ is more expensive. Since Hager's algorithm is a practical tool for cheap error
 bounds, the 1-norm is the natural choice.
 :::
 
+### The weighted residual $\rho$
+
+LAPACK's a-posteriori error estimates (e.g. `xGERFS`) do not use
+$\|\mathbf{r}\|/\|\mathbf{b}\|$ but a slightly different and sharper quantity:
+
+$$
+\rho \;=\; \frac{\|\mathbf{r}\|}{\|A\| \, \|\hat{\mathbf{x}}\|}.
+$$
+
+This is the **weighted** (or **scaled**) residual. It equals
+$\|\mathbf{r}\|/\|\mathbf{b}\|$ up to a constant whenever
+$\|A\hat{\mathbf{x}}\| \approx \|\mathbf{b}\|$, but it is the *optimal
+backward error when perturbing $A$* (Rigal–Gaches 1967): $\hat{\mathbf{x}}$ is
+the exact solution of $(A + E)\hat{\mathbf{x}} = \mathbf{b}$ for some $E$
+with $\|E\|/\|A\| \le \rho$. A backward stable algorithm for a linear system
+is one where $\rho = O(\varepsilon_{\text{mach}})$.
+
+:::{prf:theorem} Golden Rule (weighted residual form)
+:label: thm-golden-rule-rho
+
+For a computed solution $\hat{\mathbf{x}}$ of $A\mathbf{x} = \mathbf{b}$,
+
+$$
+\frac{\|\hat{\mathbf{x}} - \mathbf{x}\|}{\|\hat{\mathbf{x}}\|}
+\;\le\; \kappa(A) \cdot \rho,
+\qquad \rho = \frac{\|\mathbf{r}\|}{\|A\|\,\|\hat{\mathbf{x}}\|}.
+$$
+:::
+
+:::{prf:proof}
+:class: dropdown
+
+From $\mathbf{r} = A(\mathbf{x} - \hat{\mathbf{x}})$ we get
+$\hat{\mathbf{x}} - \mathbf{x} = -A^{-1}\mathbf{r}$, hence
+$\|\hat{\mathbf{x}} - \mathbf{x}\| \le \|A^{-1}\|\,\|\mathbf{r}\|$. Divide by
+$\|\hat{\mathbf{x}}\|$ and multiply and divide by $\|A\|$:
+
+$$
+\frac{\|\hat{\mathbf{x}} - \mathbf{x}\|}{\|\hat{\mathbf{x}}\|}
+\le \|A^{-1}\| \frac{\|\mathbf{r}\|}{\|\hat{\mathbf{x}}\|}
+= \|A\|\|A^{-1}\| \cdot \frac{\|\mathbf{r}\|}{\|A\|\,\|\hat{\mathbf{x}}\|}
+= \kappa(A) \cdot \rho.
+$$
+:::
+
+Compared to the $\|\mathbf{r}\|/\|\mathbf{b}\|$ form, $\rho$ is computable
+without reference to $\mathbf{b}$ or $\mathbf{x}$ separately (only $A$,
+$\mathbf{r}$, and $\hat{\mathbf{x}}$ appear), and it combines cleanly with
+[Hager's estimator](#alg-hager) for $\kappa(A)$. Paired in the $\infty$-norm
+(see [](#rmk-hager-infty)), $\rho$ and $\kappa_\infty$ are the standard
+package for practical forward error bounds.
+
 :::{admonition} Practical Workflow
 :class: tip
 
@@ -835,15 +895,25 @@ bounds, the 1-norm is the natural choice.
 
 1. **Factor:** Compute $A = LU$ (or $A = QR$).
 2. **Solve:** Use the factorization to obtain $\hat{\mathbf{x}}$.
-3. **Estimate $\kappa(A)$:** Apply Hager's algorithm to the factorization. This costs only $O(n^2)$ extra. For QR, the same idea works: estimate $\|R^{-1}\|$ via triangular solves, then $\kappa(A) \approx \|A\| \cdot \|R^{-1}\|$.
+3. **Estimate $\kappa_\infty(A)$:** Apply [Hager's algorithm](#alg-hager) to
+   $A^T$ (see [](#rmk-hager-infty)). This costs only $O(n^2)$ extra. For QR,
+   the same idea works: estimate $\|R^{-1}\|$ via triangular solves, then
+   $\kappa(A) \approx \|A\| \cdot \|R^{-1}\|$.
 4. **Compute the residual:** $\mathbf{r} = \mathbf{b} - A\hat{\mathbf{x}}$.
-5. **Forward error bound:** By [](#prop-residual-backward-error) and [](#thm-sensitivity-linear-systems):
+5. **Weighted residual:**
+   $\rho = \|\mathbf{r}\|_\infty / (\|A\|_\infty \|\hat{\mathbf{x}}\|_\infty)$.
+   If $\rho \gtrsim \varepsilon_{\text{mach}}$ your solver lost backward
+   stability; otherwise proceed.
+6. **Forward error bound:** By [](#thm-golden-rule-rho),
 
-$$
-\frac{\|\hat{\mathbf{x}} - \mathbf{x}\|}{\|\mathbf{x}\|} \lesssim \kappa(A) \cdot \frac{\|\mathbf{r}\|}{\|\mathbf{b}\|}
-$$
+   $$
+   \frac{\|\hat{\mathbf{x}} - \mathbf{x}\|_\infty}{\|\hat{\mathbf{x}}\|_\infty}
+   \lesssim \kappa_\infty(A) \cdot \rho.
+   $$
 
-If $\kappa(A) \cdot \varepsilon_{\text{mach}} \gtrsim 1$, the answer may be meaningless.
+   If $\kappa_\infty(A) \cdot \varepsilon_{\text{mach}} \gtrsim 1$, the answer
+   may be meaningless.
 
-Steps 3-5 are essentially free compared to the $O(n^3)$ factorization, and they give you a **computable forward error bound**.
+Steps 3-6 are essentially free compared to the $O(n^3)$ factorization, and
+they give you a **computable forward error bound**.
 :::

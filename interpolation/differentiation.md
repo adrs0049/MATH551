@@ -12,7 +12,7 @@ downloads:
     title: Download PDF
 ---
 
-# Differentiation as a Linear Operator
+# Differentiation as a Matrix
 
 :::{tip} Big Idea
 Differentiation is *linear*. On the finite-dimensional space $\mathbb{P}_n$
@@ -200,7 +200,7 @@ The left panel is the structure of $D$ at $N = 16$: every entry is
 nonzero, and the corner entries dominate (the $(0,0)$ and $(N,N)$ entries
 equal $\pm (2N^2 + 1)/6$). Those large boundary entries are exactly what
 allows boundary conditions to influence the interior in spectral BVP
-solvers ([§6](spectral-bvp.md)).
+solvers ([§7](spectral-bvp.md)).
 
 The right panel is convergence on $f(x) = e^{\sin 5x}$, an entire
 function. Centered differences drop algebraically as $N^{-2}$. Chebyshev
@@ -227,34 +227,75 @@ $$
 p_n'(x) \;=\; \sum_{k=0}^{n-1} c'_k\, T_k(x).
 $$
 
-To get a recurrence, start from the trigonometric identity
-$T_k(\cos\theta) = \cos(k\theta)$. Differentiating $T_{k+1} - T_{k-1} =
-2T_k$ (which itself follows from the product-to-sum formulas) and using
-$T_k'(x) = k\, U_{k-1}(x)$ for the Chebyshev polynomials of the second
-kind, one derives the relation
+The derivation uses two standard identities relating $T_k$ to the
+Chebyshev polynomials of the **second kind**
 
 $$
-\frac{T_{k+1}'(x)}{k+1} - \frac{T_{k-1}'(x)}{k-1} \;=\; 2\,T_k(x).
+U_k(x) \;=\; \frac{\sin\big((k+1)\theta\big)}{\sin\theta},
+\qquad x = \cos\theta.
 $$
 
-Reading this as an equation between the coefficient vectors of $T_k$ and
-$T_k'$ gives a backward two-term recurrence for the derivative
-coefficients.
+The first identity expresses the derivative of $T_k$ in the $U$ basis,
+
+$$
+T_k'(x) \;=\; k\, U_{k-1}(x),
+$$
+
+which follows from differentiating $T_k(\cos\theta) = \cos(k\theta)$ by
+the chain rule. The second identity expresses $T_j$ back in the $U$
+basis,
+
+$$
+2\, T_j(x) \;=\; U_j(x) - U_{j-2}(x)
+\qquad (j \ge 0,\; U_{-1} = U_{-2} = 0),
+$$
+
+which follows from the product-to-sum formula for $\cos(j\theta)\sin\theta$.
+
+Now differentiate $p_n = \sum_k c_k T_k$ term by term with the first
+identity,
+
+$$
+p_n'(x) \;=\; \sum_{k=1}^n k\, c_k\, U_{k-1}(x).
+$$
+
+On the other hand, writing $p_n' = \sum_j c'_j\, T_j$ and substituting
+the second identity in the form $T_j = \tfrac{1}{2}(U_j - U_{j-2})$,
+
+$$
+p_n'(x)
+\;=\; \sum_j c'_j\, T_j(x)
+\;=\; \sum_j \frac{c'_j - c'_{j+2}}{2}\, U_j(x).
+$$
+
+The polynomial $p_n'$ has the same expansion in the $U$ basis under both
+forms, so the coefficients of each $U_j$ must match. Reindex the first
+sum by $k = m + 1$ so that $U_{k-1} = U_m$ contributes $(m+1)\, c_{m+1}$
+to the coefficient of $U_m$. Matching,
+
+$$
+\frac{c'_m - c'_{m+2}}{2} \;=\; (m+1)\, c_{m+1}
+\quad\Longleftrightarrow\quad
+c'_m \;=\; c'_{m+2} + 2(m+1)\, c_{m+1}.
+$$
+
+Setting $k = m + 1$ gives the backward two-term recurrence stated
+below.
 
 :::{prf:proposition} Coefficient-space differentiation
 :label: prop-coeff-diff
 
 Given the Chebyshev coefficients $c_0, c_1, \ldots, c_n$ of $p_n$, the
-coefficients $c'_0, c'_1, \ldots, c'_{n-1}$ of $p_n'$ are computed by
+coefficients $c'_0, c'_1, \ldots, c'_{n-1}$ of $p_n'$ satisfy
 
 $$
 c'_n = 0, \qquad c'_{n-1} = 2 n\, c_n,
 \qquad
-c'_{k-1} \;=\; c'_{k+1} + 2 k\, c_k \quad \text{for } k = n-1, n-2, \ldots, 1,
+c'_{k-1} \;=\; c'_{k+1} + 2 k\, c_k \quad (k = n-1, n-2, \ldots, 1),
 $$
 
-and finally $c'_0$ is halved if one uses the convention with a doubled
-$c_0$ entry. The recurrence is exact for $p_n \in \mathbb{P}_n$.
+and $c'_0$ is halved if one uses the convention with a doubled $c_0$
+entry. The recurrence is exact for $p_n \in \mathbb{P}_n$.
 :::
 
 This is **differentiation in the coefficient basis**. In matrix terms,
@@ -340,12 +381,18 @@ the same derivative.
 The bigger point of this section is one we will keep returning to.
 Polynomial calculus offers us a *choice of representation* for every
 operation, and we are free to pick whichever is cheapest. Sampling a
-function and multiplying two polynomials pointwise are easy in the value
-basis. Reading off smoothness from coefficient decay, truncating to
-degree $n$, and (as we will see in [§5](integration.md)) integrating
-against the Chebyshev weight are easy in the coefficient basis.
-Translating between the two costs a single DCT, that is $O(N \log N)$,
-so we move freely between them. The choice between value-space
-collocation and coefficient-space (ultraspherical) discretisation in
-[§6](spectral-bvp.md) is the same idea applied to BVPs, and it is what
-determines whether the resulting linear system is dense or banded.
+function and multiplying two polynomials pointwise are easy in the
+value basis. Reading off smoothness from coefficient decay, truncating
+to degree $n$, and integrating against the Chebyshev weight (as we saw
+in [§4](integration.md)) are easy in the coefficient basis. Translating
+between the two costs a single DCT, that is $O(N \log N)$, so we move
+freely between them.
+
+The same tension will reappear in later sections. Finding polynomial
+*roots* via an eigenvalue problem ([§6](roots.md)) produces a sparse,
+well-conditioned matrix in the Chebyshev basis and an ill-conditioned
+one in the monomial basis. Spectral BVP solvers ([§7](spectral-bvp.md))
+turn on exactly the same choice: value-space collocation gives a dense
+system, while a coefficient-space (ultraspherical) representation gives
+a banded one. In both cases, picking the right basis is what turns an
+intractable problem into a practical one.

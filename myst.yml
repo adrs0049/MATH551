@@ -135,14 +135,16 @@ project:
           title: "§2 Where to Place the Nodes"
         - file: interpolation/regularity-and-decay.md
           title: "§3 Regularity and Coefficient Decay"
-        - file: interpolation/differentiation.md
-          title: "§4 Differentiation as a Linear Operator"
         - file: interpolation/integration.md
-          title: "§5 Integration as a Linear Functional"
+          title: "§4 Integration as an Inner Product"
+        - file: interpolation/differentiation.md
+          title: "§5 Differentiation as a Matrix"
+        - file: interpolation/roots.md
+          title: "§6 Roots as Eigenvalues"
         - file: interpolation/spectral-bvp.md
-          title: "§6 Spectral Methods for BVPs"
+          title: "§7 Spectral Methods for BVPs"
         - file: interpolation/adaptive-qr.md
-          title: "§7 Adaptive QR"
+          title: "§8 Adaptive QR"
         - file: interpolation/exercises.md
           title: Exercises
     - file: neural-networks/index.md
