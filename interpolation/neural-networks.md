@@ -324,7 +324,7 @@ memory by $d = 50$. The network handles it with 64 hidden units
 throughout. [Demo 3 of the companion
 notebook](../notebooks/neural-network-examples.ipynb).
 
-## What this dictionary does not give
+## Summary
 
 Three caveats.
 

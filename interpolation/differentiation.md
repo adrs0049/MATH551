@@ -17,14 +17,13 @@ downloads:
 :::{tip} Big Idea
 Differentiation is *linear*. On the finite-dimensional space $\mathbb{P}_n$
 it is therefore a single matrix, and we can choose to write that matrix
-either in the **value basis** (acting on nodal values) or in the
-**coefficient basis** (acting on Chebyshev coefficients). Both
-representations differentiate the same polynomial. The value-space matrix
-$D$ is dense and reads "differentiate the global Lagrange interpolant".
-The coefficient-space matrix is banded and reads "shift Chebyshev indices
-down by one with weight $2k$". Different operations are easier in
-different representations, and we move freely between them through the
-DCT.
+either in the **coefficient basis** (acting on Chebyshev coefficients) or
+in the **value basis** (acting on nodal values). Both representations
+differentiate the same polynomial. The coefficient-space matrix is banded
+and reads "shift Chebyshev indices down by one with weight $2k$". The
+value-space matrix $D$ is dense and reads "differentiate the global
+Lagrange interpolant". Different operations are easier in different
+representations, and we move freely between them through the DCT.
 :::
 
 ## Two Pictures of Differentiation
@@ -43,179 +42,25 @@ $\mathbb{P}_n$ to itself, and the question is: what does its matrix look
 like in each of the two bases?
 
 A naming convention before we start. Throughout this section and the
-next we use "value space" and "coefficient space" as shorthand for two
+next we use "coefficient space" and "value space" as shorthand for two
 specific bases of $\mathbb{P}_n$:
 
+- **Coefficient space** is the **Chebyshev basis** $\{T_k\}$. The
+  coordinates are the Chebyshev coefficients $(c_0, \ldots, c_n)$.
 - **Value space** is the **Lagrange basis** $\{\ell_j\}$. The coordinates
   of a polynomial in this basis are literally its nodal values
   $(f_0, \ldots, f_n)$, since $p_n(x) = \sum_j f_j\, \ell_j(x)$.
-- **Coefficient space** is the **Chebyshev basis** $\{T_k\}$. The
-  coordinates are the Chebyshev coefficients $(c_0, \ldots, c_n)$.
 
 Both are bases of the same $(n+1)$-dimensional space $\mathbb{P}_n$. The
 DCT from [§2](point-choice.md) is precisely the change-of-basis matrix
-between them. The "value-space differentiation matrix" $D$ below
-represents differentiation in the Lagrange basis; the "coefficient-space"
-operator $\mathcal{D}$ represents the same map in the Chebyshev basis.
-
-## Differentiation in the Value Basis
-
-In the Lagrange (value) basis the polynomial is
-
-$$
-p_n(x) = \sum_{j=0}^n f_j\, \ell_j(x),
-$$
-
-so
-
-$$
-p_n'(x) = \sum_{j=0}^n f_j\, \ell_j'(x).
-$$
-
-Evaluating $p_n'$ at the same nodes $x_i$ gives
-
-$$
-p_n'(x_i) \;=\; \sum_{j=0}^n \ell_j'(x_i)\, f_j.
-$$
-
-This is a matrix-vector product. Define the **value-space differentiation
-matrix** $D \in \mathbb{R}^{(n+1)\times(n+1)}$ by
-
-:::{prf:definition} Value-space differentiation matrix
-:label: def-diff-matrix
-
-$$
-D_{ij} \;=\; \ell_j'(x_i),
-\qquad
-\big(D\,\mathbf{f}\big)_i \;=\; p_n'(x_i).
-$$
-:::
-
-The entries of $D$ are determined entirely by the *nodes*, not by $f$.
-Compute them once and you can differentiate any function sampled on those
-nodes by a single matrix-vector multiplication.
-
-### Closed-form entries from the barycentric formula
-
-Recall from [§1](lagrange.md) that the barycentric form of the Lagrange
-basis is
-
-$$
-\ell_j(x) \;=\; \ell(x)\, \frac{\lambda_j}{x - x_j},
-\qquad
-\ell(x) = \prod_{k=0}^n (x - x_k),
-\qquad
-\lambda_j = \frac{1}{\prod_{k \ne j}(x_j - x_k)}.
-$$
-
-Differentiating $\ell_j$ by the product rule and evaluating at $x = x_i$
-with $i \ne j$, the term containing $\ell(x_i) = 0$ drops out and one
-obtains, after some algebra,
-
-$$
-\ell_j'(x_i) \;=\; \frac{\lambda_j}{\lambda_i}\,\frac{1}{x_i - x_j},
-\qquad i \ne j.
-$$
-
-The diagonal entries follow from a separate trick: since the constant
-function $1$ is its own interpolant, $\sum_j \ell_j(x) \equiv 1$, so
-differentiating gives $\sum_j \ell_j'(x) \equiv 0$. Evaluated at $x =
-x_i$, this says the rows of $D$ sum to zero:
-
-$$
-D_{ii} \;=\; -\sum_{k \ne i} D_{ik}.
-$$
-
-:::{prf:proposition} Entries of $D$
-:label: prop-diff-entries
-
-For any distinct nodes $x_0, \ldots, x_n$ with barycentric weights
-$\lambda_j$,
-
-$$
-D_{ij} \;=\;
-\begin{cases}
-\dfrac{\lambda_j / \lambda_i}{x_i - x_j}, & i \ne j, \\[1ex]
-\displaystyle -\sum_{k \ne i} D_{ik}, & i = j.
-\end{cases}
-$$
-:::
-
-For Chebyshev nodes $x_j = \cos(j\pi/n)$ the barycentric weights are
-$\lambda_j = (-1)^j \delta_j$ with $\delta_0 = \delta_n = \tfrac12$ and
-$\delta_j = 1$ otherwise, so the formula evaluates without any extra
-work. The value-space matrix $D$ is dense: every output value $p_n'(x_i)$
-depends on every input value $f_j$. That is the price of using a global
-interpolant.
-
-```{code-cell} python
-:tags: [hide-input]
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-def cheb_diff_matrix(N):
-    if N == 0:
-        return np.zeros((1, 1)), np.zeros(1)
-    x = np.cos(np.pi * np.arange(N+1) / N)
-    c = np.ones(N+1); c[0] = 2; c[N] = 2; c[1::2] *= -1
-    X = np.outer(x, np.ones(N+1))
-    dX = X - X.T + np.eye(N+1)
-    D = np.outer(c, 1/c) / dX
-    D -= np.diag(D.sum(axis=1))
-    return D, x
-
-f  = lambda x: np.exp(np.sin(5*x))
-fp = lambda x: 5*np.cos(5*x) * np.exp(np.sin(5*x))
-
-fig, axes = plt.subplots(1, 2, figsize=(11, 4.4))
-
-D, _ = cheb_diff_matrix(16)
-im = axes[0].imshow(np.abs(D), cmap='viridis',
-                    norm=plt.matplotlib.colors.LogNorm())
-axes[0].set_title(r'Value-space matrix $|D|$, $N = 16$')
-plt.colorbar(im, ax=axes[0], fraction=0.046)
-
-Ns = np.arange(4, 81, 2)
-err_spec, err_fd2 = [], []
-for N in Ns:
-    D, x = cheb_diff_matrix(N)
-    err_spec.append(np.max(np.abs(D @ f(x) - fp(x))))
-    xu = np.linspace(-1, 1, N+1); h = xu[1] - xu[0]
-    fu = f(xu); df = np.empty_like(fu)
-    df[1:-1] = (fu[2:] - fu[:-2]) / (2*h)
-    df[0]  = (fu[1] - fu[0]) / h
-    df[-1] = (fu[-1] - fu[-2]) / h
-    err_fd2.append(np.max(np.abs(df - fp(xu))))
-
-axes[1].semilogy(Ns, err_spec, 'o-', label='Chebyshev $D$')
-axes[1].semilogy(Ns, err_fd2, 's-', label='2nd-order centred FD')
-axes[1].set_xlabel('$N$'); axes[1].set_ylabel(r"$\|D \mathbf{f} - f'\|_\infty$")
-axes[1].set_title(r"Convergence on $e^{\sin 5x}$")
-axes[1].legend()
-plt.tight_layout(); plt.show()
-```
-
-The left panel is the structure of $D$ at $N = 16$: every entry is
-nonzero, and the corner entries dominate (the $(0,0)$ and $(N,N)$ entries
-equal $\pm (2N^2 + 1)/6$). Those large boundary entries are exactly what
-allows boundary conditions to influence the interior in spectral BVP
-solvers ([§7](spectral-bvp.md)).
-
-The right panel is convergence on $f(x) = e^{\sin 5x}$, an entire
-function. Centered differences drop algebraically as $N^{-2}$. Chebyshev
-differentiation drops *geometrically*: it reaches machine precision near
-$N \approx 30$ and stays there. By the
-[regularity-decay](regularity-and-decay.md) dictionary, the
-differentiation error inherits the convergence rate of $p_n \to f$, with
-at most a single power of $N$ lost in differentiation. Same dictionary
-also predicts that on a non-smooth $f$ both schemes drop to algebraic and
-the spectral edge disappears.
+between them. The "coefficient-space" operator $\mathcal{D}$ below
+represents differentiation in the Chebyshev basis; the "value-space
+differentiation matrix" $D$ represents the same map in the Lagrange
+basis.
 
 ## Differentiation in the Coefficient Basis
 
-The same operator looks completely different when written in the
-Chebyshev basis $\{T_k\}$. Suppose
+In the Chebyshev (coefficient) basis the polynomial is
 
 $$
 p_n(x) \;=\; \sum_{k=0}^n c_k\, T_k(x).
@@ -380,13 +225,13 @@ $$
 \end{pmatrix},
 $$
 
-with non-trivial entries only on every other super-diagonal. Compare to
-$D$ in the value basis: there every entry is nonzero. The same
-operation, two bases, two completely different sparsity patterns.
+with non-trivial entries only on every other super-diagonal.
 
 ```{code-cell} python
 :tags: [hide-input]
 
+import numpy as np
+import matplotlib.pyplot as plt
 import scipy.fft as fft
 
 def chebpts(N): return np.cos(np.pi * np.arange(N+1)/N)
@@ -415,13 +260,183 @@ def coeff_diff_matrix(N):
     M[0, :] /= 2
     return M
 
-N = 16
-D_value,  _ = cheb_diff_matrix(N)
-D_coeff     = coeff_diff_matrix(N)
+D_coeff = coeff_diff_matrix(16)
+fig, ax = plt.subplots(figsize=(5.5, 5))
+ax.spy(D_coeff, markersize=6)
+ax.set_title(r'Coefficient-space $\mathcal{D}$ (banded), $N = 16$')
+plt.tight_layout(); plt.show()
+```
 
-# Verify both compute the same derivative
+Applying $\mathcal{D}$ costs $O(N)$ because of the bandedness. The two
+DCTs that go from values to coefficients and back each cost $O(N \log
+N)$, so the whole values $\to$ derivative-values pipeline is
+$O(N \log N)$.
+
+## Differentiation in the Value Basis
+
+In the Lagrange (value) basis the polynomial is
+
+$$
+p_n(x) = \sum_{j=0}^n f_j\, \ell_j(x),
+$$
+
+so
+
+$$
+p_n'(x) = \sum_{j=0}^n f_j\, \ell_j'(x).
+$$
+
+Evaluating $p_n'$ at the same nodes $x_i$ gives
+
+$$
+p_n'(x_i) \;=\; \sum_{j=0}^n \ell_j'(x_i)\, f_j.
+$$
+
+This is a matrix-vector product. Define the **value-space differentiation
+matrix** $D \in \mathbb{R}^{(n+1)\times(n+1)}$ by
+
+:::{prf:definition} Value-space differentiation matrix
+:label: def-diff-matrix
+
+$$
+D_{ij} \;=\; \ell_j'(x_i),
+\qquad
+\big(D\,\mathbf{f}\big)_i \;=\; p_n'(x_i).
+$$
+:::
+
+The entries of $D$ are determined entirely by the *nodes*, not by $f$.
+Compute them once and you can differentiate any function sampled on those
+nodes by a single matrix-vector multiplication.
+
+### Closed-form entries from the barycentric formula
+
+Recall from [§1](lagrange.md) that the barycentric form of the Lagrange
+basis is
+
+$$
+\ell_j(x) \;=\; \ell(x)\, \frac{\lambda_j}{x - x_j},
+\qquad
+\ell(x) = \prod_{k=0}^n (x - x_k),
+\qquad
+\lambda_j = \frac{1}{\prod_{k \ne j}(x_j - x_k)}.
+$$
+
+Differentiating $\ell_j$ by the product rule and evaluating at $x = x_i$
+with $i \ne j$, the term containing $\ell(x_i) = 0$ drops out and one
+obtains, after some algebra,
+
+$$
+\ell_j'(x_i) \;=\; \frac{\lambda_j}{\lambda_i}\,\frac{1}{x_i - x_j},
+\qquad i \ne j.
+$$
+
+The diagonal entries follow from a separate trick: since the constant
+function $1$ is its own interpolant, $\sum_j \ell_j(x) \equiv 1$, so
+differentiating gives $\sum_j \ell_j'(x) \equiv 0$. Evaluated at $x =
+x_i$, this says the rows of $D$ sum to zero:
+
+$$
+D_{ii} \;=\; -\sum_{k \ne i} D_{ik}.
+$$
+
+:::{prf:proposition} Entries of $D$
+:label: prop-diff-entries
+
+For any distinct nodes $x_0, \ldots, x_n$ with barycentric weights
+$\lambda_j$,
+
+$$
+D_{ij} \;=\;
+\begin{cases}
+\dfrac{\lambda_j / \lambda_i}{x_i - x_j}, & i \ne j, \\[1ex]
+\displaystyle -\sum_{k \ne i} D_{ik}, & i = j.
+\end{cases}
+$$
+:::
+
+For Chebyshev nodes $x_j = \cos(j\pi/n)$ the barycentric weights are
+$\lambda_j = (-1)^j \delta_j$ with $\delta_0 = \delta_n = \tfrac12$ and
+$\delta_j = 1$ otherwise, so the formula evaluates without any extra
+work. The value-space matrix $D$ is dense: every output value $p_n'(x_i)$
+depends on every input value $f_j$. That is the price of using a global
+interpolant.
+
+```{code-cell} python
+:tags: [hide-input]
+
+def cheb_diff_matrix(N):
+    if N == 0:
+        return np.zeros((1, 1)), np.zeros(1)
+    x = np.cos(np.pi * np.arange(N+1) / N)
+    c = np.ones(N+1); c[0] = 2; c[N] = 2; c[1::2] *= -1
+    X = np.outer(x, np.ones(N+1))
+    dX = X - X.T + np.eye(N+1)
+    D = np.outer(c, 1/c) / dX
+    D -= np.diag(D.sum(axis=1))
+    return D, x
+
+f  = lambda x: np.exp(np.sin(5*x))
+fp = lambda x: 5*np.cos(5*x) * np.exp(np.sin(5*x))
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4.4))
+
+D, _ = cheb_diff_matrix(16)
+im = axes[0].imshow(np.abs(D), cmap='viridis',
+                    norm=plt.matplotlib.colors.LogNorm())
+axes[0].set_title(r'Value-space matrix $|D|$, $N = 16$')
+plt.colorbar(im, ax=axes[0], fraction=0.046)
+
+Ns = np.arange(4, 81, 2)
+err_spec, err_fd2 = [], []
+for N in Ns:
+    D, x = cheb_diff_matrix(N)
+    err_spec.append(np.max(np.abs(D @ f(x) - fp(x))))
+    xu = np.linspace(-1, 1, N+1); h = xu[1] - xu[0]
+    fu = f(xu); df = np.empty_like(fu)
+    df[1:-1] = (fu[2:] - fu[:-2]) / (2*h)
+    df[0]  = (fu[1] - fu[0]) / h
+    df[-1] = (fu[-1] - fu[-2]) / h
+    err_fd2.append(np.max(np.abs(df - fp(xu))))
+
+axes[1].semilogy(Ns, err_spec, 'o-', label='Chebyshev $D$')
+axes[1].semilogy(Ns, err_fd2, 's-', label='2nd-order centred FD')
+axes[1].set_xlabel('$N$'); axes[1].set_ylabel(r"$\|D \mathbf{f} - f'\|_\infty$")
+axes[1].set_title(r"Convergence on $e^{\sin 5x}$")
+axes[1].legend()
+plt.tight_layout(); plt.show()
+```
+
+The left panel is the structure of $D$ at $N = 16$: every entry is
+nonzero, and the corner entries dominate (the $(0,0)$ and $(N,N)$ entries
+equal $\pm (2N^2 + 1)/6$). Those large boundary entries are exactly what
+allows boundary conditions to influence the interior in spectral BVP
+solvers ([§7](spectral-bvp.md)).
+
+The right panel is convergence on $f(x) = e^{\sin 5x}$, an entire
+function. Centered differences drop algebraically as $N^{-2}$. Chebyshev
+differentiation drops *geometrically*: it reaches machine precision near
+$N \approx 30$ and stays there. By the
+[regularity-decay](regularity-and-decay.md) dictionary, the
+differentiation error inherits the convergence rate of $p_n \to f$, with
+at most a single power of $N$ lost in differentiation. Same dictionary
+also predicts that on a non-smooth $f$ both schemes drop to algebraic and
+the spectral edge disappears.
+
+Compare to the coefficient-space matrix above: the value-space matrix
+has every entry nonzero, so applying $D$ costs $O(N^2)$, while the
+coefficient-space pipeline costs $O(N \log N)$. Both bases produce the
+same derivative to within rounding error.
+
+```{code-cell} python
+:tags: [hide-input]
+
+N = 16
+D_value, _ = cheb_diff_matrix(N)
+D_coeff    = coeff_diff_matrix(N)
+
 x = chebpts(N); v = f(x)
-deriv_via_value  = D_value @ v
+deriv_via_value = D_value @ v
 c = vals2coeffs(v)
 cprime = D_coeff @ c
 deriv_via_coeff = coeffs2vals(cprime)
@@ -438,12 +453,7 @@ print(f'max |D f - C^(-1) D_coeff C f|  =  {err:.2e}')
 ```
 
 Two basis choices, two completely different sparsity patterns, identical
-answer to within rounding error. The value-space matrix has every entry
-nonzero, so applying it costs $O(N^2)$. The coefficient-space matrix is
-strictly upper-triangular with non-trivial entries only on every other
-super-diagonal, so applying it costs $O(N)$. Wrapping it with two DCTs
-(values $\to$ coefficients, then back) gives a total of $O(N \log N)$ for
-the same derivative.
+answer to within rounding error.
 
 ## Choose the Basis That Makes the Operation Easy
 

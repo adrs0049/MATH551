@@ -155,19 +155,11 @@ still exponential in $d$.
 
 ## What Barron's bound buys
 
-Barron replaces *covering the spectrum* with *sampling it*. Monte
-Carlo has rate $\sqrt V / \sqrt n$ where $V$ is the variance of the
-integrand, regardless of $d$. The variance is controlled by $C_f$,
-the L¹ moment of $\hat f$, which for ridge-shaped functions is
-independent of $d$ because the spectrum sits on a 1D line.
-
-So the same accuracy-vs-cost trade reads, for a Barron-class target,
+For a Barron-class target the trade becomes
 
 $$
 n \;\sim\; \frac{C_f^2}{\varepsilon^2},
 $$
 
-with no $d$ in the exponent. The price is the slow $1/\sqrt n$ rate
-instead of $\varepsilon^{-1/k}$, but the prize is removing $d$ from
-the exponent altogether. For high-dimensional problems this is the
-trade we want.
+with no $d$ in the exponent. The price is the slow $1/\sqrt n$ rate;
+the prize is escaping the curse.
