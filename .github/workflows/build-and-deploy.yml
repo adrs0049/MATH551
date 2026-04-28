@@ -305,6 +305,8 @@ jobs:
         # hung earlier than expected).
         stdbuf -oL -eL jupyter-book build --execute --execute-parallel 1 --max-size-webp 0 --html > /tmp/html-build.log 2>&1 &
         BUILD_PID=$!
+        tail -n +1 -f /tmp/html-build.log &
+        TAIL_PID=$!
         LAST_COUNT=0
         STABLE_SINCE=0
         while kill -0 $BUILD_PID 2>/dev/null; do
@@ -356,7 +358,9 @@ jobs:
           sleep 1
         done
         wait $BUILD_PID 2>/dev/null || true
-        cat /tmp/html-build.log
+        # Give tail a moment to flush remaining lines, then stop it.
+        sleep 1
+        kill $TAIL_PID 2>/dev/null || true
         exit 0
 
     - name: Stop memory monitor and print log
