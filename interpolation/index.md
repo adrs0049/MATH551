@@ -56,16 +56,30 @@ derivative, or just Lipschitz, the rates are excellent.
 
 ## What This Chapter Does
 
-We start from polynomial interpolation as a change of basis between values
-and coefficients, and identify which bases are numerically usable. We then
-ask where to place the nodes, with the answer being Chebyshev points.
-Coefficient decay reveals the smoothness of the underlying function, and
-that same dictionary controls the accuracy of every downstream operation:
+The chapter is in two parts.
+
+**Part A: 1D, deterministic.** We start from polynomial interpolation
+as a change of basis between values and coefficients, and identify
+which bases are numerically usable. We then ask where to place the
+nodes, with the answer being Chebyshev points. Coefficient decay
+reveals the smoothness of the underlying function, and that same
+dictionary controls the accuracy of every downstream operation:
 differentiation by the matrix $D_N$, integration by Clenshaw–Curtis
-quadrature, root-finding via the colleague-matrix eigenvalue problem, and
-the solution of linear boundary value problems by spectral collocation.
-The chapter ends with adaptivity, where the coefficient tail itself tells
-us when we have used enough basis functions.
+quadrature, root-finding via the colleague-matrix eigenvalue problem,
+and the solution of linear boundary value problems by spectral
+collocation. Part A ends with adaptivity, where the coefficient tail
+itself tells us when we have used enough basis functions.
+
+**Part B: high-dimensional, Monte Carlo.** Tensor-product Chebyshev in
+$d$ dimensions inherits the 1D rate but pays an $n^d$ cost for the
+grid. The way out is to pick a *parameterised* basis (ridge functions
+$\sigma(w \cdot x + b)$) and a different regularity notion (the
+Barron norm, an L¹ moment of the Fourier transform). The
+universal-approximation theorem is the modern Weierstrass for this
+basis, and Barron's theorem is the analogous regularity-rate
+dictionary, with rate $O(C_f/\sqrt n)$ in any dimension. Part B closes
+with PyTorch examples that read both the density theorem and the
+dimension-free rate off training curves.
 
 ## Learning Outcomes
 
@@ -94,3 +108,11 @@ After completing this chapter you should be able to:
   motivates ultraspherical methods.
 - **L7.9** Implement an adaptive stopping rule based on coefficient-tail
   decay, and recognize the failure mode for non-smooth $f$.
+- **L7.10** Quantify the curse of dimensionality for tensor-product
+  Chebyshev, and identify which features of $f$ control how badly $d$
+  shows up in the cost.
+- **L7.11** State the universal-approximation theorem and identify it
+  as the Weierstrass theorem for the ridge-function basis.
+- **L7.12** State Barron's theorem, identify the Barron norm as a
+  spectral-side regularity notion, and explain why a Monte Carlo
+  representation produces a dimension-free rate.

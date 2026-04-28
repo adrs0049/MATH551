@@ -139,23 +139,17 @@ project:
           title: "§4 Integration as an Inner Product"
         - file: interpolation/differentiation.md
           title: "§5 Differentiation as a Matrix"
-        - file: interpolation/roots.md
-          title: "§6 Roots as Eigenvalues"
+        #- file: interpolation/roots.md
+        #  title: "§6 Roots as Eigenvalues"
         - file: interpolation/spectral-bvp.md
-          title: "§7 Spectral Methods for BVPs"
+          title: "§6 Spectral Methods for BVPs"
         - file: interpolation/adaptive-qr.md
-          title: "§8 Adaptive QR"
+          title: "§7 Adaptive QR"
+        - file: interpolation/neural-networks.md
+          title: "§8 Neural Networks: Universal Approximation and Barron's Rate"
+        - file: interpolation/curse-of-dimensionality.md
+          title: "§9 The Curse of Dimensionality"
         - file: interpolation/exercises.md
-          title: Exercises
-    - file: neural-networks/index.md
-      title: Neural Networks as Universal Approximators
-      children:
-        - file: neural-networks/universal-approximation.md
-          title: "§1 Universal Approximation"
-        - file: neural-networks/barron-spaces.md
-          title: "§2 Barron Spaces"
-        # - file: neural-networks/deep-networks.md
-        - file: neural-networks/exercises.md
           title: Exercises
     # NOTEBOOKS
     - file: notebooks/index.md
@@ -175,9 +169,12 @@ project:
         - file: notebooks/gaussian-elimination-notebook.ipynb
         - file: notebooks/stability-ge.ipynb
         - file: notebooks/deflated-continuation.ipynb
-        - file: notebooks/fourier-dct.ipynb
-        - file: notebooks/chebyshev-differentiation.ipynb
-        - file: notebooks/chebyshev-integration.ipynb
+        # Hidden for the moment, pending review:
+        # - file: notebooks/fourier-dct.ipynb
+        # - file: notebooks/chebyshev-differentiation.ipynb
+        # - file: notebooks/chebyshev-integration.ipynb
+        - file: notebooks/chebyshev-toolbox.ipynb
+        - file: notebooks/neural-network-examples.ipynb
         # - file: notebooks/jacobi-gauss-seidel.ipynb
     # APPENDICES
     - file: direct-methods/index.md

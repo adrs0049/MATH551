@@ -1,2 +1,3 @@
 -r requirements.txt
 ode-integrate @ git+https://github.com/adrs0049/ode-integrate.git
+torch  # for interpolation/pytorch-examples.md

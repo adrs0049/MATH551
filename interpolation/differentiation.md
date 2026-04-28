@@ -227,30 +227,99 @@ $$
 p_n'(x) \;=\; \sum_{k=0}^{n-1} c'_k\, T_k(x).
 $$
 
-The derivation uses two standard identities relating $T_k$ to the
-Chebyshev polynomials of the **second kind**
+The derivation begins with a single chain-rule calculation that, by
+itself, forces a new family of polynomials onto the stage.
+
+### Step 1: Differentiate $T_k$ by the chain rule
+
+Recall that $T_k(x) = \cos(k\theta)$ where $x = \cos\theta$, so
+$\dfrac{d\theta}{dx} = -\dfrac{1}{\sin\theta}$. Differentiating,
+
+$$
+T_k'(x)
+\;=\; \frac{d}{dx}\cos(k\theta)
+\;=\; -k\sin(k\theta)\cdot\Big(-\frac{1}{\sin\theta}\Big)
+\;=\; k\,\frac{\sin(k\theta)}{\sin\theta}.
+$$
+
+The factor $\sin(k\theta)/\sin\theta$ looks transcendental but is in
+fact a polynomial in $x = \cos\theta$. The argument is short enough to
+spell out.
+
+Start with the product-to-sum identity $\sin(A+B) - \sin(A-B) = 2\cos A
+\sin B$. Setting $A = \theta$, $B = (k-1)\theta$ and using $\sin(2-k)\theta
+= -\sin(k-2)\theta$,
+
+$$
+\sin(k\theta) \;=\; 2\cos\theta \,\sin\!\big((k-1)\theta\big) \;-\;
+\sin\!\big((k-2)\theta\big).
+$$
+
+Define $u_k(x) := \sin\!\big((k+1)\theta\big)/\sin\theta$. Dividing the
+identity above by $\sin\theta$ and reindexing turns it into a
+recurrence on $u_k$,
+
+$$
+u_k(x) \;=\; 2x\, u_{k-1}(x) \;-\; u_{k-2}(x), \qquad k \ge 2.
+$$
+
+For the base cases,
+
+$$
+u_0(x) \;=\; \frac{\sin\theta}{\sin\theta} \;=\; 1,
+\qquad
+u_1(x) \;=\; \frac{\sin 2\theta}{\sin\theta}
+\;=\; \frac{2\sin\theta\cos\theta}{\sin\theta}
+\;=\; 2x.
+$$
+
+The recurrence with these starting values produces a polynomial at
+every step: if $u_{k-1}$ and $u_{k-2}$ are polynomials of degrees
+$k-1$ and $k-2$, then $2x\,u_{k-1} - u_{k-2}$ is a polynomial of
+degree $k$. By induction $u_k$ is a polynomial of degree $k$. So
+$\sin(k\theta)/\sin\theta = u_{k-1}(x)$ is a polynomial of degree
+$k-1$ in $x$. Cranking the recurrence by hand,
+
+$$
+u_0 = 1, \quad u_1 = 2x, \quad u_2 = 4x^2 - 1, \quad u_3 = 8x^3 - 4x,
+\quad u_4 = 16x^4 - 12x^2 + 1, \quad \ldots
+$$
+
+Note that this is **the same three-term recurrence as $T_k$**, with
+the same first step $u_1 = 2x = 2 T_1$ but a different zeroth value
+($u_0 = 1 = T_0$). So $u_k$ and $T_k$ are siblings: same growth
+recurrence, different boundary conditions.
+
+### Step 2: That polynomial has a name
+
+The polynomial $u_k$ that just dropped out of the chain rule is what is
+conventionally called the **Chebyshev polynomial of the second kind**,
+written $U_k$:
 
 $$
 U_k(x) \;=\; \frac{\sin\big((k+1)\theta\big)}{\sin\theta},
 \qquad x = \cos\theta.
 $$
 
-The first identity expresses the derivative of $T_k$ in the $U$ basis,
+With this name the chain-rule output is
 
 $$
-T_k'(x) \;=\; k\, U_{k-1}(x),
+T_k'(x) \;=\; k\, U_{k-1}(x).
 $$
 
-which follows from differentiating $T_k(\cos\theta) = \cos(k\theta)$ by
-the chain rule. The second identity expresses $T_j$ back in the $U$
-basis,
+That is the first identity.
+
+### Step 3: Express $T_j$ back in the $U$ basis
+
+To finish the derivation we need to translate between the two bases.
+The product-to-sum formula for $\cos(j\theta)\sin\theta$ gives
 
 $$
 2\, T_j(x) \;=\; U_j(x) - U_{j-2}(x)
 \qquad (j \ge 0,\; U_{-1} = U_{-2} = 0),
 $$
 
-which follows from the product-to-sum formula for $\cos(j\theta)\sin\theta$.
+i.e., a $T_j$ is the half-difference of two consecutive $U$'s.
 
 Now differentiate $p_n = \sum_k c_k T_k$ term by term with the first
 identity,

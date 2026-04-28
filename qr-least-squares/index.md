@@ -19,15 +19,27 @@ problems.
 
 After completing this chapter, you should be able to:
 
-- **L4.1:** State the fundamental theorem of linear algebra.
-- **L4.2:** Define and compute vector and matrix norms.
-- **L4.3:** Define condition number and explain its significance.
-- **L4.4:** Define orthogonality and compute inner products.
-- **L4.5:** State the best approximation theorem.
-- **L4.6:** Describe Gram-Schmidt and its instability.
-- **L4.7:** Explain Householder reflections.
-- **L4.8:** Write the QR factorization (full and reduced).
-- **L4.9:** Derive the normal equations.
-- **L4.10:** Explain why $\kappa(A^T A) = \kappa(A)^2$.
-- **L4.11:** Solve least squares using QR.
-- **L4.12:** Compare normal equations vs QR stability.
+**Linear algebra prerequisites.**
+
+- **L4.1:** Define and compute vector and matrix norms.
+- **L4.2:** Define orthogonality, compute inner products, and use orthogonal projections.
+
+**Errors and conditioning.**
+
+- **L4.3:** Distinguish forward error ($\|\hat{\mathbf{x}} - \mathbf{x}\|$) from backward error (residual or perturbed input), and explain why numerical analysis judges algorithms by the latter.
+- **L4.4:** Define the matrix condition number $\kappa(A) = \|A\|\,\|A^{-1}\|$ and apply the **golden rule**: forward error $\lesssim \kappa(A) \cdot$ backward error.
+- **L4.5:** Define **backward** and **forward stability**. State the central principle: a backward-stable algorithm applied to a well-conditioned problem produces a small forward error.
+- **L4.6:** Distinguish *conditioning* (a property of the problem) from *stability* (a property of the algorithm). Recognise that a small residual alone does not imply a small error; the condition number is the bridge.
+- **L4.7:** Produce an *a-posteriori* error bound on any computed solution to $A\mathbf{x} = \mathbf{b}$ from a condition-number estimate and the residual.
+
+**Factorisations and how to use them.**
+
+- **L4.8:** Reduce $A\mathbf{x} = \mathbf{b}$ to triangular form via factorisation and solve by forward/back substitution.
+- **L4.9:** Apply the **LU factorisation** (with pivoting) to solve square linear systems $A\mathbf{x} = \mathbf{b}$.
+- **L4.10:** Describe Gram-Schmidt and explain its loss of orthogonality at moderate $\kappa$.
+- **L4.11:** Describe Householder reflections and explain why they yield a backward-stable QR.
+- **L4.12:** Apply the **QR factorisation** to solve square linear systems $A\mathbf{x} = \mathbf{b}$.
+
+**Optional: least squares.**
+
+- **L4.13:** Use QR to solve overdetermined least-squares problems and compare with the normal equations; explain why $\kappa(A^\top A) = \kappa(A)^2$ matters in practice.
