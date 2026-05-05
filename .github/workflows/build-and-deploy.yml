@@ -267,6 +267,39 @@ jobs:
         find myst-theme -name "esbuild" -type f -exec chmod +x {} \;
         find myst-theme -name "*.node" -type f -exec chmod +x {} \;
 
+    # Swap the theme's `start` script so mystmd serves the already-built
+    # prod bundle via remix-serve instead of relaunching `remix dev`.
+    # Reasons:
+    #   1. Memory: the dev app server keeps every route module loaded for
+    #      HMR, growing past the runner's 12GB Node heap around page 50.
+    #      remix-serve doesn't accumulate that bookkeeping and finishes
+    #      the run without OOMing.
+    #   2. Hashes: dev rebuilds with new content hashes each launch, so
+    #      the HTML mystmd renders references hashes that differ from the
+    #      ones in our pre-build snapshot. Self-heal then restores the
+    #      "wrong" hashes and every asset 404s on the live site. The prod
+    #      bundle's hashes match the snapshot exactly.
+    # Local `jupyter-book start --execute` is unaffected — it doesn't run
+    # this workflow; users still get `remix dev` from the unmodified
+    # submodule.
+    - name: Use prod remix-serve for HTML build
+      run: |
+        cd myst-theme/themes/book
+        # Sanity-check the prod build is actually present.
+        if [ ! -f build/index.js ]; then
+          echo "::error::myst-theme/themes/book/build/index.js missing — prod:build did not run in build-theme job"
+          exit 1
+        fi
+        # Replace the start script with one that runs remix-serve against the prod bundle.
+        python3 - <<'PY'
+        import json, pathlib
+        p = pathlib.Path("package.json")
+        pkg = json.loads(p.read_text())
+        pkg["scripts"]["start"] = "node ../../node_modules/@remix-run/serve/dist/cli.js build/index.js"
+        p.write_text(json.dumps(pkg, indent=2) + "\n")
+        print("start script:", pkg["scripts"]["start"])
+        PY
+
     # Snapshot the entire theme `public/` directory before mystmd starts.
     # In jupyter-book 2.1.5, buildHtml awaits appServer.stop() before its
     # final copySync, which lets the Remix dev server fully clean up its
