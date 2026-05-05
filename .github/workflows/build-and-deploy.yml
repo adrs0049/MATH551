@@ -251,6 +251,21 @@ jobs:
         find myst-theme -name "esbuild" -type f -exec chmod +x {} \;
         find myst-theme -name "*.node" -type f -exec chmod +x {} \;
 
+    # Snapshot the prod-build theme assets before mystmd starts. mystmd
+    # spawns the Remix dev server (`npm start`), which races with the final
+    # asset-copy step and intermittently leaves files like
+    # caret-down-empty-PDAJTPAD.svg, audio-EHWPVEAB.svg, etc. missing in
+    # _build/html/build/_assets/. The self-heal step at the end of this job
+    # restores from this snapshot when that happens.
+    - name: Snapshot theme assets
+      run: |
+        if [ -d myst-theme/themes/book/public/build ]; then
+          cp -r myst-theme/themes/book/public/build /tmp/theme-snapshot
+          echo "Snapshot: $(find /tmp/theme-snapshot -type f | wc -l) files, $(du -sh /tmp/theme-snapshot | cut -f1)"
+        else
+          echo "::warning::No theme build directory to snapshot"
+        fi
+
     - name: Download PDF exports
       uses: actions/download-artifact@v4
       with:
@@ -362,6 +377,60 @@ jobs:
         sleep 1
         kill $TAIL_PID 2>/dev/null || true
         exit 0
+
+    # Self-heal if mystmd crashed during the asset-copy / URL-rewrite step.
+    # When that happens, _build/html/index.html still contains the literal
+    # /myst_assets_folder/ placeholder. Restore the missing assets from the
+    # snapshot we took before mystmd started, then rewrite the placeholder
+    # URLs ourselves. Fails loudly if the output is still broken so we don't
+    # deploy a half-baked site.
+    - name: Verify HTML output and self-heal if needed
+      run: |
+        set -e
+        if [ ! -f _build/html/index.html ]; then
+          echo "::error::No _build/html/index.html was produced"
+          ls -la _build/html/ 2>/dev/null || true
+          exit 1
+        fi
+
+        if grep -q "/myst_assets_folder/" _build/html/index.html; then
+          echo "::warning::mystmd did not finish the asset-copy / URL-rewrite step; running fallback"
+
+          # Restore _assets/ from snapshot (don't overwrite anything mystmd
+          # already managed to copy successfully).
+          if [ -d /tmp/theme-snapshot/_assets ]; then
+            mkdir -p _build/html/build/_assets
+            cp -rn /tmp/theme-snapshot/_assets/. _build/html/build/_assets/ 2>/dev/null || true
+            echo "Assets in _build/html/build/_assets after restore: $(find _build/html/build/_assets -type f | wc -l)"
+          else
+            echo "::error::No theme snapshot available to restore from"
+            exit 1
+          fi
+
+          # Rewrite placeholder URLs in all text-format outputs.
+          # BASE_URL is /<repo-name> (e.g. /MATH551). Replacement uses # as
+          # the sed delimiter so a leading slash in BASE_URL is fine.
+          REPLACEMENT="${BASE_URL}/build/"
+          echo "Rewriting /myst_assets_folder/ -> ${REPLACEMENT}"
+          find _build/html -type f \
+            \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.json' -o -name '*.xml' \) \
+            -exec sed -i "s#/myst_assets_folder/#${REPLACEMENT}#g" {} +
+
+          echo "Fallback complete."
+        else
+          echo "mystmd completed cleanly; no fallback needed."
+        fi
+
+        # Final verification: index.html and a sampling of other pages must
+        # be free of the placeholder. If we still see it, fail the workflow
+        # rather than deploy broken HTML.
+        REMAINING=$(grep -rl "/myst_assets_folder/" _build/html 2>/dev/null | head -5 || true)
+        if [ -n "$REMAINING" ]; then
+          echo "::error::Placeholder /myst_assets_folder/ still present after fallback in:"
+          echo "$REMAINING"
+          exit 1
+        fi
+        echo "Verified: no /myst_assets_folder/ placeholders remain."
 
     - name: Stop memory monitor and print log
       if: always()
