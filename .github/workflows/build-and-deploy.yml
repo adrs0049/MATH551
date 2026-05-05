@@ -198,9 +198,9 @@ jobs:
             STABLE_SINCE=0
             LAST_COUNT=$COUNT
           fi
-          # If no new PDF exported for 60s, all exports are done and process is hanging
-          if [ "$STABLE_SINCE" -ge 60 ]; then
-            echo "All $COUNT PDFs exported, process still running after 60s."
+          # If no new PDF exported for 240s, all exports are done and process is hanging
+          if [ "$STABLE_SINCE" -ge 240 ]; then
+            echo "All $COUNT PDFs exported, process still running after 240s."
             # Step 1: kill the Jupyter kernel, which is likely what's blocking Node
             echo "Killing Python/Jupyter kernel processes..."
             pkill -9 -f "ipykernel" 2>/dev/null || true

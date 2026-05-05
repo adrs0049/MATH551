@@ -49,19 +49,47 @@ echo "Patch 1: Algorithm/property proof environments"
 [ -n "$JB_CJS" ] && patch_proof_envs "$JB_CJS" "jupyter-book"
 [ -n "$MYST_CJS" ] && patch_proof_envs "$MYST_CJS" "mystmd"
 
-# ── Patch 2: Sequential HTML rendering (DISABLED) ─────────────────────
-# Disabled with mystmd 1.9.0 / jupyter-book 2.1.5 upgrade. The original
-# variant restarted the Remix server every 15 pages to free memory, but
-# Remix v1.17 takes ~30s to rebuild on restart — longer than the fetch
-# retry window — so post-restart fetches fail and the post-fetch
-# copySync step never runs, producing artifacts with no
-# _build/html/build/_assets/. The sequential-without-restart variant
-# also hits the ENOENT race more often than mystmd's default concurrent
-# rendering (longer wall time = more chances for Remix's dev cleanup to
-# delete public/build files before copySync reads them). The workflow's
-# snapshot + self-heal step handles the ENOENT race correctly, so we
-# rely on that and let mystmd run its default Promise.all + p-limit(5).
-# Re-enable if 73-page builds OOM on the CI runner.
+# ── Patch 2: SIGKILL the Remix dev server on appServer.stop() ────────
+# Stops Remix's exit handler from deleting public/build/ before mystmd's
+# final copySync reads it. Without this, copySync ENOENTs and the artifact
+# either fails or — worse — the snapshot self-heal restores prod-build
+# hashes that don't match the dev-rendered HTML, so every asset 404s.
+
+echo ""
+echo "Patch 2: SIGKILL kill signal for dev server"
+patched=false
+if [ -n "$MYST_CJS" ]; then
+    python3 scripts/patch-kill-signal.py "$MYST_CJS" && patched=true
+fi
+if [ -n "$JB_CJS" ]; then
+    python3 scripts/patch-kill-signal.py "$JB_CJS" && patched=true
+fi
+if [ "$patched" = false ]; then
+    echo "  SKIP: no CJS files found to patch"
+fi
+
+# ── Patch 3: Sequential HTML rendering ────────────────────────────────
+# mystmd's default Promise.all + p-limit(5) holds 5 routes' worth of
+# Remix-rendered React trees in memory at once and OOMs the 16GB CI
+# runner around page 50. Sequential rendering keeps peak memory low
+# enough to fit. (Earlier variant also restarted the Remix server every
+# 15 pages, but Remix v1.17 takes ~30s to rebuild on restart — longer
+# than the fetch retry window — so post-restart fetches fail. The
+# no-restart variant here lets the server run continuously; combined
+# with the SIGKILL patch above it produces a complete artifact.)
+
+echo ""
+echo "Patch 3: Sequential HTML rendering"
+patched=false
+if [ -n "$MYST_CJS" ]; then
+    python3 scripts/patch-html-sequential.py "$MYST_CJS" && patched=true
+fi
+if [ -n "$JB_CJS" ]; then
+    python3 scripts/patch-html-sequential.py "$JB_CJS" && patched=true
+fi
+if [ "$patched" = false ]; then
+    echo "  SKIP: no CJS files found to patch"
+fi
 
 echo ""
 echo "All patches applied."
