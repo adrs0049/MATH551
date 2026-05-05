@@ -1,4 +1,7 @@
 ---
+kernelspec:
+  name: python3
+  display_name: Python 3
 exports:
   - format: pdf
     template: ./_templates/plain_narrow
@@ -49,12 +52,89 @@ are linear combinations of $n$ basis functions. The Chebyshev basis
 $\{T_k\}$ is fixed; the ridge basis $\{\sigma(w_k \cdot x + b_k)\}$
 is parameterised by $(w_k, b_k)$ that we can choose.
 
-## A 1D ridge network: the same operations from §4 and §5
+## A 1D ridge network: evaluation, differentiation, integration
+
+In one variable a ridge is just a shifted, scaled copy of $\sigma$:
+$\phi_k(x) = \sigma(w_k x + b_k)$ with $w_k, b_k \in \mathbb{R}$. The
+basis is parameterised but each basis function is something we can
+draw on a single axis. Before doing any algebra, look at it.
+
+### What a ridge basis looks like
+
+Three panels. The left shows three single ridges with different
+$(w, b)$. The slope at the inflection point is $w/4$ for $\tanh$, so
+$|w|$ controls how fast the ridge transitions from one saturation
+level to the other; the sign of $w$ flips left and right; $b$ shifts
+the inflection point to $x = -b/w$. The middle panel overlays a few
+$a_k\,\sigma(w_k x + b_k)$, dashed unscaled and solid scaled, to show
+how $a_k$ rescales each individual ridge. The right panel adds them
+up and overlays a target.
+
+```{code-cell} python
+:tags: [hide-input]
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+sigma = np.tanh
+xs = np.linspace(-2, 2, 400)
+
+fig, axes = plt.subplots(1, 3, figsize=(11, 3.2))
+
+# Panel 1: three single ridges
+ax = axes[0]
+for w, b, label in [(1, 0, r"$w=1,\ b=0$"),
+                    (4, 0, r"$w=4,\ b=0$"),
+                    (-2, 1, r"$w=-2,\ b=1$")]:
+    ax.plot(xs, sigma(w * xs + b), label=label)
+ax.set_title(r"Single ridges $\sigma(wx+b)$")
+ax.legend(fontsize=8, loc="lower right")
+ax.set_xlabel(r"$x$"); ax.grid(alpha=0.3)
+
+# Panel 2: scaled vs unscaled
+ax = axes[1]
+params = [(3, -1, 1.0), (-2, 0.5, -0.7), (1.5, 1, 1.3)]
+for w, b, a in params:
+    ax.plot(xs, sigma(w * xs + b), '--', alpha=0.45)
+    ax.plot(xs, a * sigma(w * xs + b), '-')
+ax.set_title(r"Scaled ridges $a_k\,\sigma(w_k x+b_k)$")
+ax.set_xlabel(r"$x$"); ax.grid(alpha=0.3)
+
+# Panel 3: sum vs target
+ax = axes[2]
+target = lambda t: np.sin(2 * np.pi * t) * np.exp(-0.5 * t**2)
+rng = np.random.default_rng(0)
+n = 30
+ws = rng.normal(scale=4, size=n)
+bs = rng.uniform(-3, 3, size=n)
+V = sigma(np.outer(xs, ws) + bs)
+y = target(xs)
+a, *_ = np.linalg.lstsq(V, y, rcond=None)
+ax.plot(xs, y, 'k-', lw=2, label="target")
+ax.plot(xs, V @ a, '--', lw=1.5, label=f"sum, $n={n}$")
+ax.set_title(r"Sum $\sum_k a_k\,\sigma(w_k x+b_k)$")
+ax.legend(fontsize=8); ax.set_xlabel(r"$x$"); ax.grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+The takeaway: each ridge contributes one bend, localised to a region
+of width $\sim 1/|w_k|$ around $x = -b_k/w_k$. Outside that region
+the ridge is essentially constant and adds nothing. Contrast with
+Chebyshev, where every $T_k$ oscillates across the entire interval
+$[-1, 1]$. Ridges are *local*, polynomials are *global*. This single
+fact drives the difference in behaviour in high dimensions: a
+$d$-variable ridge is a 1D bump pulled along $d-1$ flat directions, so
+its cost does not multiply with $d$, while a tensor-product basis of
+global polynomials does.
+
+### Random features: the linear case
 
 Treat $(w_k, b_k)$ as fixed up front and let only $\{a_k\}$ vary, the
-**random-features view**. The ridge basis $\phi_k(x) = \sigma(w_k x + b_k)$ is then a fixed basis like $\{T_k\}$, and every operation is
-linear in the coefficient vector $a$. We come back to the trained
-case at the end.
+**random-features view**. The ridge basis is then a fixed basis like
+$\{T_k\}$, and every operation is linear in the coefficient vector
+$a$. We come back to the trained case at the end.
 
 ### Evaluation
 
@@ -72,9 +152,9 @@ $$
 
 The coefficient map is $a \mapsto W a$ with $W = \mathrm{diag}(w_k)$,
 expressed in the related basis $\sigma'$. Like Chebyshev:
-differentiation maps $T_k \to U_{k-1}$ to a different family, and the
-§5 recurrence converts back. For ridges we evaluate in the
-$\sigma'$-basis directly.
+differentiation maps $T_k \to U_{k-1}$ to a different family, and a
+[recurrence](./differentiation.md) converts back. For ridges we
+evaluate in the $\sigma'$-basis directly.
 
 ### Integration
 
@@ -87,7 +167,7 @@ m_k = \frac{\Sigma(w_k b + b_k) - \Sigma(w_k a + b_k)}{w_k}.
 $$
 
 A linear functional with precomputed moments, identical in shape to
-[§4](./integration.md).
+the Chebyshev [integration construction](./integration.md).
 
 ### Fitting
 
@@ -117,6 +197,23 @@ The trade is linearity for adaptivity: random features keeps the
 basis fixed and the solve linear, a trained network places ridge
 directions where the structure of $f$ lives. In 1D the polynomial
 story already wins; the trade flips in high $d$.
+
+## From construction to guarantees
+
+The 1D story above shows ridges are a basis we can compute with: we
+can evaluate, differentiate, integrate, and fit, exactly as we did
+with $\{T_k\}$. Two questions remain:
+
+1. *Can ridges represent every continuous function?* Density is the
+   property that lets us call this a basis at all, and is what
+   universal approximation answers.
+2. *How efficiently?* Density allows arbitrary error in the limit;
+   it says nothing about how the required width $n$ scales with the
+   target function or the input dimension. Barron's theorem answers
+   this.
+
+These two questions have separate answers and the second is where
+the dimension-dependence (or lack of it) actually lives.
 
 ## The universal approximation theorem
 
@@ -206,8 +303,22 @@ $$
 f(x) - f(0) \;=\; \int_{\mathbb{R}^d} a(\omega)\, \sigma(\omega \cdot x + b(\omega))\, d\mu(\omega),
 $$
 
-for some weight $a$, phase $b$, and probability measure $\mu$. The
-size of the integrand is controlled by an L¹ moment of $\hat f$.
+for some weight $a$, phase $b$, and probability measure $\mu$.
+
+Where does the $|\omega|$ factor in the Barron norm come from? A
+sinusoid $\sin(\omega \cdot x)$ is itself not a ridge (the activation
+$\sigma$ is bounded and monotone, $\sin$ oscillates). But it *is* a
+difference of sigmoidal ridges: imagine forming one period of
+$\sin(\omega \cdot x)$ by adding rescaled saturating sigmoids that
+turn on and off in the right places. To build a wave of frequency
+$|\omega|$ from sigmoids that saturate at $\pm 1$, the amplitudes
+$a(\omega)$ have to scale with $|\omega|$ so the steep up-and-down of
+the wave can be matched by sigmoid steps that rise and fall on a
+length scale $1/|\omega|$. That is the only place $|\omega|$ enters,
+and it is exactly the weight $|\omega| \cdot |\hat f(\omega)|$ that
+appears under the Barron integral. High-frequency content costs more
+ridge amplitude, in proportion to the frequency, so the Barron norm
+weights it accordingly.
 
 Sampling $\omega_1, \ldots, \omega_n \sim \mu$ and averaging gives a
 width-$n$ ridge network as a Monte Carlo estimator. By
@@ -261,9 +372,13 @@ $$
 $$
 :::
 
-The dimension $d$ enters through $C_f$ and $r_K$, not through the
-exponent of $n$. For ridge functions $C_f$ is dimension-free, so the
-network needs $O(C_f^2/\varepsilon^2)$ neurons regardless of $d$.
+:::{important} The headline
+**The dimension $d$ enters through $C_f$ and $r_K$, not through the
+exponent of $n$.** For ridge functions $C_f$ is dimension-free, so
+the network needs $O(C_f^2 / \varepsilon^2)$ neurons regardless of
+$d$. This is the entire content of the page: a $1/\sqrt n$ rate, in
+any dimension, for functions whose spectrum is concentrated.
+:::
 
 :::{prf:proof}
 :class: dropdown
@@ -305,9 +420,9 @@ are in $\mathcal{B}$.
 
 Outside $\mathcal{B}$: anything with a heavy high-frequency tail. A
 half-space indicator has a jump and $C_f = \infty$. Generic Lipschitz
-functions in $d$D usually have $C_f$ infinite. A tensor product of
-$d$ smooth bumps is formally Barron but the constant grows fast
-enough in $d$ that the rate is useless.
+functions in $d$ dimensions usually have $C_f$ infinite. A tensor
+product of $d$ smooth bumps is formally Barron but the constant grows
+fast enough in $d$ that the rate is useless.
 
 The Barron rate is conditional on a concentrated spectrum. For
 ridge-type targets, smooth densities, and certain compositions it

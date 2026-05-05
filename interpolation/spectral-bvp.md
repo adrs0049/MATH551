@@ -15,44 +15,108 @@ downloads:
 # Spectral Methods for Boundary Value Problems
 
 :::{tip} Big Idea
-With $D_N$ in hand from the [previous section](differentiation.md), a linear
-BVP $\mathcal{L}u = f$ on $[-1, 1]$ becomes a finite linear system
-$L_N \mathbf{u} = \mathbf{f}$. Boundary conditions are imposed by replacing
-the appropriate rows. For smooth solutions the error decays geometrically
-in $N$. The price is that $L_N$ is **dense and ill-conditioned**: the
-*ultraspherical* method recasts the same problem in a basis where the
-operator matrix is sparse and well-conditioned.
+A linear BVP $\mathcal{L} u = f$ on $[-1, 1]$ becomes a finite linear
+system once we choose a discretisation. The **ultraspherical method**
+of {cite:t}`OlverTownsend2013` writes the unknown $u$ in the Chebyshev
+$T_k$ basis and each derivative in its own ultraspherical basis
+$C_k^{(\lambda)}$, producing a sparse, well-conditioned, *almost-banded*
+operator. The textbook alternative is *physical-space collocation*,
+which writes everything in the value basis at Chebyshev nodes; it is
+conceptually simple, but its operator is dense and its conditioning
+scales like $N^{2k}$ in the differentiation order $k$. We develop the
+ultraspherical method first, then look at physical-space collocation
+for comparison.
 :::
 
-## Collocation in One Picture
+## The Ultraspherical Method
 
-Take a linear two-point BVP
+The unknown $u$ is expanded in Chebyshev polynomials,
+$u(x) = \sum_{k=0}^{N} c_k\, T_k(x)$, and the unknowns become the
+coefficients $\mathbf{c} = (c_0, \ldots, c_N)$. The trick is to use
+*different bases for different orders of derivative*: $u$ in
+$T_k = C_k^{(0)}$, $u'$ in $U_k = C_k^{(1)}$, $u''$ in $C_k^{(2)}$, and
+so on. Each level is connected to the next by sparse, well-conditioned
+operators. The price is some bookkeeping; the reward is a banded
+linear system.
+
+We illustrate by working through the simplest non-trivial BVP, then
+extend to variable coefficients.
+
+### Worked example: $u'(x) = f(x),\ u(-1) = \alpha$
+
+**Step 1: Differentiation operator.** From $T_k'(x) = k\, U_{k-1}(x)$
+for $k \ge 1$,
 
 $$
-a(x)\, u''(x) + b(x)\, u'(x) + c(x)\, u(x) = f(x),
-\qquad u(-1) = \alpha,\ u(1) = \beta.
+u'(x) = \sum_{k=1}^{N} k\, c_k\, U_{k-1}(x).
 $$
 
-Let $\mathbf{u} = (u(x_0), \ldots, u(x_N))^T$ be the *unknown* values at the
-Chebyshev nodes. Differentiation at the nodes is just $D_N \mathbf{u}$ and
-$D_N^2 \mathbf{u}$. The differential operator becomes the matrix
+So the $U$-basis coefficients of $u'$ are obtained from $\mathbf{c}$ by
 
 $$
-L_N = \mathrm{diag}(a)\, D_N^2 + \mathrm{diag}(b)\, D_N + \mathrm{diag}(c).
+\mathcal{D}_0 = \begin{pmatrix}
+0 & 1 & 0 & 0 & \cdots & 0 \\
+0 & 0 & 2 & 0 & \cdots & 0 \\
+0 & 0 & 0 & 3 & \cdots & 0 \\
+\vdots & & & & \ddots & \vdots \\
+0 & 0 & 0 & 0 & \cdots & N
+\end{pmatrix}
+\in \mathbb{R}^{N \times (N+1)},
 $$
 
-Demanding $L_N \mathbf{u} = \mathbf{f}$ at every interior node and replacing
-the first and last rows with the boundary conditions ($u_0 = \beta$,
-$u_N = \alpha$, with the convention $x_0 = 1$, $x_N = -1$) gives a square
-linear system to solve.
+a single super-diagonal of strictly increasing entries. Applying it
+costs $O(N)$.
 
-That's all there is to *physical-space* spectral collocation.
+**Step 2: Conversion operator.** The right-hand side $f$ is given as a
+Chebyshev expansion $f = \sum f_k\, T_k$, but the equation $u' = f$
+asks us to compare two coefficient vectors in *different* bases.
+The bridge is
 
-## Worked Example
+$$
+T_0 = U_0, \qquad T_1 = \tfrac{1}{2} U_1, \qquad
+T_k = \tfrac{1}{2}\big(U_k - U_{k-2}\big) \text{ for } k \ge 2,
+$$
 
-Solve $-u'' + (1 + x^2)\, u = f$ on $[-1, 1]$ with homogeneous Dirichlet
-boundary conditions, manufacturing $f$ from $u_{\mathrm{exact}}(x) =
-(1 - x^2)\, e^{\sin 5x}$.
+so the conversion matrix from $T$- to $U$-coefficients is
+
+$$
+\mathcal{S}_0 = \begin{pmatrix}
+1 & 0 & -\tfrac{1}{2} & 0 & 0 & \cdots \\
+0 & \tfrac{1}{2} & 0 & -\tfrac{1}{2} & 0 & \cdots \\
+0 & 0 & \tfrac{1}{2} & 0 & -\tfrac{1}{2} & \cdots \\
+\vdots & & & & \ddots &
+\end{pmatrix}
+\in \mathbb{R}^{N \times (N+1)},
+$$
+
+with a main diagonal at $\tfrac{1}{2}$ (the $0,0$ entry is $1$) and a
+second super-diagonal at $-\tfrac{1}{2}$. Bandwidth two; $O(N)$ to
+apply.
+
+**Step 3: Boundary condition.** Since $T_k(-1) = (-1)^k$, the condition
+$u(-1) = \alpha$ is one linear constraint on $\mathbf{c}$:
+
+$$
+\mathbf{b}^\top \mathbf{c} = \alpha,
+\qquad
+\mathbf{b} = (1, -1, 1, -1, \ldots, (-1)^N).
+$$
+
+A single dense row.
+
+**Step 4: Assemble.** Stacking the boundary row above $\mathcal{D}_0$ produces a
+square $(N+1) \times (N+1)$ system,
+
+$$
+\underbrace{\begin{pmatrix} \mathbf{b}^\top \\ \mathcal{D}_0 \end{pmatrix}}_{\mathcal{L}}
+\, \mathbf{c} =
+\begin{pmatrix} \alpha \\ \mathcal{S}_0 \mathbf{f}_T \end{pmatrix},
+$$
+
+where $\mathbf{f}_T$ holds the Chebyshev coefficients of $f$. The
+operator $\mathcal{L}$ is **almost banded**: one dense row sitting on
+top of a sparse banded block. An $O(N)$ banded factorisation handles
+the bulk, with a small dense correction for the boundary row.
 
 ```{code-cell} python
 :tags: [hide-input]
@@ -60,6 +124,189 @@ boundary conditions, manufacturing $f$ from $u_{\mathrm{exact}}(x) =
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.linalg as la
+
+def ultra_first_order(N):
+    L = np.zeros((N+1, N+1))
+    L[0, :] = (-1.0)**np.arange(N+1)        # u(-1) = sum (-1)^k c_k
+    for k in range(1, N+1):
+        L[k, k] = k                          # D_0
+    return L
+
+fig, ax = plt.subplots(figsize=(4.5, 4.5))
+ax.spy(ultra_first_order(32), markersize=6)
+ax.set_title(r'Ultraspherical $\mathcal{L}$ at $N = 32$: almost banded')
+plt.tight_layout(); plt.show()
+```
+
+### Multiplication operator for variable coefficients
+
+For an equation with a variable coefficient like $a(x)\, u'(x) + u(x) = f(x)$,
+we need one more piece: a **multiplication operator** $M_1[a]$ that
+takes the $U$-coefficients of $u'$ and returns the $U$-coefficients of
+$a\, u'$. We build it in three steps using the Chebyshev recurrence.
+
+:::{seealso}
+The pointwise product of two Chebyshev expansions makes the
+coefficient space into a *Banach algebra*. The multiplication
+operator $M_1[a]$ below is the matrix realisation of "multiply by
+$a$" in this algebra. For the analytic underpinnings see
+[Banach Algebras (MATH 725)](https://www.buttenschoen.ca/MATH725/distributions/banach-algebras/).
+:::
+
+**Building block.** Multiplication by $x$ in the $U$ basis. The
+identity $x\, U_k = \tfrac{1}{2}(U_{k+1} + U_{k-1})$ (with $U_{-1} = 0$)
+gives the symmetric tridiagonal
+
+$$
+M_1[x] = \tfrac{1}{2}\begin{pmatrix}
+0 & 1 & & \\
+1 & 0 & 1 & \\
+  & 1 & 0 & 1 \\
+  &   & \ddots & \ddots & \ddots
+\end{pmatrix}.
+$$
+
+**Multiplication by $T_k$.** The Chebyshev recurrence
+$T_{k+1} = 2 x T_k - T_{k-1}$ lifts directly to operators:
+
+$$
+M_1[T_0] = I, \qquad M_1[T_1] = M_1[x],
+\qquad
+M_1[T_{k+1}] = 2\, M_1[x]\, M_1[T_k] - M_1[T_{k-1}].
+$$
+
+Each application of $M_1[x]$ widens the band by one, so $M_1[T_k]$ has
+bandwidth exactly $k$.
+
+**General $a$.** If $a(x) = \sum_{k=0}^{d} a_k\, T_k(x)$, linearity gives
+
+$$
+M_1[a] = \sum_{k=0}^{d} a_k\, M_1[T_k],
+$$
+
+a banded matrix of bandwidth at most $d$. A coefficient $a$ with a
+short Chebyshev expansion produces a narrow operator. The simplest
+case $a(x) = 1 + x$ has $a_T = (1, 1, 0, \ldots)$ and gives the
+tridiagonal $M_1[1+x] = I + M_1[x]$.
+
+**The full operator.** For $a(x)\, u'(x) + u(x) = f(x)$,
+
+$$
+\mathcal{L} = \begin{pmatrix} \mathbf{b}^\top \\ M_1[a]\, \mathcal{D}_0 + \mathcal{S}_0 \end{pmatrix},
+$$
+
+an almost-banded operator: dense top row from the boundary condition,
+banded interior of bandwidth $\max(d, 2)$. The construction extends to
+any number of dense rows (more boundary conditions) and any short-Chebyshev
+coefficients.
+
+This is the operator we use in [](adaptive-qr.md) to drive the QR
+sweep on a genuinely variable-coefficient problem.
+
+### Preconditioning for direct solves
+
+The ultraspherical operator $\mathcal{L}$ is *sparse*, but it is not
+yet *well-scaled*. The differentiation matrix $\mathcal{D}_0$ has rows
+growing linearly with the column index — entry $\mathcal{D}_0[k-1, k] = k$,
+so the $k$-th column of the interior is $k$ times bigger than the
+first. A direct solve via `linalg.solve` works, but its forward error
+inherits a condition number that scales with $N$.
+
+The fix is a diagonal **right preconditioner**
+({cite:t}`OlverTownsend2013`, §4.1). For an order-$\nu$ operator, set
+
+$$
+R = \mathrm{diag}(R_0, R_1, \ldots, R_N),
+\qquad
+R_k = \begin{cases}
+1, & 0 \le k \le \nu - 2, \\[2pt]
+1/(\nu - 1)!, & k = \nu - 1, \\[2pt]
+1/k, & k \ge \nu.
+\end{cases}
+$$
+
+For the first-order problems of this section ($\nu = 1$):
+$R = \mathrm{diag}(1,\, 1,\, \tfrac{1}{2},\, \tfrac{1}{3},\, \ldots,\, \tfrac{1}{N})$.
+
+The recipe for a direct solve is **two lines** of bookkeeping.
+
+1. Build $\tilde{\mathcal{L}} := \mathcal{L}\, R$ by scaling the columns
+   of $\mathcal{L}$.
+2. Solve $\tilde{\mathcal{L}}\, \mathbf{y} = \mathbf{g}$ as usual, then
+   recover $\mathbf{c} = R\, \mathbf{y}$.
+
+Olver-Townsend prove $\kappa_2(\tilde{\mathcal{L}}) \le 53.6$ for the
+Dirichlet problem **independent of $N$**, so the preconditioned solve
+has the same $O(N)$ cost but a bounded condition number. The same
+trick works for the streaming QR of [](adaptive-qr.md): scale columns
+on the way in and rescale the recovered solution on the way out; the
+factorisation itself is unchanged.
+
+```{code-cell} python
+:tags: [hide-input]
+
+from math import factorial
+
+def column_scaling(n, nu):
+    """Olver-Townsend right preconditioner for an order-nu ODE."""
+    R = np.ones(n)
+    if nu >= 2 and nu - 1 < n:
+        R[nu - 1] = 1.0 / factorial(nu - 1)
+    for k in range(nu, n):
+        R[k] = 1.0 / k
+    return R
+
+# Condition number, with and without preconditioning, on the simplest
+# first-order operator L = (b^T; D_0).
+print(f"{'N':>5}  {'kappa(L)':>12}  {'kappa(L R)':>12}")
+for N in [16, 32, 64, 128, 256, 512]:
+    L = ultra_first_order(N)
+    R = column_scaling(N + 1, nu=1)
+    LR = L * R[None, :]                          # column scaling
+    print(f"{N:5d}  {np.linalg.cond(L):12.2e}  {np.linalg.cond(LR):12.2e}")
+```
+
+Without scaling, $\kappa(\mathcal{L})$ grows with $N$. With scaling,
+the condition number is bounded by a small constant. That is what makes
+the ultraspherical method *well-conditioned* in the practical sense, not
+just sparse.
+
+## Physical-Space Collocation: an Alternative
+
+The textbook alternative writes everything in the *value* basis at
+Chebyshev nodes. Let
+
+$$
+a(x)\, u''(x) + b(x)\, u'(x) + c(x)\, u(x) = f(x),
+\qquad u(-1) = \alpha,\ u(1) = \beta,
+$$
+
+be a linear two-point BVP, and let $\mathbf{u} = (u(x_0), \ldots, u(x_N))^T$
+be the unknown values at the type-1 Chebyshev nodes. From
+[§5](differentiation.md), differentiation at the nodes is
+$D_N \mathbf{u}$ and $D_N^2 \mathbf{u}$, so the differential operator
+becomes the matrix
+
+$$
+L_N = \mathrm{diag}(a)\, D_N^2 + \mathrm{diag}(b)\, D_N + \mathrm{diag}(c).
+$$
+
+Demanding $L_N \mathbf{u} = \mathbf{f}$ at the interior nodes and
+replacing the first and last rows with the boundary conditions gives a
+square linear system to solve.
+
+That is all there is to it: one differentiation matrix, one diagonal
+multiplication for each coefficient, two row replacements for the
+boundary conditions.
+
+### Worked example
+
+Solve $-u'' + (1 + x^2)\, u = f$ on $[-1, 1]$ with homogeneous Dirichlet
+boundary conditions, manufacturing $f$ from
+$u_{\mathrm{exact}}(x) = (1 - x^2)\, e^{\sin 5x}$.
+
+```{code-cell} python
+:tags: [hide-input]
 
 def cheb_diff_matrix(N):
     x = np.cos(np.pi * np.arange(N+1) / N)
@@ -80,8 +327,6 @@ def solve_bvp(a, b, c, f, alpha, beta, N):
 ue = lambda x: (1 - x**2) * np.exp(np.sin(5*x))
 def rhs_f(x):
     s, c5 = np.sin(5*x), np.cos(5*x); E = np.exp(s)
-    # u'  = -2x E + (1-x^2)(5 c5 E)
-    # u'' = -2 E + (-2x)(5 c5 E) + (-2x)(5 c5 E) + (1-x^2)(-25 s E + 25 c5^2 E)
     upp = -2*E - 20*x*c5*E + (1-x**2)*((25*c5**2 - 25*s)*E)
     return -upp + (1 + x**2)*ue(x)
 
@@ -110,216 +355,58 @@ plt.tight_layout(); plt.show()
 
 The error halves the digit count between $N = 8$ and $N = 32$. This is
 geometric convergence, exactly the
-[coefficient-decay](regularity-and-decay.md) result transported through the
-linear solve.
+[coefficient-decay](regularity-and-decay.md) result transported through
+the linear solve.
 
-## The Conditioning Problem
+### The conditioning problem
 
-The same plot for finite differences would show $O(N^{-2})$ instead of
-geometric. The reward is dramatic. The cost is two-fold:
+Geometric convergence is the prize. The cost is two-fold:
 
 1. **Density.** $L_N$ is dense, so each solve costs $O(N^3)$ instead of
-   $O(N)$ for tridiagonal FD.
+   $O(N)$ for a banded system.
 2. **Conditioning.** From [§5](differentiation.md), $\kappa(D_N^2) \sim N^4$.
    Backward stability of `solve` then bounds the achievable accuracy at
    $\kappa(L_N) \cdot \varepsilon_{\mathrm{mach}} \sim N^4 \cdot 10^{-16}$.
-   Pushing $N$ much above $\sim 10^3$ in double precision is hopeless.
+   For high-order operators (think $u^{(4)}$ in beam equations) the
+   exponent grows: $\kappa(D_N^k) \sim N^{2k}$. Pushing $N$ above a
+   few hundred in double precision is hopeless.
 
-These are not small problems for stiff or high-order operators (think
-$u^{(4)}$ in beam equations). They have driven a substantial body of
-research, of which the cleanest answer is *ultraspherical* methods.
-
-## Ultraspherical Spectral Methods (Sketch)
-
-The standard collocation method writes everything in the *value* basis at
-Chebyshev nodes. The same basis is used for $u$, $u'$, and $u''$, and that
-is exactly why $D_N^2$ is dense and ill-conditioned. The
-**ultraspherical** approach of {cite:t}`OlverTownsend2013` (see also
-{cite:t}`Trefethen2013`) uses *different bases for different orders of
-derivative*. The unknown $u$ is expanded in the Chebyshev basis $T_k$. Its
-first derivative $u'$ lives naturally in the basis of Chebyshev
-polynomials of the second kind $U_k = C_k^{(1)}$, its second derivative
-in $C_k^{(2)}$, and so on. The price for doing this is *bookkeeping*:
-operators that convert between adjacent bases. The reward is a
-**banded** linear system.
-
-### A worked example: $u'(x) = f(x)$, $u(-1) = \alpha$
-
-To see how this plays out, consider the simplest non-trivial BVP, the
-first-order initial-value problem
-
-$$
-u'(x) = f(x), \qquad u(-1) = \alpha,
-$$
-
-solved on $[-1, 1]$. Write the unknown in the Chebyshev basis,
-
-$$
-u(x) = \sum_{k=0}^{N} c_k\, T_k(x),
-$$
-
-so the unknowns are the coefficients $\mathbf{c} = (c_0, \ldots, c_N)$.
-
-**Step 1: Differentiation operator.** From the identity $T_k'(x) = k\,
-U_{k-1}(x)$ for $k \ge 1$,
-
-$$
-u'(x) \;=\; \sum_{k=1}^{N} k\, c_k\, U_{k-1}(x).
-$$
-
-So the *coefficients of $u'$ in the $U$ basis* are obtained from
-$\mathbf{c}$ by the rectangular sparse matrix
-
-$$
-\mathcal{D}_0 \;=\;
-\begin{pmatrix}
-0 & 1 & 0 & 0 & \cdots & 0 \\
-0 & 0 & 2 & 0 & \cdots & 0 \\
-0 & 0 & 0 & 3 & \cdots & 0 \\
-\vdots & & & & \ddots & \vdots \\
-0 & 0 & 0 & 0 & \cdots & N
-\end{pmatrix}
-\;\in\; \mathbb{R}^{N \times (N+1)},
-$$
-
-a single super-diagonal of strictly increasing entries. Applying it costs
-$O(N)$.
-
-**Step 2: Conversion operator.** The right-hand side $f$ is given as a
-Chebyshev expansion $f = \sum f_k\, T_k$, but the equation $u' = f$ now
-asks us to compare two coefficient vectors *in different bases*: the
-$U$-basis coefficients of $u'$ on the left, the $T$-basis coefficients
-of $f$ on the right. The bridge is the identity
-
-$$
-T_0 = U_0, \qquad
-T_1 = \tfrac{1}{2} U_1, \qquad
-T_k = \tfrac{1}{2}\big(U_k - U_{k-2}\big) \text{ for } k \ge 2,
-$$
-
-so the conversion matrix from $T$- to $U$-coefficients is
-
-$$
-\mathcal{S}_0 \;=\;
-\begin{pmatrix}
-1 & 0   & -\tfrac{1}{2} & 0 & 0 & \cdots \\
-0 & \tfrac{1}{2} & 0   & -\tfrac{1}{2} & 0 & \cdots \\
-0 & 0   & \tfrac{1}{2} & 0   & -\tfrac{1}{2} & \cdots \\
-\vdots & & & & \ddots & \\
-\end{pmatrix},
-$$
-
-a tridiagonal matrix (bandwidth two: a main diagonal and a second
-super-diagonal). It costs $O(N)$ to apply.
-
-**Step 3: Boundary condition.** Since $T_k(-1) = (-1)^k$, the condition
-$u(-1) = \alpha$ becomes one linear constraint on $\mathbf{c}$:
-
-$$
-\mathbf{b}^\top \mathbf{c} = \alpha,
-\qquad
-\mathbf{b} = (1,\, -1,\, 1,\, -1,\, \ldots,\, (-1)^N).
-$$
-
-This is a single *dense row*.
-
-**Step 4: Assemble.** The full discretisation is
-
-$$
-\underbrace{\begin{pmatrix} \mathbf{b}^\top \\[0.4ex] \mathcal{D}_0 \end{pmatrix}}_{\mathcal{L} \in \mathbb{R}^{(N+1) \times (N+1)}}
-\;\mathbf{c} \;=\;
-\begin{pmatrix} \alpha \\[0.4ex] \mathcal{S}_0 \mathbf{f}_T \end{pmatrix},
-$$
-
-with $\mathbf{f}_T$ the Chebyshev coefficients of $f$. The operator
-$\mathcal{L}$ has *one* dense row on top of a sparse banded block. This is
-the **almost-banded** structure that makes ultraspherical solves
-efficient: an $O(N)$ banded factorisation handles the bulk, with a
-small dense correction for the boundary row.
+The two costs are visible side by side: the dense physical-space
+$D_N$ next to the almost-banded ultraspherical $\mathcal{L}$.
 
 ```{code-cell} python
 :tags: [hide-input]
 
 N = 32
-
-# Physical-space collocation D for u'
 D_phys, _ = cheb_diff_matrix(N)
-
-# Ultraspherical operator: dense boundary row on top of banded D_0
-def ultra_first_order(N):
-    L = np.zeros((N+1, N+1))
-    L[0, :] = (-1.0)**np.arange(N+1)        # u(-1) = sum (-1)^k c_k
-    for k in range(1, N+1):
-        L[k, k] = k                          # D_0
-    return L
-
 L_ultra = ultra_first_order(N)
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 4.5))
 axes[0].spy(D_phys, markersize=3)
-axes[0].set_title(f'Physical-space $D$, dense, $N = {N}$')
+axes[0].set_title(f'Physical-space $D$: dense, $N = {N}$')
 axes[1].spy(L_ultra, markersize=6)
-axes[1].set_title(r'Ultraspherical $\mathcal{L}$: 1 dense row + banded $\mathcal{D}_0$')
+axes[1].set_title(r'Ultraspherical $\mathcal{L}$: almost banded')
 plt.tight_layout(); plt.show()
 ```
 
-### Multiplication operator for variable coefficients
+Physical-space collocation is the right tool when $N$ is moderate and
+the operator is well-conditioned. For stiff or high-order problems,
+or when $N$ has to grow large, the ultraspherical formulation pays off.
 
-For a variable-coefficient problem $a(x)\, u'(x) + \cdots = f(x)$, we also
-need a *multiplication operator* that takes the coefficient vector of $u'$
-and returns the coefficient vector of $a u'$ in the same basis. Suppose
-$a$ has the short Chebyshev expansion
+## Higher-Order Operators
 
-$$
-a(x) \;=\; \sum_{k=0}^d a_k\, T_k(x),
-$$
-
-with $d$ small. We need the matrix $M_1[a]$ that acts on $U$-basis
-coefficients, since $u'$ lives there. The basic building block is the
-multiplication-by-$x$ operator, derived from the recurrence
-$x\, U_k = \tfrac{1}{2}(U_{k+1} + U_{k-1})$ (with $U_{-1} = 0$):
-
-$$
-M_1[x] \;=\;
-\frac{1}{2}\!
-\begin{pmatrix}
-0 & 1 & & \\
-1 & 0 & 1 & \\
-  & 1 & 0 & 1 \\
-  &   & \ddots & \ddots & \ddots
-\end{pmatrix},
-$$
-
-a tridiagonal matrix. From this and the three-term Chebyshev recurrence,
-$M_1[T_k]$ is built by polynomial recursion: $M_1[T_0] = I$,
-$M_1[T_1] = M_1[x]$, and
-
-$$
-M_1[T_{k+1}] \;=\; 2\, M_1[x]\, M_1[T_k] - M_1[T_{k-1}].
-$$
-
-The result is a Toeplitz-plus-Hankel matrix with **bandwidth equal to the
-degree $k$**. Therefore $M_1[a] = \sum_k a_k\, M_1[T_k]$ has bandwidth at
-most $d$. Coefficients $a$ with short Chebyshev expansion give *banded*
-multiplication operators. For example $a(x) = 1 + x$ gives the
-tridiagonal $M_1[1+x] = I + M_1[x]$.
-
-The full operator $M_1[a]\,\mathcal{D}_0 + \mathcal{S}_0$ for the equation
-$a(x)\, u'(x) + u(x) = f(x)$ inherits the almost-banded pattern: a few
-dense rows from boundary conditions, sparse banded everything else.
-Higher-order problems work the same way, with $\mathcal{D}_\lambda$ and
-$\mathcal{S}_\lambda$ for the next basis up. We use this construction in
-[](adaptive-qr.md) to drive the visualisation of the QR sweep on a
-genuinely variable-coefficient problem.
-
-The pay-off is dramatic. Solving the almost-banded system by an
-adapted-bandwidth QR factorisation costs $O(N)$. The conditioning of
-$\mathcal{L}$ stays $O(1)$ in $N$ instead of $O(N^{2k})$ for a $k$-th
-order problem. The cost is the basis bookkeeping above and the loss of a
-direct nodal interpretation. For the moderate-$N$ collocation problems
-of this chapter, the dense version is fine. For the
-[adaptive QR](adaptive-qr.md) algorithm in the next section, the
-almost-banded structure is essential.
+The construction above generalises cleanly to any order of derivative.
+A second derivative $u''$ lives in $C^{(2)}$, requiring a sparse
+differentiation map $\mathcal{D}_1: U \to C^{(2)}$ and a conversion
+$\mathcal{S}_1: U \to C^{(2)}$. A multiplication operator $M_2[a]$
+acting on $C^{(2)}$-coefficients is built by the same three-term
+recurrence as $M_1[a]$, with the appropriate Gegenbauer recurrence in
+place of the Chebyshev one. For an equation of order $k$, the
+discretisation lives in $C^{(k)}$ and the resulting operator is again
+almost banded, with bandwidth determined by the differentiation order
+and the smoothness of the variable coefficients. The full theory,
+along with the analysis of conditioning and the optimal $O(N)$ solver,
+is in {cite:t}`OlverTownsend2013`.
 
 ```{bibliography}
 :filter: docname in docnames

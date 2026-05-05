@@ -110,6 +110,8 @@ project:
           title: "§6 QR Factorization"
         - file: qr-least-squares/least-squares.md
           title: "§7 Least Squares"
+        # - file: qr-least-squares/givens-streaming-qr.md
+        #  title: "§8 Givens Rotations and Streaming QR"
         - file: qr-least-squares/exercises.md
           title: Exercises
         # - file: qr-least-squares/iterative-methods.md
@@ -149,6 +151,8 @@ project:
           title: "§8 Neural Networks: Universal Approximation and Barron's Rate"
         - file: interpolation/curse-of-dimensionality.md
           title: "§9 The Curse of Dimensionality"
+        - file: interpolation/neural-ode.md
+          title: "§10 Neural ODEs and the Barron Rate for Vector Fields"
         - file: interpolation/exercises.md
           title: Exercises
     # NOTEBOOKS
@@ -174,6 +178,7 @@ project:
         # - file: notebooks/chebyshev-differentiation.ipynb
         # - file: notebooks/chebyshev-integration.ipynb
         - file: notebooks/chebyshev-toolbox.ipynb
+        - file: notebooks/ultraspherical-toolbox.ipynb
         - file: notebooks/neural-network-examples.ipynb
         # - file: notebooks/jacobi-gauss-seidel.ipynb
     # APPENDICES
