@@ -486,6 +486,14 @@ jobs:
           echo "mystmd completed cleanly; no fallback needed."
         fi
 
+        # Always rewrite CSS files: mystmd's rewriteAssetsFolder only handles
+        # .html/.js/.json, but the prod theme bundle's CSS contains
+        # /myst_assets_folder/ refs (from remix's publicPath config) that need
+        # the same substitution.
+        REPLACEMENT="${BASE_URL}/build/"
+        find _build/html -type f -name '*.css' \
+          -exec sed -i "s#/myst_assets_folder/#${REPLACEMENT}#g" {} +
+
         # Final verification: no file should still contain the placeholder.
         REMAINING=$(grep -rl "/myst_assets_folder/" _build/html 2>/dev/null | head -5 || true)
         if [ -n "$REMAINING" ]; then
