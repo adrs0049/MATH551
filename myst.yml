@@ -169,9 +169,6 @@ project:
         - file: notebooks/bisection-demo.ipynb
         - file: notebooks/fixed-point-iteration.ipynb
         - file: notebooks/CondNumberEst.ipynb
-        - file: notebooks/condition-number-digits.ipynb
-        - file: notebooks/gaussian-elimination-notebook.ipynb
-        - file: notebooks/stability-ge.ipynb
         - file: notebooks/deflated-continuation.ipynb
         # Hidden for the moment, pending review:
         # - file: notebooks/fourier-dct.ipynb
@@ -192,6 +189,9 @@ project:
         - file: direct-methods/pivoting.md
           title: "§3 Pivoting"
         - file: direct-methods/exercises.md
+        - file: notebooks/condition-number-digits.ipynb
+        - file: notebooks/gaussian-elimination-notebook.ipynb
+        - file: notebooks/stability-ge.ipynb
           title: Exercises
     # - file: appendix/index.md
     #   title: Appendices
