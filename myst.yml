@@ -36,8 +36,8 @@ project:
     - file: index.md
     - file: schedule.md
       title: Course Schedule
-    - file: core-concepts.md
-      title: Core Concepts
+    #- file: core-concepts.md
+    #  title: Core Concepts
     # PART I: LOCAL APPROXIMATION
     - file: approximation-theory/index.md
       title: Local Approximation
