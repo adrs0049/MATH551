@@ -251,19 +251,21 @@ jobs:
         find myst-theme -name "esbuild" -type f -exec chmod +x {} \;
         find myst-theme -name "*.node" -type f -exec chmod +x {} \;
 
-    # Snapshot the prod-build theme assets before mystmd starts. mystmd
-    # spawns the Remix dev server (`npm start`), which races with the final
-    # asset-copy step and intermittently leaves files like
-    # caret-down-empty-PDAJTPAD.svg, audio-EHWPVEAB.svg, etc. missing in
-    # _build/html/build/_assets/. The self-heal step at the end of this job
-    # restores from this snapshot when that happens.
-    - name: Snapshot theme assets
+    # Snapshot the entire theme `public/` directory before mystmd starts.
+    # In jupyter-book 2.1.5, buildHtml awaits appServer.stop() before its
+    # final copySync, which lets the Remix dev server fully clean up its
+    # build outputs first — copySync then ENOENTs on
+    # myst-theme/themes/book/public/build/_assets/<hash>.{svg,css}.
+    # (2.1.4 fired the stop unawaited, so the copy raced ahead before the
+    # cleanup deleted anything.) The self-heal step at the end of this job
+    # finishes the copy from this snapshot when that happens.
+    - name: Snapshot theme public dir
       run: |
-        if [ -d myst-theme/themes/book/public/build ]; then
-          cp -r myst-theme/themes/book/public/build /tmp/theme-snapshot
-          echo "Snapshot: $(find /tmp/theme-snapshot -type f | wc -l) files, $(du -sh /tmp/theme-snapshot | cut -f1)"
+        if [ -d myst-theme/themes/book/public ]; then
+          cp -r myst-theme/themes/book/public /tmp/theme-public-snapshot
+          echo "Snapshot: $(find /tmp/theme-public-snapshot -type f | wc -l) files, $(du -sh /tmp/theme-public-snapshot | cut -f1)"
         else
-          echo "::warning::No theme build directory to snapshot"
+          echo "::warning::No theme public directory to snapshot"
         fi
 
     - name: Download PDF exports
@@ -378,12 +380,16 @@ jobs:
         kill $TAIL_PID 2>/dev/null || true
         exit 0
 
-    # Self-heal if mystmd crashed during the asset-copy / URL-rewrite step.
-    # When that happens, _build/html/index.html still contains the literal
-    # /myst_assets_folder/ placeholder. Restore the missing assets from the
-    # snapshot we took before mystmd started, then rewrite the placeholder
-    # URLs ourselves. Fails loudly if the output is still broken so we don't
-    # deploy a half-baked site.
+    # Self-heal if mystmd crashed during the post-fetch copy steps.
+    # mystmd's buildHtml ends with two copySync calls:
+    #   1. theme/public/        -> _build/html/        (Remix bundle, theme css, favicon, _assets/, _shared/)
+    #   2. <session>/_build/site/public/ -> _build/html/build/ (per-page figures, PDFs, ipynbs)
+    # In jupyter-book 2.1.5 the dev-server stop is awaited, so the Remix dev
+    # cleanup runs first and ENOENTs the source files; the second copy then
+    # never happens either. Symptom: _build/html/index.html still contains
+    # /myst_assets_folder/ placeholders. Self-heal redoes both copies from
+    # the snapshot + the still-on-disk site/public, then rewrites the URLs.
+    # Fails loudly if the output is still broken.
     - name: Verify HTML output and self-heal if needed
       run: |
         set -e
@@ -394,22 +400,32 @@ jobs:
         fi
 
         if grep -q "/myst_assets_folder/" _build/html/index.html; then
-          echo "::warning::mystmd did not finish the asset-copy / URL-rewrite step; running fallback"
+          echo "::warning::mystmd did not finish the post-fetch copy + URL-rewrite step; running fallback"
 
-          # Restore _assets/ from snapshot (don't overwrite anything mystmd
-          # already managed to copy successfully).
-          if [ -d /tmp/theme-snapshot/_assets ]; then
-            mkdir -p _build/html/build/_assets
-            cp -rn /tmp/theme-snapshot/_assets/. _build/html/build/_assets/ 2>/dev/null || true
-            echo "Assets in _build/html/build/_assets after restore: $(find _build/html/build/_assets -type f | wc -l)"
+          # 1. Theme bundle: replay copySync(theme/public, _build/html).
+          # `cp -rn` keeps anything mystmd already wrote (favicon.ico,
+          # myst-theme.css, etc.) and only fills in the missing pieces.
+          if [ -d /tmp/theme-public-snapshot ]; then
+            cp -rn /tmp/theme-public-snapshot/. _build/html/ 2>/dev/null || true
+            echo "Theme bundle restored. _build/html/build now has: $(find _build/html/build -mindepth 1 -maxdepth 1 -printf '%f ')"
           else
-            echo "::error::No theme snapshot available to restore from"
+            echo "::error::No theme public snapshot available to restore from"
             exit 1
           fi
 
-          # Rewrite placeholder URLs in all text-format outputs.
-          # BASE_URL is /<repo-name> (e.g. /MATH551). Replacement uses # as
-          # the sed delimiter so a leading slash in BASE_URL is fine.
+          # 2. Per-page generated assets: replay copySync(session.publicPath(), _build/html/build).
+          # session.publicPath() is <workspace>/_build/site/public — populated
+          # by mystmd's project-build phase and still on disk after the crash.
+          if [ -d _build/site/public ]; then
+            cp -rn _build/site/public/. _build/html/build/ 2>/dev/null || true
+            echo "Per-page assets restored. Files in _build/html/build: $(find _build/html/build -type f | wc -l)"
+          else
+            echo "::warning::_build/site/public/ not found; figures and per-page exports may be missing"
+          fi
+
+          # 3. Rewrite the placeholder URLs in all text-format outputs.
+          # BASE_URL is /<repo-name> (e.g. /MATH551). Use # as the sed
+          # delimiter so a leading slash in BASE_URL is fine.
           REPLACEMENT="${BASE_URL}/build/"
           echo "Rewriting /myst_assets_folder/ -> ${REPLACEMENT}"
           find _build/html -type f \
@@ -421,9 +437,7 @@ jobs:
           echo "mystmd completed cleanly; no fallback needed."
         fi
 
-        # Final verification: index.html and a sampling of other pages must
-        # be free of the placeholder. If we still see it, fail the workflow
-        # rather than deploy broken HTML.
+        # Final verification: no file should still contain the placeholder.
         REMAINING=$(grep -rl "/myst_assets_folder/" _build/html 2>/dev/null | head -5 || true)
         if [ -n "$REMAINING" ]; then
           echo "::error::Placeholder /myst_assets_folder/ still present after fallback in:"
@@ -431,6 +445,7 @@ jobs:
           exit 1
         fi
         echo "Verified: no /myst_assets_folder/ placeholders remain."
+        echo "Total files in _build/html/build: $(find _build/html/build -type f 2>/dev/null | wc -l)"
 
     - name: Stop memory monitor and print log
       if: always()
