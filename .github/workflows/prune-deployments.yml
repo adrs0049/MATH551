@@ -1,0 +1,61 @@
+name: Prune old deployments
+
+on:
+  workflow_run:
+    workflows: ["build-and-deploy"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: "How many recent deployments to keep"
+        default: "5"
+
+permissions:
+  deployments: write
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old deployments, preserving last success
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          KEEP: ${{ inputs.keep || 5 }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t ALL < <(gh api "repos/$REPO/deployments" --paginate --jq '.[].id')
+          if [ "${#ALL[@]}" -le "$KEEP" ]; then
+            echo "Only ${#ALL[@]} deployments — nothing to prune."
+            exit 0
+          fi
+
+          state_of() {
+            gh api "repos/$REPO/deployments/$1/statuses" --jq '.[0].state // ""'
+          }
+
+          declare -A KEEP_SET=()
+          for id in "${ALL[@]:0:$KEEP}"; do KEEP_SET[$id]=1; done
+
+          has_success=false
+          for id in "${!KEEP_SET[@]}"; do
+            if [ "$(state_of "$id")" = "success" ]; then has_success=true; break; fi
+          done
+
+          if [ "$has_success" = false ]; then
+            for id in "${ALL[@]:$KEEP}"; do
+              if [ "$(state_of "$id")" = "success" ]; then
+                echo "preserving most recent successful deployment $id"
+                KEEP_SET[$id]=1
+                break
+              fi
+            done
+          fi
+
+          for id in "${ALL[@]}"; do
+            [ -n "${KEEP_SET[$id]:-}" ] && continue
+            gh api -X POST "repos/$REPO/deployments/$id/statuses" -f state=inactive >/dev/null
+            gh api -X DELETE "repos/$REPO/deployments/$id"
+            echo "deleted $id"
+          done
