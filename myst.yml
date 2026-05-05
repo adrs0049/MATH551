@@ -151,8 +151,8 @@ project:
           title: "§8 Neural Networks: Universal Approximation and Barron's Rate"
         - file: interpolation/curse-of-dimensionality.md
           title: "§9 The Curse of Dimensionality"
-        - file: interpolation/neural-ode.md
-          title: "§10 Neural ODEs and the Barron Rate for Vector Fields"
+        #- file: interpolation/neural-ode.md
+        #  title: "§10 Neural ODEs and the Barron Rate for Vector Fields"
         - file: interpolation/exercises.md
           title: Exercises
     # NOTEBOOKS
