@@ -23,16 +23,22 @@ jobs:
           REPO: ${{ github.repository }}
           KEEP: ${{ inputs.keep || 5 }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          echo "Repo: $REPO  Keep: $KEEP"
 
-          mapfile -t ALL < <(gh api "repos/$REPO/deployments" --paginate --jq '.[].id')
+          if ! all_json=$(gh api "repos/$REPO/deployments" --paginate 2>&1); then
+            echo "::error::Listing deployments failed: $all_json"
+            exit 1
+          fi
+          mapfile -t ALL < <(echo "$all_json" | jq -r '.[].id // empty')
+          echo "Found ${#ALL[@]} deployments"
           if [ "${#ALL[@]}" -le "$KEEP" ]; then
-            echo "Only ${#ALL[@]} deployments — nothing to prune."
+            echo "Nothing to prune."
             exit 0
           fi
 
           state_of() {
-            gh api "repos/$REPO/deployments/$1/statuses" --jq '.[0].state // ""'
+            gh api "repos/$REPO/deployments/$1/statuses" --jq '.[0].state // ""' 2>/dev/null || echo ""
           }
 
           declare -A KEEP_SET=()
@@ -55,7 +61,11 @@ jobs:
 
           for id in "${ALL[@]}"; do
             [ -n "${KEEP_SET[$id]:-}" ] && continue
-            gh api -X POST "repos/$REPO/deployments/$id/statuses" -f state=inactive >/dev/null
-            gh api -X DELETE "repos/$REPO/deployments/$id"
-            echo "deleted $id"
+            gh api -X POST "repos/$REPO/deployments/$id/statuses" -f state=inactive >/dev/null 2>&1 \
+              || echo "  warn: could not mark $id inactive"
+            if gh api -X DELETE "repos/$REPO/deployments/$id" 2>/dev/null; then
+              echo "deleted $id"
+            else
+              echo "  warn: could not delete $id (already gone?)"
+            fi
           done

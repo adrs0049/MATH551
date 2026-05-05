@@ -49,21 +49,19 @@ echo "Patch 1: Algorithm/property proof environments"
 [ -n "$JB_CJS" ] && patch_proof_envs "$JB_CJS" "jupyter-book"
 [ -n "$MYST_CJS" ] && patch_proof_envs "$MYST_CJS" "mystmd"
 
-# ── Patch 2: Sequential HTML rendering ────────────────────────────────
-
-echo ""
-echo "Patch 2: Sequential HTML rendering"
-patched=false
-if [ -n "$MYST_CJS" ]; then
-    python3 scripts/patch-html-sequential.py "$MYST_CJS" && patched=true
-fi
-if [ -n "$JB_CJS" ]; then
-    # jupyter-book bundles its own myst.cjs - patch that too
-    python3 scripts/patch-html-sequential.py "$JB_CJS" && patched=true
-fi
-if [ "$patched" = false ]; then
-    echo "  SKIP: no CJS files found to patch"
-fi
+# ── Patch 2: Sequential HTML rendering (DISABLED) ─────────────────────
+# Disabled with mystmd 1.9.0 / jupyter-book 2.1.5 upgrade. The original
+# variant restarted the Remix server every 15 pages to free memory, but
+# Remix v1.17 takes ~30s to rebuild on restart — longer than the fetch
+# retry window — so post-restart fetches fail and the post-fetch
+# copySync step never runs, producing artifacts with no
+# _build/html/build/_assets/. The sequential-without-restart variant
+# also hits the ENOENT race more often than mystmd's default concurrent
+# rendering (longer wall time = more chances for Remix's dev cleanup to
+# delete public/build files before copySync reads them). The workflow's
+# snapshot + self-heal step handles the ENOENT race correctly, so we
+# rely on that and let mystmd run its default Promise.all + p-limit(5).
+# Re-enable if 73-page builds OOM on the CI runner.
 
 echo ""
 echo "All patches applied."

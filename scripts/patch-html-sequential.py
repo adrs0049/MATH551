@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
-Patch mystmd/jupyter-book buildHtml to render pages sequentially and
-restart the Remix server every BATCH_SIZE pages to free memory.
+Patch mystmd/jupyter-book buildHtml to render pages sequentially.
 
-The default Promise.all + p-limit(5) causes the Remix server to accumulate
-memory for all route modules, which OOMs on 16GB GitHub runners.
+The default Promise.all + p-limit(5) hits the Remix server with 5 concurrent
+requests, which raises peak memory on CI runners. Sequential rendering keeps
+peak lower at a small wall-clock cost.
+
+(Earlier versions of this patch also restarted the Remix server every N
+pages to free accumulated memory. That stopped working with mystmd 1.9.0:
+Remix v1.17 takes ~30s to rebuild on restart, longer than the fetch retry
+window, so post-restart fetches fail and the post-fetch copySync step never
+runs, producing an artifact with no _build/html/build/_assets/ directory.)
 """
 import sys
-
-BATCH_SIZE = 15  # Restart server every N pages
 
 
 def patch(cjs_path):
@@ -19,17 +23,14 @@ def patch(cjs_path):
         print(f"  OK: already patched")
         return True
 
-    # Find the Promise.all block
     marker = 'await Promise.all(routes.map(async (route) => limitConnections(async () => {'
     start = content.find(marker)
     if start == -1:
         print(f"  WARNING: could not find Promise.all block in {cjs_path}")
         return False
 
-    # Find line start (include leading whitespace)
     line_start = content.rfind('\n', 0, start) + 1
 
-    # Find the closing })));
     end_marker = '})));'
     end = content.find(end_marker, start)
     if end == -1:
@@ -37,37 +38,19 @@ def patch(cjs_path):
         return False
     end += len(end_marker)
 
-    # Extract the inner block (route processing logic)
     inner_start = start + len(marker) + 1
     inner = content[inner_start:end - len(end_marker)]
 
-    # Build replacement: sequential for-loop with server restart every BATCH_SIZE pages
-    replacement = f'''  // PATCHED_SEQUENTIAL_HTML: sequential rendering with server restarts
-  // to reduce memory on CI runners (batch size: {BATCH_SIZE})
-  const BATCH_SIZE = {BATCH_SIZE};
-  for (let i = 0; i < routes.length; i += BATCH_SIZE) {{
-    const batch = routes.slice(i, i + BATCH_SIZE);
-    for (const route of batch) {{
-{inner.replace('return;', 'continue;')}  }}
-    // Restart server to free accumulated memory
-    if (i + BATCH_SIZE < routes.length) {{
-      session.log.info(`\\u267B\\uFE0F  Restarting server after ${{i + BATCH_SIZE}}/${{routes.length}} pages to free memory`);
-      appServer.stop();
-      const newServer = await startServer(session, {{ ...opts, buildStatic: true, baseurl }});
-      if (!newServer) {{
-        session.log.error('Failed to restart server');
-        break;
-      }}
-      Object.assign(appServer, newServer);
-    }}
-  }}'''
+    replacement = f'''  // PATCHED_SEQUENTIAL_HTML: sequential rendering to lower peak memory
+  for (const route of routes) {{
+{inner.replace('return;', 'continue;')}  }}'''
 
     content = content[:line_start] + replacement + content[end:]
 
     with open(cjs_path, 'w') as f:
         f.write(content)
 
-    print(f"  PATCHED: sequential HTML rendering with server restart every {BATCH_SIZE} pages")
+    print(f"  PATCHED: sequential HTML rendering (no server restart)")
     return True
 
 
