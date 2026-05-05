@@ -30,12 +30,20 @@ jobs:
       with:
         submodules: true
 
+    # Cache key covers notebooks/ AND every .md with code-cells: if a .md
+    # notebook's code changes, mystmd's cache key changes too, so we must
+    # re-execute. Otherwise mystmd would miss cache and execute live during
+    # the HTML build, where the broken executionSemaphore (hardcoded to
+    # cpus()-1, ignoring --execute-parallel) plus a hung kernel deadlocks
+    # the entire 45-min build step.
     - name: Cache executed notebooks
       uses: actions/cache@v4
       id: nb-cache
       with:
-        path: notebooks/
-        key: notebooks-${{ hashFiles('notebooks/**/*.ipynb', 'requirements.txt') }}
+        path: |
+          notebooks/
+          _build/execute/
+        key: notebooks-${{ hashFiles('notebooks/**/*.ipynb', '**/*.md', 'requirements.txt', 'requirements-notebooks.txt') }}
 
     - name: Set up Python
       if: steps.nb-cache.outputs.cache-hit != 'true'
@@ -48,12 +56,20 @@ jobs:
       if: steps.nb-cache.outputs.cache-hit != 'true'
       run: pip install -r requirements-notebooks.txt
 
-    - name: Execute notebooks
+    - name: Execute .ipynb notebooks
       if: steps.nb-cache.outputs.cache-hit != 'true'
       run: bash scripts/execute-notebooks.sh
 
-    - name: Populate MyST execution cache from executed notebooks
+    - name: Populate MyST execution cache from executed .ipynb files
       run: python3 scripts/populate-execute-cache.py
+
+    # Pre-execute .md notebooks (MyST markdown with {code-cell} blocks) so
+    # the HTML-build job hits cache for ALL notebooks. We use nbclient
+    # directly here (one notebook at a time, per-notebook timeout) to dodge
+    # mystmd's flaky kernel manager.
+    - name: Pre-execute .md notebooks
+      if: steps.nb-cache.outputs.cache-hit != 'true'
+      run: python3 scripts/precache-md-notebooks.py --timeout 300
 
     - name: Upload executed notebooks
       uses: actions/upload-artifact@v4
