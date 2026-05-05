@@ -93,7 +93,26 @@ jobs:
       with:
         submodules: true
 
+    - name: Get theme submodule SHA
+      id: theme-sha
+      run: echo "sha=$(git -C myst-theme rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+    # Cache the built theme keyed on the submodule SHA. The theme rebuilds
+    # only when we bump the submodule, so most runs hit cache and skip the
+    # ~5-min Node install + remix build.
+    - name: Cache built theme
+      uses: actions/cache@v4
+      id: theme-cache
+      with:
+        path: |
+          myst-theme/themes/book/public
+          myst-theme/themes/book/build
+          myst-theme/packages/*/dist
+          myst-theme/node_modules
+        key: theme-${{ steps.theme-sha.outputs.sha }}
+
     - name: Set up Node.js
+      if: steps.theme-cache.outputs.cache-hit != 'true'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
@@ -101,6 +120,7 @@ jobs:
         cache-dependency-path: myst-theme/package-lock.json
 
     - name: Build myst-theme
+      if: steps.theme-cache.outputs.cache-hit != 'true'
       run: |
         cd myst-theme
         npm ci
