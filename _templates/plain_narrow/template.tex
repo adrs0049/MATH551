@@ -5,7 +5,25 @@
 \usepackage{datetime}
 \usepackage{graphicx}
 \usepackage{natbib}
+\usepackage{enumitem}
 \bibliographystyle{abbrvnat}
+
+%%% Algorithm environment for prf:algorithm directives
+\newcounter{algorithm}
+\renewcommand{\thealgorithm}{\arabic{algorithm}}
+\newenvironment{algorithm}[1][]{%
+  \refstepcounter{algorithm}%
+  \par\vspace{1ex}%
+  \noindent\rule{\linewidth}{0.8pt}%
+  \par\vspace{2pt}%
+  \noindent{\normalfont\textbf{Algorithm~\thealgorithm}%
+    \ifx\relax#1\relax\else~(#1)\fi%
+  .\hspace{0.5em}}%
+}{%
+  \par\vspace{2pt}%
+  \noindent\rule{\linewidth}{0.8pt}%
+  \par\vspace{1ex}%
+}
 
 [-IMPORTS-]
 

@@ -147,10 +147,10 @@ project:
           title: "§6 Spectral Methods for BVPs"
         - file: interpolation/adaptive-qr.md
           title: "§7 Adaptive QR"
-        - file: interpolation/neural-networks.md
-          title: "§8 Neural Networks: Universal Approximation and Barron's Rate"
-        - file: interpolation/curse-of-dimensionality.md
-          title: "§9 The Curse of Dimensionality"
+        - file: interpolation/ridge-functions.md
+          title: "§8 Ridge Functions and Universal Approximation"
+        - file: interpolation/barron.md
+          title: "§9 Barron's Theorem and the Curse of Dimensionality"
         #- file: interpolation/neural-ode.md
         #  title: "§10 Neural ODEs and the Barron Rate for Vector Fields"
         - file: interpolation/exercises.md
