@@ -14,6 +14,17 @@ downloads:
 
 # Ridge Functions and Universal Approximation
 
+:::{admonition} Optional Section
+:class: warning
+
+This section and the next ([§Barron's Theorem](./barron.md)) cover
+material beyond the core MATH 551 syllabus. They extend the
+deterministic 1D approximation theory to the high-dimensional
+setting, where neural networks are the practitioner's tool. The
+content is included for interested students; nothing later in the
+course depends on it.
+:::
+
 :::{tip} Big Idea
 A one-hidden-layer neural network is a basis expansion in *ridge
 functions* $\sigma(w \cdot x + b)$. Cybenko (1989) and Hornik (1991)

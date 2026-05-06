@@ -14,6 +14,16 @@ downloads:
 
 # Barron's Theorem and the Curse of Dimensionality
 
+:::{admonition} Optional Section
+:class: warning
+
+This section, together with [§Ridge Functions and Universal
+Approximation](./ridge-functions.md), covers material beyond the
+core MATH 551 syllabus. The two pages develop the rate-of-convergence
+question for neural networks; the content is included for
+interested students.
+:::
+
 :::{tip} Big Idea
 The previous page showed ridge functions are dense: any continuous
 $f$ on $K \subset \mathbb{R}^d$ can be approximated by a wide-enough

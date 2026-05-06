@@ -90,29 +90,43 @@ After completing this chapter you should be able to:
   basis.
 - **L7.2** Use the barycentric formula to evaluate a Chebyshev interpolant
   in $O(n)$.
-- **L7.3** Explain Runge's phenomenon, quantify it via the Lebesgue
-  constant, and describe why Chebyshev nodes are nearly optimal.
+- **L7.3** Explain Runge's phenomenon and describe why Chebyshev nodes
+  are nearly optimal.
 - **L7.4** Read a coefficient-magnitude plot and infer the regularity
   class of the underlying function.
-- **L7.5** Build the Chebyshev differentiation matrix $D_N$, use it to
-  approximate $f'$ at the nodes, and relate its conditioning to $N$.
-- **L7.6** Apply Clenshaw–Curtis quadrature, derive its weights from the
-  DCT, and predict its convergence rate from the smoothness of the
-  integrand.
-- **L7.7** Compute the roots of a smooth function on $[-1, 1]$ by forming
-  the Chebyshev colleague matrix and computing its eigenvalues, and
-  explain why the colleague formulation is better conditioned than the
-  monomial companion.
-- **L7.8** Discretize a linear BVP via Chebyshev collocation, impose
-  boundary conditions by row replacement, and explain the trade-off that
-  motivates ultraspherical methods.
-- **L7.9** Implement an adaptive stopping rule based on coefficient-tail
-  decay, and recognize the failure mode for non-smooth $f$.
-- **L7.10** Quantify the curse of dimensionality for tensor-product
+- **L7.5** Differentiate $f$ in the Chebyshev coefficient basis using
+  the $T \to U$ recurrence between Chebyshev coefficients of $f$ and
+  $f'$, and predict the accuracy from the coefficient decay.
+- **L7.6** Integrate $f$ in the Chebyshev coefficient basis as a
+  linear functional on $\{c_k\}$ (inner product against fixed weights),
+  and predict the quadrature error from the coefficient decay.
+- **L7.7** Discretize a linear BVP via Chebyshev collocation, impose
+  boundary conditions by row replacement, and explain the trade-off
+  that motivates ultraspherical methods.
+- **L7.8** Implement an adaptive stopping rule based on coefficient-
+  tail decay, and recognize the failure mode for non-smooth $f$.
+- **L7.9** Quantify the curse of dimensionality for tensor-product
   Chebyshev, and identify which features of $f$ control how badly $d$
   shows up in the cost.
-- **L7.11** State the universal-approximation theorem and identify it
+
+**Optional:**
+
+- **L7.10** Distinguish the Chebyshev *projection* (truncated series,
+  $L^2$-optimal) from the Chebyshev *interpolant* (sampled values,
+  near-best in $L^\infty$), quantify the gap via the Lebesgue
+  constant, and apply the near-best approximation theorem.
+- **L7.11** Build the Chebyshev differentiation matrix $D_N$ in the
+  *value* basis, use it to approximate $f'$ at the nodes, and relate
+  its conditioning to $N$.
+- **L7.12** Apply Clenshaw–Curtis quadrature in the *value* basis,
+  derive its weights from the DCT, and predict its convergence rate
+  from the smoothness of the integrand.
+- **L7.13** Compute the roots of a smooth function on $[-1, 1]$ by
+  forming the Chebyshev colleague matrix and computing its
+  eigenvalues, and explain why the colleague formulation is better
+  conditioned than the monomial companion.
+- **L7.14** State the universal-approximation theorem and identify it
   as the Weierstrass theorem for the ridge-function basis.
-- **L7.12** State Barron's theorem, identify the Barron norm as a
+- **L7.15** State Barron's theorem, identify the Barron norm as a
   spectral-side regularity notion, and explain why a Monte Carlo
   representation produces a dimension-free rate.

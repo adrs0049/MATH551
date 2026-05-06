@@ -32,31 +32,19 @@ Class meets Monday & Wednesday, 75 minutes per session.
 | | Mar 15-22 | | **SPRING BREAK** | |
 | 13 | Mar 23 | Mon | Fixed Point Methods | |
 | 14 | Mar 25 | Wed | Condition number of root finding | |
-| 15 | Mar 30 | Mon | **Linear Algebra** Orthogonality, Gram-Schmidt | |
-| 16 | Apr 1 | Wed | QR factorization | |
-| 17 | Apr 6 | Mon | Least squares via QR | |
-| 18 | Apr 8 | Wed | SVD, pseudo-inverse, low-rank approximation + **Quiz 3** | |
+| 15 | Mar 30 | Mon | Newton's Method | |
+| 16 | Apr 1 | Wed | **Linear Algebra** Orthogonality, Gram-Schmidt | |
+| 17 | Apr 6 | Mon | QR-factorization | |
+| 18 | Apr 8 | Wed | Stability in Linear Systems + **Quiz 3** | |
 | 19 | Apr 13 | Mon | **Interpolation** - Lagrange | |
-| 20 | Apr 15 | Wed | Chebyshev polynomials | |
-| 21 | Apr 22 | Wed | Values ↔ coefficients, FFT | |
-| 22 | Apr 24 | Fri | Calculus using polynomials | *Mon schedule* |
-| 23 | Apr 27 | Mon | Spectral accuracy & Gibbs | |
-| 24 | Apr 29 | Wed | **Neural Networks** - Universal approximation + **Quiz 4** | |
-| 25 | May 4 | Mon | Barron spaces | |
-| 26 | May 6 | Wed | Deep networks | |
+| 20 | Apr 15 | Wed | Barycentric Interpolation | |
+| 21 | Apr 22 | Wed | Chebyshev Polynomials | |
+| 22 | Apr 24 | Fri | Integration as an inner product | *Mon schedule* |
+| 23 | Apr 27 | Mon | Differentiation as a matrix | |
+| 24 | Apr 29 | Wed | Spectral accuracy & Gibbs + **Quiz 4** | |
+| 25 | May 4 | Mon | BVPs and adaptive-QR | |
+| 26 | May 6 | Wed | **Neural Networks** - Universal approximation | |
 | | May 11-15 | | **FINAL EXAM** | |
-
-## Topic Summary
-
-| Topic | Classes | Content |
-|-------|---------|---------|
-| Approximation Theory | 3 | Taylor's theorem, finite differences |
-| Error & Stability | 3 | Floating point, forward/backward error, condition numbers |
-| ODEs | 2 | Euler's method, Euler-Maruyama |
-| Nonlinear Equations | 3 | Bisection, fixed-point, Newton, convergence analysis |
-| QR, Least Squares & SVD | 6 | Norms, Gram-Schmidt, QR, least squares, TBD, SVD |
-| Interpolation | 5 | Lagrange, Chebyshev, FFT, calculus via polynomials, spectral accuracy |
-| Neural Networks | 3 | Universal approximation, Barron spaces, deep networks |
 
 ## Assessment
 
